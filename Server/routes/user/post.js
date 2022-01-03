@@ -43,7 +43,7 @@ postsRouter.get('/:postId', authenticateToken, doesHasPermission, async (req, re
 // Adds post
 postsRouter.post('/', authenticateToken, doesRequesterOwn, async (req, res) => {
     try {
-        req.body.publishedAt = Date.now()
+        req.body.publishedAt = new Date()
         if (isPostValidate(req.body)) {
             const post = new postModel({ photosUrls: req.body.photosUrls, publishedAt: req.body.publishedAt, taggedUsers: req.body.taggedUsers })
             const user = await getUserById(req.params.userId)
@@ -134,6 +134,7 @@ postsRouter.delete('/:postId/like', authenticateToken, doesHasPermission, async 
 })
 
 const commentRouter = require('./comment')
+const { errorCodes } = require('../../errorCodes')
 postsRouter.use('/:postId/comments/', commentRouter)
 
 module.exports = { postsRouter }

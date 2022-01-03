@@ -1,5 +1,6 @@
 const Joi = require("joi")
 const mongoose = require("mongoose")
+const { getUserById } = require("./User")
 
 const postModel = mongoose.model("Post", mongoose.Schema({
     photosUrls: {

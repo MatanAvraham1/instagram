@@ -4,6 +4,7 @@ const { getUserById, userModel } = require('../../models/User');
 const { authenticateToken } = require('../auth');
 const { doesRequesterOwn, doesHasPermission } = require('../../helpers/privacyHelper');
 const { getPostById } = require('../../models/Post');
+const { errorCodes } = require('../../errorCodes');
 const commentRouter = express.Router({ mergeParams: true })
 
 
@@ -20,7 +21,7 @@ commentRouter.get('/:commentId', authenticateToken, doesHasPermission, async (re
             return res.status(400).json({ "errorCode": errorCodes.commentNotExist })
         }
 
-        const comment = post.comments[index].comment
+        const comment = post.comments[index]
         res.status(200).json({
             'comment': comment.comment,
             'likes': comment.likes.length,
@@ -43,7 +44,16 @@ commentRouter.get('/', authenticateToken, doesHasPermission, async (req, res) =>
             return res.status(400).json({ errorCode: errorCodes.postNotExist })
         }
 
-        res.status(200).json({ 'comments': post.comments })
+        var comments = []
+        post.comments.forEach(comment => {
+            comments.push({
+                publisherId: comment.publisherId,
+                comment: comment.comment,
+                likes: comment.likes.length,
+                publishedAt: comment.publishedAt
+            })
+        });
+        res.status(200).json({ 'comments': comments })
     }
     catch (err) {
         console.log(err)
@@ -56,7 +66,7 @@ commentRouter.get('/', authenticateToken, doesHasPermission, async (req, res) =>
 commentRouter.post('/', authenticateToken, doesHasPermission, async (req, res) => {
     try {
         req.body.publisherId = req.userId;
-        req.body.publishedAt = Date.now()
+        req.body.publishedAt = new Date()
         if (isCommentValidate(req.body)) {
             const user = await getUserById(req.params.userId)
             const comment = new commentModel({ publisherId: req.body.publisherId, comment: req.body.comment, publishedAt: req.body.publishedAt })

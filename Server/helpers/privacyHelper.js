@@ -1,4 +1,5 @@
 const { userModel, getUserById } = require("../models/User");
+const { errorCodes } = require('../errorCodes')
 
 async function isFollowing(firstUserId, secondUserId) {
     /*

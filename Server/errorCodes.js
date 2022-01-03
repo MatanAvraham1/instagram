@@ -13,9 +13,14 @@ const errorCodes = {
     invalidUpdateValues: 700,
     cantFollowHimself: 800,
     userNotInFollowRequests: 900,
-    alreadyRequested: 1000,
+    userNotInFollowingRequests: 901,
+    followRequestAlreadySent: 1000,
     alreadyFollowed: 2000,
     alreadyUnfollowed: 2001,
     missingUserToAccept: 3000,
     missingUserToDelete: 4000,
+    invalidStory: 5000,
+    storyNotExist: 5001
 }
+
+module.exports = { errorCodes }

@@ -154,7 +154,7 @@ userRouter.post('/:userId/followers', authenticateToken, async (req, res) => {
         const requesterUser = await getUserById(req.userId)
 
         if (user.followRequests.includes(req.userId)) {
-            return res.status(400).json({ 'errorCode': errorCodes.alreadyRequested })
+            return res.status(400).json({ 'errorCode': errorCodes.followRequestAlreadySent })
         }
         if (user.followers.includes(req.userId)) {
             return res.status(400).json({ 'errorCode': errorCodes.alreadyFollowed })
@@ -226,6 +226,7 @@ userRouter.post('/:userId/followRequests', authenticateToken, doesRequesterOwn, 
 
         const user = await getUserById(req.params.userId)
         const index = user.followRequests.findIndex((request) => request == idOfUserToAccept)
+
         if (index == -1) {
             return res.status(400).json({ 'errorCode': errorCodes.userNotInFollowRequests })
         }
@@ -280,7 +281,42 @@ userRouter.delete('/:userId/followRequests', authenticateToken, doesRequesterOwn
 })
 
 
+// Deletes follow request
+userRouter.delete('/:userId/followingRequests', authenticateToken, doesRequesterOwn, async (req, res) => {
+    try {
+
+        const idOfUserToDelete = req.query.userToDelete
+        if (idOfUserToDelete == null) {
+            return res.status(400).json({ 'errorCode': errorCodes.missingUserToDelete })
+        }
+
+        const user = await getUserById(req.params.userId)
+        const index = user.followingRequests.findIndex((request) => request == idOfUserToDelete)
+        if (index == -1) {
+            return res.status(400).json({ 'errorCode': errorCodes.userNotInFollowingRequests })
+        }
+
+        user.followingRequests.splice(index, 1)
+        await user.save()
+
+        const userToDelete = await getUserById(idOfUserToDelete)
+        const index_ = userToDelete.followRequests.findIndex((request) => request == req.params.userId)
+        userToDelete.followRequests.splice(index_, 1)
+        await userToDelete.save()
+
+        res.sendStatus(200)
+    }
+    catch (err) {
+        console.log(err)
+        res.sendStatus(500)
+    }
+})
+
 const { postsRouter } = require('./post')
 userRouter.use('/:userId/posts/', postsRouter)
+
+const { storiesRouter } = require('./story')
+const { errorCodes } = require('../../errorCodes')
+userRouter.use('/:userId/stories/', storiesRouter)
 
 module.exports = { userRouter }

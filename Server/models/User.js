@@ -31,6 +31,10 @@ const userModel = mongoose.model("User", mongoose.Schema({
         type: Array,
         default: [],
     },
+    stories: {
+        type: Array,
+        default: [],
+    },
     followRequests: {
         type: Array,
         default: []

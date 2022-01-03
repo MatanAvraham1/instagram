@@ -13,6 +13,15 @@ class AuthSerivce {
   );
   static const _safeStorage = FlutterSecureStorage(aOptions: _androidOptions);
 
+  static Future getAuthorizationHeader() async {
+    /*
+    Returns the authorization header
+    */
+
+    var jwt = await _safeStorage.read(key: "jwt");
+    return "Bearer $jwt";
+  }
+
   static Future getUserId() async {
     if (!await isUserLoggedIn()) {
       throw NoUserLoggedInExeption();

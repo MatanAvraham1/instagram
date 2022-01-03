@@ -1,2 +1,0 @@
-com/example/stories_for_flutter/BuildConfig.java
- com.example.stories_for_flutter.BuildConfig

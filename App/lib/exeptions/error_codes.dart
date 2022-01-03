@@ -13,7 +13,7 @@ class ErrorCodes {
   static const invalidUpdateValues = 700;
   static const cantFollowHimself = 800;
   static const userNotInFollowRequests = 900;
-  static const alreadyRequested = 1000;
+  static const followRequestAlreadySent = 1000;
   static const alreadyFollowed = 2000;
   static const alreadyUnfollowed = 2001;
   static const missingUserToAccept = 3000;

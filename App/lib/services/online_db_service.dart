@@ -25,11 +25,12 @@ class OnlineDBService {
   static Future<User> getUserById(String userId) async {
     /*
     Returns user by id [userId]
-
     */
-    var response = await http.get(
-      Uri.parse(_serverApiUrl + "users/$userId?filter=byId"),
-    );
+
+    var response = await http
+        .get(Uri.parse(_serverApiUrl + "users/$userId?filter=byId"), headers: {
+      "authorization": await AuthSerivce.getAuthorizationHeader(),
+    });
 
     if (response.statusCode == 400) {
       var errorCode = jsonDecode(response.body)["errorCode"];
@@ -49,6 +50,45 @@ class OnlineDBService {
     return user;
   }
 
+  static Future updateUser(User user) async {
+    /*
+    Updates user details
+
+    param 1: the user 
+    */
+
+    // var userId = await AuthSerivce.getUserId();
+
+    var response = await http.patch(
+      Uri.parse(_serverApiUrl + "users/${user.userId}/posts"),
+      headers: {
+        'Content-type': 'application/json',
+        "authorization": await AuthSerivce.getAuthorizationHeader(),
+      },
+      body: jsonEncode({
+        'username': user.username,
+        'fullname': user.fullname,
+        'bio': user.bio,
+        'isPrivate': user.isPrivate
+      }),
+    );
+
+    if (response.statusCode == 400) {
+      var errorCode = jsonDecode(response.body)["errorCode"];
+
+      if (errorCode == ErrorCodes.usernameAlreadyUsed) {
+        throw UsernameAlreadyUsedExeption();
+      }
+      if (errorCode == ErrorCodes.invalidUpdateValues) {
+        throw InvalidUpdateValuesExeption();
+      }
+    } else if (response.statusCode == 403) {
+      throw ForbiddenExeption();
+    } else if (response.statusCode == 500) {
+      throw ServerErrorExeption();
+    }
+  }
+
   static Future<Post> getPost(String userId, String postId) async {
     /*
     Returns some post
@@ -58,8 +98,10 @@ class OnlineDBService {
     */
 
     var response = await http.get(
-      Uri.parse(_serverApiUrl + "users/$userId/posts/$postId"),
-    );
+        Uri.parse(_serverApiUrl + "users/$userId/posts/$postId"),
+        headers: {
+          "authorization": await AuthSerivce.getAuthorizationHeader(),
+        });
 
     if (response.statusCode == 400) {
       var errorCode = jsonDecode(response.body)["errorCode"];
@@ -92,6 +134,7 @@ class OnlineDBService {
       Uri.parse(_serverApiUrl + "users/$userId/posts"),
       headers: {
         'Content-type': 'application/json',
+        "authorization": await AuthSerivce.getAuthorizationHeader(),
       },
       body: jsonEncode({
         'photosUrls': post.photosUrls,
@@ -122,8 +165,10 @@ class OnlineDBService {
     var userId = await AuthSerivce.getUserId();
 
     var response = await http.delete(
-      Uri.parse(_serverApiUrl + "users/$userId/posts/$postId"),
-    );
+        Uri.parse(_serverApiUrl + "users/$userId/posts/$postId"),
+        headers: {
+          "authorization": await AuthSerivce.getAuthorizationHeader(),
+        });
 
     if (response.statusCode == 400) {
       var errorCode = jsonDecode(response.body)["errorCode"];
@@ -138,6 +183,37 @@ class OnlineDBService {
     }
   }
 
+  static Future<List<Post>> getPosts(String userId) async {
+    /*  
+    Returns the posts of user
+    */
+
+    var response = await http
+        .get(Uri.parse(_serverApiUrl + "users/$userId/posts"), headers: {
+      "authorization": await AuthSerivce.getAuthorizationHeader(),
+    });
+
+    if (response.statusCode == 400) {
+      var errorCode = jsonDecode(response.body)["errorCode"];
+
+      if (errorCode == ErrorCodes.userNotExist) {
+        throw UserNotExistExeption();
+      }
+    } else if (response.statusCode == 403) {
+      throw ForbiddenExeption();
+    } else if (response.statusCode == 500) {
+      throw ServerErrorExeption();
+    }
+
+    List<Post> posts = [];
+    for (var postObject in jsonDecode(response.body)) {
+      Post post = Post.fromJson(postObject);
+      post.ownerId = userId;
+      posts.add(post);
+    }
+    return posts;
+  }
+
   static Future<Comment> getComment(
       String userId, String postId, String commentId) async {
     /*
@@ -149,9 +225,11 @@ class OnlineDBService {
     */
 
     var response = await http.get(
-      Uri.parse(
-          _serverApiUrl + "users/$userId/posts/$postId/comments/$commentId"),
-    );
+        Uri.parse(
+            _serverApiUrl + "users/$userId/posts/$postId/comments/$commentId"),
+        headers: {
+          "authorization": await AuthSerivce.getAuthorizationHeader(),
+        });
 
     if (response.statusCode == 400) {
       var errorCode = jsonDecode(response.body)["errorCode"];
@@ -192,6 +270,7 @@ class OnlineDBService {
       Uri.parse(_serverApiUrl + "users/$userId/posts/$postId/comments"),
       headers: {
         'Content-type': 'application/json',
+        "authorization": await AuthSerivce.getAuthorizationHeader(),
       },
       body: jsonEncode({
         'comment': comment.comment,
@@ -228,9 +307,11 @@ class OnlineDBService {
     */
 
     var response = await http.delete(
-      Uri.parse(
-          _serverApiUrl + "users/$userId/posts/$postId/comments/$commentId"),
-    );
+        Uri.parse(
+            _serverApiUrl + "users/$userId/posts/$postId/comments/$commentId"),
+        headers: {
+          "authorization": await AuthSerivce.getAuthorizationHeader(),
+        });
 
     if (response.statusCode == 400) {
       var errorCode = jsonDecode(response.body)["errorCode"];
@@ -251,51 +332,68 @@ class OnlineDBService {
     }
   }
 
-  static Future updateUser(User user) async {
-    /*
-    Updates user details
-
-    param 1: the user 
-    */
-
-    // var userId = await AuthSerivce.getUserId();
-
-    var response = await http.patch(
-      Uri.parse(_serverApiUrl + "users/${user.userId}/posts"),
-      headers: {
-        'Content-type': 'application/json',
-      },
-      body: jsonEncode({
-        'username': user.username,
-        'fullname': user.fullname,
-        'bio': user.bio,
-        'isPrivate': user.isPrivate
-      }),
-    );
-
-    if (response.statusCode == 400) {
-      var errorCode = jsonDecode(response.body)["errorCode"];
-
-      if (errorCode == ErrorCodes.usernameAlreadyUsed) {
-        throw UsernameAlreadyUsedExeption();
-      }
-      if (errorCode == ErrorCodes.invalidUpdateValues) {
-        throw InvalidUpdateValuesExeption();
-      }
-    } else if (response.statusCode == 403) {
-      throw ForbiddenExeption();
-    } else if (response.statusCode == 500) {
-      throw ServerErrorExeption();
-    }
-  }
-
-  Future<List<String>> getFollowers(String userId) async {
+  static Future<List<String>> getFollowers(String userId) async {
     /*  
     Returns the followers of user
     */
 
-    var response = await http.get(
+    var response = await http
+        .get(Uri.parse(_serverApiUrl + "users/$userId/followers"), headers: {
+      "authorization": await AuthSerivce.getAuthorizationHeader(),
+    });
+
+    if (response.statusCode == 400) {
+      var errorCode = jsonDecode(response.body)["errorCode"];
+
+      if (errorCode == ErrorCodes.userNotExist) {
+        throw UserNotExistExeption();
+      }
+    } else if (response.statusCode == 403) {
+      throw ForbiddenExeption();
+    } else if (response.statusCode == 500) {
+      throw ServerErrorExeption();
+    }
+
+    return jsonDecode(response.body);
+  }
+
+  static Future<List<String>> getFollowing(String userId) async {
+    /*  
+    Returns the following of user
+    */
+
+    var response = await http
+        .get(Uri.parse(_serverApiUrl + "users/$userId/following"), headers: {
+      "authorization": await AuthSerivce.getAuthorizationHeader(),
+    });
+
+    if (response.statusCode == 400) {
+      var errorCode = jsonDecode(response.body)["errorCode"];
+
+      if (errorCode == ErrorCodes.userNotExist) {
+        throw UserNotExistExeption();
+      }
+    } else if (response.statusCode == 403) {
+      throw ForbiddenExeption();
+    } else if (response.statusCode == 500) {
+      throw ServerErrorExeption();
+    }
+
+    return jsonDecode(response.body);
+  }
+
+  static Future followUser(String userId) async {
+    /*
+    Follows user
+
+    param 1: the id of the user
+    */
+
+    var response = await http.post(
       Uri.parse(_serverApiUrl + "users/$userId/followers"),
+      headers: {
+        "authorization": await AuthSerivce.getAuthorizationHeader(),
+      },
     );
 
     if (response.statusCode == 400) {
@@ -304,22 +402,34 @@ class OnlineDBService {
       if (errorCode == ErrorCodes.userNotExist) {
         throw UserNotExistExeption();
       }
+      if (errorCode == ErrorCodes.cantFollowHimself) {
+        throw UserCantFollowHimselfExeption();
+      }
+      if (errorCode == ErrorCodes.alreadyFollowed) {
+        throw UserAlreadyFollowedExeption();
+      }
+      if (errorCode == ErrorCodes.followRequestAlreadySent) {
+        throw FollowRequestAlreadySentExeption();
+      }
     } else if (response.statusCode == 403) {
       throw ForbiddenExeption();
     } else if (response.statusCode == 500) {
       throw ServerErrorExeption();
     }
-
-    return jsonDecode(response.body);
   }
 
-  Future<List<String>> getFollowing(String userId) async {
-    /*  
-    Returns the following of user
+  static Future unfollowUser(String userId) async {
+    /*
+    Unfollow user
+
+    param 1: the id of the user
     */
 
-    var response = await http.get(
-      Uri.parse(_serverApiUrl + "users/$userId/following"),
+    var response = await http.delete(
+      Uri.parse(_serverApiUrl + "users/$userId/followers"),
+      headers: {
+        "authorization": await AuthSerivce.getAuthorizationHeader(),
+      },
     );
 
     if (response.statusCode == 400) {
@@ -328,36 +438,80 @@ class OnlineDBService {
       if (errorCode == ErrorCodes.userNotExist) {
         throw UserNotExistExeption();
       }
+      if (errorCode == ErrorCodes.cantFollowHimself) {
+        throw UserCantFollowHimselfExeption();
+      }
+      if (errorCode == ErrorCodes.alreadyUnfollowed) {
+        throw UserAlreadyUnfollowedExeption();
+      }
     } else if (response.statusCode == 403) {
       throw ForbiddenExeption();
     } else if (response.statusCode == 500) {
       throw ServerErrorExeption();
     }
-
-    return jsonDecode(response.body);
   }
 
-  Future getPosts(String userId) async {
-    /*  
-    Returns the following of user
+  static Future acceptFollowRequest(String userToAccept) async {
+    /*
+    Accepts follow request 
+
+    param 1: the id of the user to accept
     */
 
-    var response = await http.get(
-      Uri.parse(_serverApiUrl + "users/$userId/following"),
+    var connectedUserId = await AuthSerivce.getUserId();
+    var response = await http.post(
+      Uri.parse(_serverApiUrl +
+          "users/$connectedUserId/followRequests?userToAccept=$userToAccept"),
+      headers: {
+        "authorization": await AuthSerivce.getAuthorizationHeader(),
+      },
     );
 
     if (response.statusCode == 400) {
       var errorCode = jsonDecode(response.body)["errorCode"];
 
-      if (errorCode == ErrorCodes.userNotExist) {
-        throw UserNotExistExeption();
+      if (errorCode == ErrorCodes.missingUserToAccept) {
+        throw MissingUserToAcceptExeption();
+      }
+      if (errorCode == ErrorCodes.userNotInFollowRequests) {
+        throw UserNotInFollowRequestsExeption();
       }
     } else if (response.statusCode == 403) {
       throw ForbiddenExeption();
     } else if (response.statusCode == 500) {
       throw ServerErrorExeption();
     }
+  }
 
-    return jsonDecode(response.body);
+  static Future deleteFollowRequest(String userToDelete) async {
+    /*
+    Deletes follow request 
+
+    param 1: the id of the user to delete
+    */
+
+    var connectedUserId = await AuthSerivce.getUserId();
+    var response = await http.delete(
+      Uri.parse(_serverApiUrl +
+          "users/$connectedUserId/followRequests?userToDelete=$userToDelete"),
+      headers: {
+        "authorization": await AuthSerivce.getAuthorizationHeader(),
+      },
+    );
+
+    if (response.statusCode == 400) {
+      var errorCode = jsonDecode(response.body)["errorCode"];
+
+      if (errorCode == ErrorCodes.missingUserToDelete) {
+        throw MissingUserToDeleteExeption();
+      }
+      if (errorCode == ErrorCodes.userNotInFollowRequests) {
+        throw UserNotInFollowRequestsExeption();
+      }
+    } else if (response.statusCode == 403) {
+      throw ForbiddenExeption();
+    } else if (response.statusCode == 500) {
+      throw ServerErrorExeption();
+    }
   }
 }
