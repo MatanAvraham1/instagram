@@ -1,9 +1,10 @@
 const express = require('express');
-const { isCommentValidate, commentModel } = require('../../models/Comment');
-const { getUserById, userModel } = require('../../models/User');
+const { isCommentValidate, commentModel, commentErrors, getComments, addComment, deleteComment, likeComment, unlikeComment } = require('../../models/Comment');
+const { getUserById, userModel, userErrors } = require('../../models/User');
 const { authenticateToken } = require('../auth');
-const { doesRequesterOwn, doesHasPermission } = require('../../helpers/privacyHelper');
-const { getPostById } = require('../../models/Post');
+const { doesHasPermission } = require('../../helpers/privacyHelper');
+const { getPostById, postErrors } = require('../../models/Post');
+const { getCommentById } = require('../../models/Comment')
 const { errorCodes } = require('../../errorCodes');
 const commentRouter = express.Router({ mergeParams: true })
 
@@ -11,17 +12,8 @@ const commentRouter = express.Router({ mergeParams: true })
 // Gets comment 
 commentRouter.get('/:commentId', authenticateToken, doesHasPermission, async (req, res) => {
     try {
-        const post = await getPostById(req.params.userId, req.params.postId)
-        if (post == null) {
-            return res.status(400).json({ errorCode: errorCodes.postNotExist })
-        }
 
-        const index = post.comments.findIndex((comment) => comment._id == req.params.commentId)
-        if (index == -1) {
-            return res.status(400).json({ "errorCode": errorCodes.commentNotExist })
-        }
-
-        const comment = post.comments[index]
+        const comment = await getCommentById(req.params.userId, req.params.postId, req.params.commentId)
         res.status(200).json({
             'comment': comment.comment,
             'likes': comment.likes.length,
@@ -30,8 +22,19 @@ commentRouter.get('/:commentId', authenticateToken, doesHasPermission, async (re
         })
     }
     catch (err) {
+
+        if (err == userErrors.userNotExistsError) {
+            return res.status(400).json({ errorCode: errorCodes.userNotExist })
+        }
+        if (err == postErrors.postNotExistsError) {
+            return res.status(400).json({ errorCode: errorCodes.postNotExist })
+        }
+        if (err == commentErrors.commentNotExist) {
+            return res.status(400).json({ errorCode: errorCodes.postNotExist })
+        }
+
         console.log(err)
-        res.sendStatus(500)
+        return res.sendStatus(500)
     }
 })
 
@@ -39,23 +42,27 @@ commentRouter.get('/:commentId', authenticateToken, doesHasPermission, async (re
 // Gets comments of post
 commentRouter.get('/', authenticateToken, doesHasPermission, async (req, res) => {
     try {
-        const post = await getPostById(req.params.userId, req.params.postId)
-        if (post == null) {
-            return res.status(400).json({ errorCode: errorCodes.postNotExist })
-        }
+        var response = []
+        const comments = await getComments(req.params.userId, req.params.postId)
 
-        var comments = []
-        post.comments.forEach(comment => {
-            comments.push({
+        comments.forEach(comment => {
+            response.push({
                 publisherId: comment.publisherId,
                 comment: comment.comment,
                 likes: comment.likes.length,
                 publishedAt: comment.publishedAt
             })
         });
-        res.status(200).json({ 'comments': comments })
+        res.status(200).json({ 'comments': response })
     }
     catch (err) {
+        if (err == userErrors.userNotExistsError) {
+            return res.status(400).json({ errorCode: errorCodes.userNotExist })
+        }
+        if (err == postErrors.postNotExistsError) {
+            return res.status(400).json({ errorCode: errorCodes.postNotExist })
+        }
+
         console.log(err)
         res.sendStatus(500)
     }
@@ -65,59 +72,48 @@ commentRouter.get('/', authenticateToken, doesHasPermission, async (req, res) =>
 // Adds comment
 commentRouter.post('/', authenticateToken, doesHasPermission, async (req, res) => {
     try {
-        req.body.publisherId = req.userId;
-        req.body.publishedAt = new Date()
-        if (isCommentValidate(req.body)) {
-            const user = await getUserById(req.params.userId)
-            const comment = new commentModel({ publisherId: req.body.publisherId, comment: req.body.comment, publishedAt: req.body.publishedAt })
-
-            const postIndex = user.posts.findIndex((post) => post._id == req.params.postId)
-            if (postIndex == -1) {
-                return res.status(400).json({ errorCode: errorCodes.postNotExist })
-            }
-
-            user.posts[postIndex].comments.push(comment)
-            await userModel.updateOne({ _id: req.params.userId }, user)
-            res.sendStatus(200)
-        }
-        else {
-            res.status(400).json({ "errorCode": errorCodes.invalidComment })
-        }
-
+        await addComment(req.params.userId, req.params.postId, {
+            publisherId: req.userId,
+            comment: req.body.comment,
+            publishedAt: new Date()
+        })
+        return res.sendStatus(200)
     }
     catch (err) {
+        if (err == userErrors.userNotExistsError) {
+            return res.status(400).json({ errorCode: errorCodes.userNotExist })
+        }
+        if (err == postErrors.postNotExistsError) {
+            return res.status(400).json({ errorCode: errorCodes.postNotExist })
+        }
+        if (err == commentErrors.invalidCommentError) {
+            return res.status(400).json({ errorCode: errorCodes.invalidComment })
+        }
+
         console.log(err)
-        res.sendStatus(500)
+        return res.sendStatus(500)
     }
 })
 
 // Removes comment
 commentRouter.delete('/:commentId', authenticateToken, doesHasPermission, async (req, res) => {
     try {
-        const user = await getUserById(req.params.userId)
-
-        const postIndex = user.posts.findIndex((post) => post._id == req.params.postId)
-        if (postIndex == -1) {
-            return res.status(400).json({ errorCode: errorCodes.postNotExist })
-        }
-
-        const commentIndex = user.posts[postIndex].comments.findIndex((comment) => comment._id == req.params.commentId)
-        if (commentIndex == -1) {
-            return res.status(400).json({ errorCode: errorCodes.commentNotExist })
-        }
-
-        // If the requester doesn't own the comment
-        if (user.posts[postIndex].comments[commentIndex].publisherId != req.userId) {
-            return res.sendStatus(403)
-        }
-
-        user.posts[postIndex].comments.splice(commentIndex, 1);
-        await userModel.updateOne({ _id: req.params.userId }, user)
+        await deleteComment(req.params.userId, req.params.postId, req.params.commentId)
         res.sendStatus(200)
     }
     catch (err) {
+        if (err == userErrors.userNotExistsError) {
+            return res.status(400).json({ errorCode: errorCodes.userNotExist })
+        }
+        if (err == postErrors.postNotExistsError) {
+            return res.status(400).json({ errorCode: errorCodes.postNotExist })
+        }
+        if (err == commentErrors.commentNotExist) {
+            return res.status(400).json({ errorCode: errorCodes.commentNotExist })
+        }
+
         console.log(err)
-        res.sendStatus(500)
+        return res.sendStatus(500)
     }
 })
 
@@ -125,29 +121,25 @@ commentRouter.delete('/:commentId', authenticateToken, doesHasPermission, async 
 commentRouter.post('/:commentId/like', authenticateToken, doesHasPermission, async (req, res) => {
 
     try {
-        const user = await getUserById(req.params.userId)
-
-        const postIndex = user.posts.findIndex((post) => post._id == req.params.postId)
-        if (postIndex == -1) {
+        await likeComment(req.params.userId, req.params.postId, req.params.commentId, req.userId)
+        return res.sendStatus(200)
+    }
+    catch (err) {
+        if (err == userErrors.userNotExistsError) {
+            return res.status(400).json({ errorCode: errorCodes.userNotExist })
+        }
+        if (err == postErrors.postNotExistsError) {
             return res.status(400).json({ errorCode: errorCodes.postNotExist })
         }
-
-        const commentIndex = user.posts[postIndex].comments.findIndex((comment) => comment._id == req.params.commentId)
-        if (commentIndex == -1) {
+        if (err == commentErrors.commentNotExist) {
             return res.status(400).json({ errorCode: errorCodes.commentNotExist })
         }
-
-        if (user.posts[postIndex].comments[commentIndex].likes.includes(req.userId)) {
+        if (err == commentErrors.alreadyLikedError) {
             return res.status(400).json({ errorCode: errorCodes.alreadyLiked })
         }
 
-        user.posts[postIndex].comments[commentIndex].likes.push(req.userId)
-        await userModel.updateOne({ _id: req.params.userId }, user)
-        res.sendStatus(200)
-    }
-    catch (err) {
         console.log(err)
-        res.sendStatus(500)
+        return res.sendStatus(500)
     }
 })
 
@@ -155,31 +147,25 @@ commentRouter.post('/:commentId/like', authenticateToken, doesHasPermission, asy
 commentRouter.delete('/:commentId/like', authenticateToken, doesHasPermission, async (req, res) => {
 
     try {
-        const user = await getUserById(req.params.userId)
-
-        const postIndex = user.posts.findIndex((post) => post._id == req.params.postId)
-        if (postIndex == -1) {
+        await unlikeComment(req.params.userId, req.params.postId, req.params.commentId, req.userId)
+        return res.sendStatus(200)
+    }
+    catch (err) {
+        if (err == userErrors.userNotExistsError) {
+            return res.status(400).json({ errorCode: errorCodes.userNotExist })
+        }
+        if (err == postErrors.postNotExistsError) {
             return res.status(400).json({ errorCode: errorCodes.postNotExist })
         }
-
-        const commentIndex = user.posts[postIndex].comments.findIndex((comment) => comment._id == req.params.commentId)
-        if (commentIndex == -1) {
+        if (err == commentErrors.commentNotExist) {
             return res.status(400).json({ errorCode: errorCodes.commentNotExist })
         }
-
-        if (!user.posts[postIndex].comments[commentIndex].likes.includes(req.userId)) {
+        if (err == commentErrors.alreadyUnlikedError) {
             return res.status(400).json({ errorCode: errorCodes.alreadyUnliked })
         }
 
-        const likeIndex = user.posts[postIndex].comments[commentIndex].likes.findIndex((like) => like == req.userId)
-        user.posts[postIndex].comments[commentIndex].likes.splice(likeIndex, 1);
-
-        await userModel.updateOne({ _id: req.params.userId }, user)
-        res.sendStatus(200)
-    }
-    catch (err) {
         console.log(err)
-        res.sendStatus(500)
+        return res.sendStatus(500)
     }
 })
 

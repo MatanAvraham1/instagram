@@ -1,52 +1,117 @@
 const express = require("express");
 const { doesRequesterOwn, doesHasPermission } = require("../../helpers/privacyHelper");
 const { authenticateToken } = require("../auth");
-const { isStoryValidate, storyModel } = require('../../models/Story');
-const { getUserById, userModel } = require("../../models/User");
+const { isStoryValidate, storyModel, getStoriesArchive, getStory, getLast24HoursStories, addStory, storyErrors, deleteStory } = require('../../models/Story');
+const { getUserById, userModel, updateUser, userErrors } = require("../../models/User");
 const { errorCodes } = require("../../errorCodes");
 const storiesRouter = express.Router({ mergeParams: true })
 
 
-function getHoursDifference(date1, date2) {
-    return Math.abs(date1 - date2) / 36e5;
-}
+// Gets which of my following has been published a story
+// storiesRouter.get('/following', authenticateToken, doesRequesterOwn, (req, res) => {
+//     try {
+//         const user = await getUserById(req.userId)
+//         user.following.forEach(_userId => {
+//             var _user = await getUserById(_userId)
+
+//         });
+//     }
+//     catch (err) {
+//         console.log(err)
+//         res.sendStatus(500)
+//     }
+// })
+
+
+// Gets archive (all the stories from all the time)
+storiesRouter.get('/archive', authenticateToken, doesRequesterOwn, async (req, res) => {
+    /*
+    Returns the stories from all the time even those that have been deleted.
+    Will return only if the requester owns the stories
+    */
+
+    try {
+        var response = []
+        const stories = await getStoriesArchive(req.params.userId)
+
+        stories.forEach(story => {
+            response.push({
+                'publishedAt': story.publishedAt,
+                'photoUrl': story.photoUrl,
+                'viewers': story.viewers.length
+            })
+        });
+
+        res.status(200).json({ stories: response })
+    }
+    catch (err) {
+        if (err == userErrors.userNotExistsError) {
+            return res.status(400).json({ errorCode: errorCodes.userNotExist })
+        }
+
+        console.log(err)
+        return res.sendStatus(500)
+    }
+
+})
 
 // Gets story
 storiesRouter.get('/:storyId', authenticateToken, doesHasPermission, async (req, res) => {
+    /*
+    Returns story by it's id
+
+    Returns the story onlf if the requester has permission for that
+    If the requester is not the owner so the story will be returned only
+    if the story has been published in less than 24 hours and if the story
+    has been not deleted!
+    */
     try {
-        const user = await getUserById(req.params.userId)
-        const index = user.stories.findIndex((story) => story._id == req.params.storyId);
-        // If story doesn't exist
-        if (index == -1) {
-            return res.status(400).json({ errorCode: errorCodes.storyNotExist })
-        }
+        const story = getStory(req.params.userId, req.params.postId, req.params.commentId)
 
         // If the requester doesn't own the story
         if (req.userId != req.params.userId) {
-            // Checks if the story has been uploaded 1 day ago
-            if (getHoursDifference(user.stories[index].publishedAt, new Date()) >= 24) {
+            // Checks if the story has been published in/more than 24 hours
+            if (getHoursDifference(story.publishedAt, new Date()) >= 24) {
                 return res.sendStatus(403)
             }
 
-            // Add the requester to the viewers of the story
-            if (!user.stories[index].viewers.includes(req.userId)) {
-                user.stories[index].viewers.push(req.userId)
-                await userModel.updateOne({ _id: req.params.userId }, user)
-
+            // If the story has been deleted manually
+            if (story.deleted) {
+                return res.sendStatus(403)
             }
+
+            // Adds the requester to the viewers of the story
+            if (!story.viewers.includes(req.userId)) {
+                story.viewers.push(req.userId)
+
+                var user = await getUserById(req.params.userId)
+                const storyIndex = user.stories.findIndex((story) => story._id == story._id)
+                user.stories[storyIndex] = story
+
+                await updateUser(req.params.userId, user)
+            }
+
             return res.status(200).json({
                 photoUrl: user.stories[index].photoUrl,
                 publishedAt: user.stories[index].publishedAt,
             })
         }
 
+        // If the requester is the owner of the story
         return res.status(200).json({
-            photoUrl: user.stories[index].photoUrl,
-            publishedAt: user.stories[index].publishedAt,
-            viewers: user.stories[index].viewers.length
+            photoUrl: story.photoUrl,
+            publishedAt: story.publishedAt,
+            viewers: story.viewers.length
         })
     }
     catch (err) {
+        if (err == userErrors.userNotExistsError) {
+            return res.status(400).json({ errorCode: errorCodes.userNotExist })
+        }
+        if (err == storyError.storyNotExist) {
+            return res.status(400).json({ errorCode: errorCodes.storyNotExist })
+        }
+
         console.log(err)
         return res.sendStatus(500)
     }
@@ -55,45 +120,53 @@ storiesRouter.get('/:storyId', authenticateToken, doesHasPermission, async (req,
 
 // Returns all the last 24 hours stories
 storiesRouter.get('/', authenticateToken, doesHasPermission, async (req, res) => {
+    /*
+    Returns only if the requester has permission for that 
+    Returns all the stories which have been published in the last 24 hours and the stories
+    which have not been deleted manually!
+    */
     try {
-        var stories = []
-        var index = 0;
 
-        const user = await getUserById(req.params.userId)
+        var response = []
+        var stories = await getLast24HoursStories(req.params.userId)
+
         user.stories.forEach(async (story) => {
-
             // If the requester owns the story
             if (req.userId == req.params.userId) {
-                // Checks if the story has been uploaded in less than 24 hours
-                if (getHoursDifference(story.publishedAt, new Date()) > 24) {
-                    stories.push({
+                response.push({
+                    "publishedAt": story.publishedAt,
+                    "photoUrl": story.photoUrl,
+                    "viewers": story.viewers.length
+                })
+            }
+            // If the requester doesn't own the story
+            else {
+                // Add the requester to the viewers of the story
+                if (!story.viewers.includes(req.userId)) {
+                    story.viewers.push(req.userId)
+                    var user = await getUserById(req.params.userId)
+                    const storyIndex = user.stories.findIndex((story) => story._id == story._id)
+                    user.stories[storyIndex] = story
+
+                    await updateUser(req.params.userId, user)
+
+                    response.push({
                         "publishedAt": story.publishedAt,
                         "photoUrl": story.photoUrl,
-                        "viewers": story.viewers.length
                     })
-                }
-            }
-            else {
-                // Checks if the story has been uploaded in less than 24 hours
-                if (getHoursDifference(story.publishedAt, new Date()) > 24) {
-                    // Add the requester to the viewers of the story
-                    if (!user.stories[index].viewers.includes(req.userId)) {
-                        user.stories[index].viewers.push(req.userId)
-                        await userModel.updateOne({ _id: req.params.userId }, user)
-                        stories.push({
-                            "publishedAt": story.publishedAt,
-                            "photoUrl": story.photoUrl,
-                        })
-                    }
                 }
             }
             index++
         });
 
 
-        return res.status(200).json({ stories: stories })
+        return res.status(200).json({ stories: response })
     }
     catch (err) {
+        if (err == userErrors.userNotExistsError) {
+            return res.status(400).json({ errorCode: errorCodes.userNotExist })
+        }
+
         console.log(err)
         return res.sendStatus(500)
     }
@@ -101,22 +174,25 @@ storiesRouter.get('/', authenticateToken, doesHasPermission, async (req, res) =>
 
 // Adds story
 storiesRouter.post('/', authenticateToken, doesRequesterOwn, async (req, res) => {
+    /*
+    Publishes new story 
+    Publishing only if the requester owns this user 
+    */
     try {
-
-        const user = await getUserById(req.userId);
-
-        req.body.publishedAt = new Date()
-        if (isStoryValidate(req.body)) {
-            const story = new storyModel({ photoUrl: req.body.photoUrl, publishedAt: req.body.publishedAt })
-            user.stories.push(story)
-            await user.save()
-            res.sendStatus(200)
-        }
-        else {
-            return res.status(400).json({ errorCode: errorCodes.invalidStory })
-        }
+        await addStory(req.params.userId, {
+            photoUrl: req.body.photoUrl,
+            publishedAt: new Date()
+        })
+        return res.sendStatus(200)
     }
     catch (err) {
+        if (err == userErrors.userNotExistsError) {
+            return res.status(400).json({ errorCode: errorCodes.userNotExist })
+        }
+        if (err == storyErrors.invalidStory) {
+            return res.status(400).json({ errorCode: errorCodes.invalidStory })
+        }
+
         console.log(err)
         return res.sendStatus(500)
     }
@@ -125,20 +201,31 @@ storiesRouter.post('/', authenticateToken, doesRequesterOwn, async (req, res) =>
 
 // Deletes story
 storiesRouter.delete('/:storyId', authenticateToken, doesRequesterOwn, async (req, res) => {
+    /*
+    Deletes story
+    Deleting only if the requester owns the story
+    
+    Note:
+    When deleteing the story, the story object is not deleted we only changed his "deleted" property
+    to true - this will lock the permission for this story.
+    So if the "deleted" propery is true only if the requester owns the story and will request this specific
+    story by the "Get one story" request it will return that
+    but in others function (like the - "Get all the last 24 hours stories" request) this story will be like not exist!
+    
+    */
     try {
-        const user = await getUserById(req.userId)
-        const index = user.stories.findIndex((story) => story._id == req.params.storyId)
-        // If the story doesn't exist
-        if (index == -1) {
+        await deleteStory(req.params.userId, req.params.storyId)
+        return res.sendStatus(200)
+    }
+    catch (err) {
+        if (err == userErrors.userNotExistsError) {
+            return res.status(400).json({ errorCode: errorCodes.userNotExist })
+        }
+        if (err == storyErrors.storyNotExist) {
             return res.status(400).json({ errorCode: errorCodes.storyNotExist })
         }
 
-        // Deletes the story
-        user.stories.splice(index, 1)
-        await user.save()
-        res.sendStatus(200)
-    }
-    catch (err) {
+
         console.log(err)
         return res.sendStatus(500)
     }

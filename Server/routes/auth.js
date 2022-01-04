@@ -1,4 +1,4 @@
-const { userModel, doesUserExist } = require('../models/User')
+const { userModel, doesUserExist: doesUsernameAlreadyUse } = require('../models/User')
 const bcrypt = require('bcryptjs')
 const express = require('express')
 const jwt = require('jsonwebtoken')
@@ -53,7 +53,7 @@ authRouter.post('/register', async (req, res) => {
     try {
         const isValid = isRegisterValid(req.body)
         if (isValid) {
-            if (await doesUserExist(req.body.username)) {
+            if (await doesUsernameAlreadyUse(req.body.username)) {
                 return res.status(400).send({ "errorCode": errorCodes.usernameAlreadyUsed })
 
             }

@@ -1,6 +1,6 @@
 const express = require('express')
 const { authenticateToken } = require('../auth')
-const { isPostValidate, postModel, getPostById } = require('../../models/Post')
+const { isPostValidate, postModel, getPostById, getPosts, postErrors, addPost, deletePost, likePost, unlikePost } = require('../../models/Post')
 const { getUserById, userModel } = require('../../models/User')
 const { doesRequesterOwn, doesHasPermission } = require('../../helpers/privacyHelper')
 const postsRouter = express.Router({ mergeParams: true })
@@ -8,8 +8,20 @@ const postsRouter = express.Router({ mergeParams: true })
 // Gets posts of user
 postsRouter.get('/', authenticateToken, doesHasPermission, async (req, res) => {
     try {
-        const user = await getUserById(req.params.userId)
-        res.status(200).json({ 'posts': user.posts })
+        var response = []
+        const posts = await getPosts(req.params.userId)
+        posts.forEach(post => {
+            response.push({
+                'photosUrls': post.photosUrls,
+                'comments': post.comments.length,
+                'taggedUsers': post.taggedUsers,
+                'publishedAt': post.publishedAt,
+                'likes': post.likes.length
+            })
+        });
+
+        return res.status(200).json({ 'posts': response })
+
     }
     catch (err) {
         console.log(err)
@@ -21,9 +33,6 @@ postsRouter.get('/', authenticateToken, doesHasPermission, async (req, res) => {
 postsRouter.get('/:postId', authenticateToken, doesHasPermission, async (req, res) => {
     try {
         const post = await getPostById(req.params.userId, req.params.postId)
-        if (post == null) {
-            return res.status(400).json({ errorCode: errorCodes.postNotExist })
-        }
 
         res.status(200).json({
             'photosUrls': post.photosUrls,
@@ -35,47 +44,47 @@ postsRouter.get('/:postId', authenticateToken, doesHasPermission, async (req, re
         })
     }
     catch (err) {
+        if (err == postErrors.postNotExistsError) {
+            return res.status(400).json({ errorCode: errorCodes.postNotExist })
+        }
+
         console.log(err)
-        res.sendStatus(500)
+        return res.sendStatus(500)
     }
 })
 
 // Adds post
 postsRouter.post('/', authenticateToken, doesRequesterOwn, async (req, res) => {
     try {
-        req.body.publishedAt = new Date()
-        if (isPostValidate(req.body)) {
-            const post = new postModel({ photosUrls: req.body.photosUrls, publishedAt: req.body.publishedAt, taggedUsers: req.body.taggedUsers })
-            const user = await getUserById(req.params.userId)
-            user.posts.push(post)
-            await user.save()
-            res.sendStatus(200)
-        }
-        else {
-            res.status(400).json({ errorCode: errorCodes.invalidPost })
-        }
-
+        await addPost(req.userId, {
+            publishedAt: new Date(),
+            photosUrls: req.body.photosUrls,
+            publishedAt: req.body.publishedAt,
+            taggedUsers: req.body.taggedUsers
+        })
+        res.sendStatus(200)
     }
     catch (err) {
+        if (err == postErrors.invalidPostError) {
+            return res.status(400).json({ errorCode: errorCodes.invalidPost })
+        }
+
         console.log(err)
-        res.sendStatus(500)
+        return res.sendStatus(500)
     }
 })
 
 // Deletes post
 postsRouter.delete('/:postId', authenticateToken, doesRequesterOwn, async (req, res) => {
     try {
-        const user = await getUserById(req.params.userId)
-
-        const postIndex = user.posts.findIndex((post) => post._id == req.params.postId)
-        if (postIndex == -1) {
-            return res.status(400).json({ errorCode: errorCodes.postNotExist })
-        }
-        user.posts.splice(postIndex, 1);
-        await userModel.updateOne({ _id: req.params.userId }, user)
+        await deletePost(req.userId, req.params.postId)
         res.sendStatus(200)
     }
     catch (err) {
+        if (err == postErrors.postNotExistsError) {
+            return res.status(400).json({ errorCode: errorCodes.postNotExist })
+        }
+
         console.log(err)
         res.sendStatus(500)
     }
@@ -85,22 +94,17 @@ postsRouter.delete('/:postId', authenticateToken, doesRequesterOwn, async (req, 
 postsRouter.post('/:postId/like', authenticateToken, doesHasPermission, async (req, res) => {
 
     try {
-        const user = await getUserById(req.params.userId)
-
-        const postIndex = user.posts.findIndex((post) => post._id == req.params.postId)
-        if (postIndex == -1) {
-            return res.status(400).json({ errorCode: errorCodes.postNotExist })
-        }
-
-        if (user.posts[postIndex].likes.includes(req.userId)) {
-            return res.status(400).json({ errorCode: errorCodes.alreadyLiked })
-        }
-
-        user.posts[postIndex].likes.push(req.userId)
-        await userModel.updateOne({ _id: req.params.userId }, user)
+        await likePost(req.params.userId, req.params.postId, req.userId)
         res.sendStatus(200)
     }
     catch (err) {
+        if (err == postErrors.postNotExistsError) {
+            return res.status(400).json({ errorCode: errorCodes.postNotExist })
+        }
+        if (err == postErrors.alreadyLikedError) {
+            return res.status(400).json({ errorCode: errorCodes.alreadyLiked })
+        }
+
         console.log(err)
         res.sendStatus(500)
     }
@@ -110,24 +114,17 @@ postsRouter.post('/:postId/like', authenticateToken, doesHasPermission, async (r
 postsRouter.delete('/:postId/like', authenticateToken, doesHasPermission, async (req, res) => {
 
     try {
-        const user = await getUserById(req.params.userId)
-
-        const postIndex = user.posts.findIndex((post) => post._id == req.params.postId)
-        if (postIndex == -1) {
-            return res.status(400).json({ errorCode: errorCodes.postNotExist })
-        }
-
-        if (!user.posts[postIndex].likes.includes(req.userId)) {
-            return res.status(400).json({ errorCode: errorCodes.alreadyUnliked })
-        }
-
-        const likeIndex = user.posts.findIndex((like) => like == req.userId)
-        user.posts[postIndex].likes.splice(likeIndex, 1);
-
-        await userModel.updateOne({ _id: req.params.userId }, user)
+        await unlikePost(req.params.userId, req.params.postId, req.userId)
         res.sendStatus(200)
     }
     catch (err) {
+        if (err == postErrors.postNotExistsError) {
+            return res.status(400).json({ errorCode: errorCodes.postNotExist })
+        }
+        if (err == postErrors.alreadyUnlikedError) {
+            return res.status(400).json({ errorCode: errorCodes.alreadyUnliked })
+        }
+
         console.log(err)
         res.sendStatus(500)
     }
