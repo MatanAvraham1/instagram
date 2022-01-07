@@ -135,6 +135,30 @@ async function getLast24HoursStories(userId) {
     return stories
 }
 
+async function whichOfMyFollowingPublishedStories(userId) {
+    /*
+    Returns which of the users which [userId] follows has published a story
 
+    param 1: the user id
+    */
 
-module.exports = { storyModel, addStory, getStory, storyErrors, deleteStory, isStoryValidate, getStoriesArchive, getLast24HoursStories }
+    var response = []
+
+    const user = await getUserById(userId)
+    user.following.forEach(_userId => {
+        try {
+            const _user = await getUserById(_userId)
+            if (_user.following.length > 0) {
+                response.push(_userId)
+            }
+        }
+        catch (err) {
+            continue
+        }
+
+    });
+
+    return response
+}
+
+module.exports = { storyModel, addStory, getStory, whichOfMyFollowingPublishedStories, storyErrors, deleteStory, isStoryValidate, getStoriesArchive, getLast24HoursStories }

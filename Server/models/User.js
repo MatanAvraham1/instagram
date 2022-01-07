@@ -1,15 +1,18 @@
-const { bool } = require('joi')
 const Joi = require('joi')
 const mongoose = require('mongoose')
+const bcrypt = require('bcryptjs')
 
 const userErrors = {
     userNotExistsError: "userNotExists!",
     missingFullnameParamError: "the fullname param can't be empty!",
     alreadyUnfollowedError: "the first user doesn't follow the second user!",
     alreadyFollowedError: "the first user already followed the seconds user!",
-    followRequestNotExists: "the follow request doesn't exists!",
-    followingRequestNotExists: "the following request doesn't exists!",
-    followRequestAlreadySent: "follow request has been already sent!",
+    followRequestNotExistsError: "the follow request doesn't exists!",
+    followingRequestNotExistsError: "the following request doesn't exists!",
+    followRequestAlreadySentError: "follow request has been already sent!",
+    usernameAlreadyUsedError: "the username is already used!",
+    invalidRegisterDetailsError: "invalid register details!",
+    wrongLoginDetailsError = "wrong login deatils!"
 }
 
 const userModel = mongoose.model("User", mongoose.Schema({
@@ -58,6 +61,21 @@ const userModel = mongoose.model("User", mongoose.Schema({
         default: false
     }
 }))
+
+function isRegisterValid(data) {
+    const scheme = Joi.object({
+        username: Joi.string().required(),
+        password: Joi.string().required(),
+    })
+    const value = scheme.validate(data)
+
+    if (value.error == null) {
+        return true
+    }
+
+    return false
+}
+const isLoginValid = isRegisterValid
 
 async function doesUsernameAlreadyUsed(username) {
     /*
@@ -209,7 +227,7 @@ async function followUser(firstUserId, secondUserId) {
         throw userErrors.alreadyFollowedError
     }
     if (secondUser.followRequests.includes(firstUserId)) {
-        throw userErrors.followRequestAlreadySent
+        throw userErrors.followRequestAlreadySentError
     }
 
     if (secondUser.isPrivate) {
@@ -266,7 +284,7 @@ async function acceptFollowRequest(userId, userIdToAccept) {
     // Deletes the follow request
     const index = user.followRequests.findIndex((request) => request == userIdToAccept)
     if (index == -1) {
-        throw userErrors.followRequestNotExists
+        throw userErrors.followRequestNotExistsError
     }
     user.followRequests.splice(index, 1)
 
@@ -279,7 +297,7 @@ async function acceptFollowRequest(userId, userIdToAccept) {
     // Deletes the following request
     const _index = userToAccpet.followingRequests.findIndex((request) => request == userId)
     if (_index == -1) {
-        throw userErrors.followingRequestNotExists
+        throw userErrors.followingRequestNotExistsError
     }
     userToAccpet.followingRequests.splice(_index, 1)
 
@@ -308,14 +326,14 @@ async function deleteFollowRequest(userId, userIdToDelete) {
     // Deletes the follow request
     const index = user.followRequests.findIndex((request) => request == userIdToDelete)
     if (index == -1) {
-        throw userErrors.followRequestNotExists
+        throw userErrors.followRequestNotExistsError
     }
     user.followRequests.splice(index, 1)
 
     // Deletes the following request
     const _index = userToDelete.followingRequests.findIndex((request) => request == userId)
     if (_index == -1) {
-        throw userErrors.followingRequestNotExists
+        throw userErrors.followingRequestNotExistsError
     }
     userToDelete.followingRequests.splice(_index, 1)
 
@@ -338,14 +356,14 @@ async function deleteFollowingRequest(userId, requestToDeleteId) {
     // Deletes the following request
     const index = user.followingRequests.findIndex((request) => request == requestToDeleteId)
     if (index == -1) {
-        throw userErrors.followingRequestNotExists
+        throw userErrors.followingRequestNotExistsError
     }
     user.followingRequests.splice(index, 1)
 
     // Deletes the follow request
     const _index = requestToDelete.followRequests.findIndex((request) => request == userId)
     if (_index == -1) {
-        throw userErrors.followRequestNotExists
+        throw userErrors.followRequestNotExistsError
     }
     requestToDelete.followRequests.splice(_index, 1)
 
@@ -354,5 +372,60 @@ async function deleteFollowingRequest(userId, requestToDeleteId) {
     await updateUser(requestToDeleteId, requestToDelete)
 }
 
+async function createUser(data) {
+    /*
+    Creates a new user (register...)
+    Returns the created user id
 
-module.exports = { deleteFollowingRequest, followUser, unfollowUser, acceptFollowRequest, deleteFollowRequest, updateUser, userModel, clearFollowRequests, userErrors, doesUsernameAlreadyUsed, getUserById, getUserByUsername, getUserByFullname, deleteUser }
+    param 1: the user object
+    */
+
+    if (isRegisterValid(data)) {
+        if (doesUsernameAlreadyUsed(data.username)) {
+            throw userErrors.usernameAlreadyUsedError
+        }
+
+        const hashedPassword = await bcrypt.hash(data.password, 10);
+        const user = new userModel({ username: data.username, password: hashedPassword })
+        const { _id } = await user.save()
+
+        return _id
+    }
+    else {
+        throw userErrors.invalidRegisterDetailsError
+    }
+}
+
+async function login(data) {
+    /*
+    Logins 
+    Returns the user id
+
+    param 1: the user object
+    */
+
+    if (isLoginValid(data)) {
+        const user
+
+        try {
+            user = await getUserByUsername(data.username)
+        }
+        catch (err) {
+            if (err == userErrors.userNotExistsError) {
+                throw userErrors.wrongLoginDetailsError
+            }
+        }
+
+        if (await bcrypt.compare(data.password, user.password)) {
+            return user._id
+        }
+        else {
+            throw userErrors.wrongLoginDetailsError
+        }
+    }
+    else {
+        throw userErrors.wrongLoginDetailsError
+    }
+}
+
+module.exports = { login, deleteFollowingRequest, followUser, unfollowUser, acceptFollowRequest, deleteFollowRequest, updateUser, userModel, clearFollowRequests, userErrors, createUser, doesUsernameAlreadyUsed, getUserById, getUserByUsername, getUserByFullname, deleteUser }

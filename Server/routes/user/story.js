@@ -1,26 +1,28 @@
 const express = require("express");
 const { doesRequesterOwn, doesHasPermission } = require("../../helpers/privacyHelper");
 const { authenticateToken } = require("../auth");
-const { isStoryValidate, storyModel, getStoriesArchive, getStory, getLast24HoursStories, addStory, storyErrors, deleteStory } = require('../../models/Story');
+const { isStoryValidate, storyModel, getStoriesArchive, getStory, getLast24HoursStories, addStory, storyErrors, deleteStory, whichOfMyFollowingPublishedStories } = require('../../models/Story');
 const { getUserById, userModel, updateUser, userErrors } = require("../../models/User");
 const { errorCodes } = require("../../errorCodes");
+const { response } = require("express");
 const storiesRouter = express.Router({ mergeParams: true })
 
 
 // Gets which of my following has been published a story
-// storiesRouter.get('/following', authenticateToken, doesRequesterOwn, (req, res) => {
-//     try {
-//         const user = await getUserById(req.userId)
-//         user.following.forEach(_userId => {
-//             var _user = await getUserById(_userId)
+storiesRouter.get('/following', authenticateToken, doesRequesterOwn, (req, res) => {
+    try {
+        const users = await whichOfMyFollowingPublishedStories(req.userId)
+        return response.status(200).json({ users: users })
+    }
+    catch (err) {
+        if (err == userErrors.userNotExistsError) {
+            return res.status(400).json({ errorCode: errorCodes.userNotExist })
+        }
 
-//         });
-//     }
-//     catch (err) {
-//         console.log(err)
-//         res.sendStatus(500)
-//     }
-// })
+        console.log(err)
+        res.sendStatus(500)
+    }
+})
 
 
 // Gets archive (all the stories from all the time)
