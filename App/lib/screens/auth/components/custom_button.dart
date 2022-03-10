@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
 
 class CustomButton extends StatefulWidget {
+  final double strokeHeight;
+  final double borderRadius;
+  final bool isOutlined;
   final String text;
   final Future Function() onPressed;
-  final Function disableWhen;
+  final Function enableWhen;
+  final bool expanded;
+
   const CustomButton(
       {Key? key,
       required this.onPressed,
-      required this.disableWhen,
-      required this.text})
+      required this.enableWhen,
+      required this.text,
+      this.expanded = false,
+      this.borderRadius = 4,
+      this.isOutlined = false,
+      this.strokeHeight = 25})
       : super(key: key);
 
   @override
@@ -21,14 +30,18 @@ class _CustomButtonState extends State<CustomButton> {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(4),
+      borderRadius: BorderRadius.circular(widget.borderRadius),
       child: SizedBox(
-        height: 50,
-        width: MediaQuery.of(context).size.width - 40,
+        height: widget.expanded ? null : 50,
+        width: widget.expanded ? null : MediaQuery.of(context).size.width - 40,
         child: MaterialButton(
+          color: widget.isOutlined ? null : Colors.blue,
+          shape: widget.isOutlined
+              ? Border.all(color: Colors.white, width: 0.3)
+              : null,
           onPressed: isLoading
               ? null
-              : widget.disableWhen()
+              : widget.enableWhen()
                   ? () async {
                       setState(() {
                         isLoading = true;
@@ -40,15 +53,14 @@ class _CustomButtonState extends State<CustomButton> {
                     }
                   : null,
           child: isLoading
-              ? const SizedBox(
-                  height: 25,
-                  width: 25,
-                  child: CircularProgressIndicator(
+              ? SizedBox(
+                  height: widget.strokeHeight,
+                  width: widget.strokeHeight,
+                  child: const CircularProgressIndicator(
                     strokeWidth: 2,
                     color: Colors.white,
                   ))
               : Text(widget.text),
-          color: Colors.blue,
           disabledColor: Colors.blue[900],
         ),
       ),

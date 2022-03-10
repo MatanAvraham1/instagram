@@ -1,66 +1,91 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
+import 'package:collection/collection.dart';
+
+import 'package:instagram/models/user.dart';
 
 class Post {
-  String ownerId;
-  String postId;
+  User? publisher;
+  String id;
+
+  String publisherComment;
   List<String> photosUrls;
   List<String> taggedUsers;
+  String location;
   DateTime publishedAt;
+
   int likes;
   int comments;
+
+  bool isLikedByMe;
+
   Post({
-    required this.ownerId,
-    required this.postId,
+    required this.publisher,
+    required this.id,
+    required this.publisherComment,
     required this.photosUrls,
     required this.taggedUsers,
+    required this.location,
     required this.publishedAt,
     required this.likes,
     required this.comments,
+    required this.isLikedByMe,
   });
 
   Post copyWith({
-    String? ownerId,
-    String? postId,
+    User? publisher,
+    String? id,
+    String? publisherComment,
     List<String>? photosUrls,
     List<String>? taggedUsers,
+    String? location,
     DateTime? publishedAt,
     int? likes,
     int? comments,
+    bool? isLikedByMe,
   }) {
     return Post(
-      ownerId: ownerId ?? this.ownerId,
-      postId: postId ?? this.postId,
+      publisher: publisher ?? this.publisher,
+      id: id ?? this.id,
+      publisherComment: publisherComment ?? this.publisherComment,
       photosUrls: photosUrls ?? this.photosUrls,
       taggedUsers: taggedUsers ?? this.taggedUsers,
+      location: location ?? this.location,
       publishedAt: publishedAt ?? this.publishedAt,
       likes: likes ?? this.likes,
       comments: comments ?? this.comments,
+      isLikedByMe: isLikedByMe ?? this.isLikedByMe,
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'ownerId': ownerId,
-      'postId': postId,
+      'publisher': publisher?.toMap(),
+      'id': id,
+      'publisherComment': publisherComment,
       'photosUrls': photosUrls,
       'taggedUsers': taggedUsers,
+      'location': location,
       'publishedAt': publishedAt.millisecondsSinceEpoch,
       'likes': likes,
       'comments': comments,
+      'isLikedByMe': isLikedByMe,
     };
   }
 
   factory Post.fromMap(Map<String, dynamic> map) {
     return Post(
-      ownerId: map['ownerId'] ?? '',
-      postId: map['postId'] ?? '',
+      publisher:
+          map['publisher'] != null ? User.fromMap(map['publisher']) : null,
+      id: map['id'] ?? '',
+      publisherComment: map['publisherComment'] ?? '',
       photosUrls: List<String>.from(map['photosUrls']),
       taggedUsers: List<String>.from(map['taggedUsers']),
-      publishedAt: DateTime.fromMillisecondsSinceEpoch(map['publishedAt']),
+      location: map['location'] ?? '',
+      publishedAt: DateTime.parse(map['publishedAt']),
       likes: map['likes']?.toInt() ?? 0,
       comments: map['comments']?.toInt() ?? 0,
+      isLikedByMe: map['isLikedByMe'] ?? false,
     );
   }
 
@@ -70,31 +95,38 @@ class Post {
 
   @override
   String toString() {
-    return 'Post(ownerId: $ownerId, postId: $postId, photosUrls: $photosUrls, taggedUsers: $taggedUsers, publishedAt: $publishedAt, likes: $likes, comments: $comments)';
+    return 'Post(publisher: $publisher, id: $id, publisherComment: $publisherComment, photosUrls: $photosUrls, taggedUsers: $taggedUsers, location: $location, publishedAt: $publishedAt, likes: $likes, comments: $comments, isLikedByMe: $isLikedByMe)';
   }
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
+    final listEquals = const DeepCollectionEquality().equals;
 
     return other is Post &&
-        other.ownerId == ownerId &&
-        other.postId == postId &&
+        other.publisher == publisher &&
+        other.id == id &&
+        other.publisherComment == publisherComment &&
         listEquals(other.photosUrls, photosUrls) &&
         listEquals(other.taggedUsers, taggedUsers) &&
+        other.location == location &&
         other.publishedAt == publishedAt &&
         other.likes == likes &&
-        other.comments == comments;
+        other.comments == comments &&
+        other.isLikedByMe == isLikedByMe;
   }
 
   @override
   int get hashCode {
-    return ownerId.hashCode ^
-        postId.hashCode ^
+    return publisher.hashCode ^
+        id.hashCode ^
+        publisherComment.hashCode ^
         photosUrls.hashCode ^
         taggedUsers.hashCode ^
+        location.hashCode ^
         publishedAt.hashCode ^
         likes.hashCode ^
-        comments.hashCode;
+        comments.hashCode ^
+        isLikedByMe.hashCode;
   }
 }

@@ -1,57 +1,67 @@
 import 'dart:convert';
 
+import 'package:instagram/models/user.dart';
+
 class Comment {
+  User publisher;
   String comment;
+  String id;
   String postId;
-  String publisherId;
   DateTime publishedAt;
   int likes;
+  bool isLikedByMe;
 
   Comment({
+    required this.publisher,
     required this.comment,
+    required this.id,
     required this.postId,
-    required this.publisherId,
     required this.publishedAt,
     required this.likes,
+    required this.isLikedByMe,
   });
 
-  get owner {
-    return null;
-  }
-
   Comment copyWith({
+    User? publisher,
     String? comment,
+    String? id,
     String? postId,
-    String? publisherId,
     DateTime? publishedAt,
     int? likes,
+    bool? isLikedByMe,
   }) {
     return Comment(
+      publisher: publisher ?? this.publisher,
       comment: comment ?? this.comment,
+      id: id ?? this.id,
       postId: postId ?? this.postId,
-      publisherId: publisherId ?? this.publisherId,
       publishedAt: publishedAt ?? this.publishedAt,
       likes: likes ?? this.likes,
+      isLikedByMe: isLikedByMe ?? this.isLikedByMe,
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
+      'publisher': publisher.toMap(),
       'comment': comment,
+      'id': id,
       'postId': postId,
-      'publisherId': publisherId,
       'publishedAt': publishedAt.millisecondsSinceEpoch,
       'likes': likes,
+      'isLikedByMe': isLikedByMe,
     };
   }
 
   factory Comment.fromMap(Map<String, dynamic> map) {
     return Comment(
+      publisher: User.fromMap(map['publisher']),
       comment: map['comment'] ?? '',
+      id: map['id'] ?? '',
       postId: map['postId'] ?? '',
-      publisherId: map['publisherId'] ?? '',
-      publishedAt: DateTime.fromMillisecondsSinceEpoch(map['publishedAt']),
+      publishedAt: DateTime.parse(map['publishedAt']),
       likes: map['likes']?.toInt() ?? 0,
+      isLikedByMe: map['isLikedByMe'] ?? false,
     );
   }
 
@@ -62,7 +72,7 @@ class Comment {
 
   @override
   String toString() {
-    return 'Comment(comment: $comment, postId: $postId, publisherId: $publisherId, publishedAt: $publishedAt, likes: $likes)';
+    return 'Comment(publisher: $publisher, comment: $comment, id: $id, postId: $postId, publishedAt: $publishedAt, likes: $likes, isLikedByMe: $isLikedByMe)';
   }
 
   @override
@@ -70,19 +80,23 @@ class Comment {
     if (identical(this, other)) return true;
 
     return other is Comment &&
+        other.publisher == publisher &&
         other.comment == comment &&
+        other.id == id &&
         other.postId == postId &&
-        other.publisherId == publisherId &&
         other.publishedAt == publishedAt &&
-        other.likes == likes;
+        other.likes == likes &&
+        other.isLikedByMe == isLikedByMe;
   }
 
   @override
   int get hashCode {
-    return comment.hashCode ^
+    return publisher.hashCode ^
+        comment.hashCode ^
+        id.hashCode ^
         postId.hashCode ^
-        publisherId.hashCode ^
         publishedAt.hashCode ^
-        likes.hashCode;
+        likes.hashCode ^
+        isLikedByMe.hashCode;
   }
 }

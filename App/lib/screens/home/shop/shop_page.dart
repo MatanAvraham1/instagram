@@ -10,7 +10,8 @@ class ShopPage extends StatefulWidget {
   _ShopPageState createState() => _ShopPageState();
 }
 
-class _ShopPageState extends State<ShopPage> {
+class _ShopPageState extends State<ShopPage>
+    with AutomaticKeepAliveClientMixin {
   final FloatingSearchBarController floatingSearchBarController =
       FloatingSearchBarController();
 
@@ -22,6 +23,8 @@ class _ShopPageState extends State<ShopPage> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     final isPortrait =
         MediaQuery.of(context).orientation == Orientation.portrait;
 
@@ -76,4 +79,7 @@ class _ShopPageState extends State<ShopPage> {
       },
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

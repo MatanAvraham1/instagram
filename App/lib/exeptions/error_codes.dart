@@ -13,9 +13,12 @@ class ErrorCodes {
   static const invalidUpdateValues = 700;
   static const cantFollowHimself = 800;
   static const userNotInFollowRequests = 900;
+  static const userNotInFollowingRequests = 901;
   static const followRequestAlreadySent = 1000;
   static const alreadyFollowed = 2000;
   static const alreadyUnfollowed = 2001;
   static const missingUserToAccept = 3000;
   static const missingUserToDelete = 4000;
+  static const invalidStory = 5000;
+  static const storyNotExist = 5001;
 }

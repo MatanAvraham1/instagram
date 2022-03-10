@@ -1,22 +1,27 @@
 import 'dart:convert';
 
 class Story {
-  String imageUrl;
+  String photoUrl;
+  String id;
   DateTime publishedAt;
   String ownerUid;
+
   Story({
-    required this.imageUrl,
+    required this.photoUrl,
+    required this.id,
     required this.publishedAt,
     required this.ownerUid,
   });
 
   Story copyWith({
-    String? imageUrl,
+    String? photoUrl,
+    String? id,
     DateTime? publishedAt,
     String? ownerUid,
   }) {
     return Story(
-      imageUrl: imageUrl ?? this.imageUrl,
+      photoUrl: photoUrl ?? this.photoUrl,
+      id: id ?? this.id,
       publishedAt: publishedAt ?? this.publishedAt,
       ownerUid: ownerUid ?? this.ownerUid,
     );
@@ -24,7 +29,8 @@ class Story {
 
   Map<String, dynamic> toMap() {
     return {
-      'imageUrl': imageUrl,
+      'photoUrl': photoUrl,
+      'id': id,
       'publishedAt': publishedAt.millisecondsSinceEpoch,
       'ownerUid': ownerUid,
     };
@@ -32,9 +38,10 @@ class Story {
 
   factory Story.fromMap(Map<String, dynamic> map) {
     return Story(
-      imageUrl: map['imageUrl'],
-      publishedAt: DateTime.fromMillisecondsSinceEpoch(map['publishedAt']),
-      ownerUid: map['ownerUid'],
+      photoUrl: map['photoUrl'] ?? '',
+      id: map['id'] ?? '',
+      publishedAt: DateTime.parse(map['publishedAt']),
+      ownerUid: map['ownerUid'] ?? '',
     );
   }
 
@@ -43,20 +50,26 @@ class Story {
   factory Story.fromJson(String source) => Story.fromMap(json.decode(source));
 
   @override
-  String toString() =>
-      'Story(imageUrl: $imageUrl, publishedAt: $publishedAt, ownerUid: $ownerUid)';
+  String toString() {
+    return 'Story(photoUrl: $photoUrl, id: $id, publishedAt: $publishedAt, ownerUid: $ownerUid)';
+  }
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
 
     return other is Story &&
-        other.imageUrl == imageUrl &&
+        other.photoUrl == photoUrl &&
+        other.id == id &&
         other.publishedAt == publishedAt &&
         other.ownerUid == ownerUid;
   }
 
   @override
-  int get hashCode =>
-      imageUrl.hashCode ^ publishedAt.hashCode ^ ownerUid.hashCode;
+  int get hashCode {
+    return photoUrl.hashCode ^
+        id.hashCode ^
+        publishedAt.hashCode ^
+        ownerUid.hashCode;
+  }
 }

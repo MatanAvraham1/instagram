@@ -9,9 +9,12 @@ class ReelsPage extends StatefulWidget {
   _ReelsPageState createState() => _ReelsPageState();
 }
 
-class _ReelsPageState extends State<ReelsPage> {
+class _ReelsPageState extends State<ReelsPage>
+    with AutomaticKeepAliveClientMixin {
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     return MaterialApp(
       home: Scaffold(
         body: Stack(
@@ -53,4 +56,7 @@ class _ReelsPageState extends State<ReelsPage> {
       ),
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

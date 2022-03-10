@@ -14,11 +14,15 @@ const app = express()
 
 app.use(express.json())
 
-const { authRouter } = require('./routes/auth')
+const { authRouter } = require('./routes/user/auth_route')
 app.use('/api/', authRouter)
 
-const { userRouter } = require('./routes/user/user')
+const { userRouter } = require('./routes/user/user_route')
 app.use('/api/users/', userRouter)
+
+// const { chatRouter } = require('./routes/chat/chat_route')
+// app.use('/api/chats/', chatRouter)
+
 
 app.listen(5000, () => {
     console.log("Listening on port 5000...")

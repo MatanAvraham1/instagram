@@ -27,3 +27,17 @@ class MissingUserToAcceptExeption implements OnlineDBServiceExeption {}
 class MissingUserToDeleteExeption implements OnlineDBServiceExeption {}
 
 class UserNotInFollowRequestsExeption implements OnlineDBServiceExeption {}
+
+class StoryNotExistExeption implements OnlineDBServiceExeption {}
+
+class InvalidStoryExeption implements OnlineDBServiceExeption {}
+
+class UnauthorizedException implements OnlineDBServiceExeption {}
+
+class PostAlreadyLikedException implements OnlineDBServiceExeption {}
+
+class PostAlreadyUnlikedException implements OnlineDBServiceExeption {}
+
+class CommentAlreadyLikedException implements OnlineDBServiceExeption {}
+
+class CommentAlreadyUnlikedException implements OnlineDBServiceExeption {}

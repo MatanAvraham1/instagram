@@ -6,9 +6,16 @@
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "express": "^4.17.2",
+    "faker": "^5.5.3",
+    "generate-password": "^1.7.0",
+    "jetty": "^0.2.1",
     "joi": "^17.5.0",
     "jsonwebtoken": "^8.5.1",
-    "mongoose": "^6.1.2"
+    "log-update": "^5.0.0",
+    "mongoose": "^6.1.2",
+    "random-paragraph": "^1.0.4",
+    "unique-names-generator": "^4.6.0",
+    "username-generator": "^1.1.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.15",
@@ -16,7 +23,8 @@
   },
   "scripts": {
     "start": "nodemon app.js",
-    "test": "nodemon test.js"
+    "test": "nodemon database_generate.js",
+    "alpha": "nodemon a.js"
   },
   "author": "",
   "license": "ISC"

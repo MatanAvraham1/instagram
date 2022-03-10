@@ -308,6 +308,12 @@
       "languageVersion": "2.12"
     },
     {
+      "name": "scrollable_positioned_list",
+      "rootUri": "file:///C:/Users/Matan/Downloads/flutter_windows_2.5.3-stable/flutter/.pub-cache/hosted/pub.dartlang.org/scrollable_positioned_list-0.2.3",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
       "name": "sky_engine",
       "rootUri": "file:///C:/Users/Matan/Downloads/flutter_windows_2.5.3-stable/flutter/bin/cache/pkg/sky_engine",
       "packageUri": "lib/",
@@ -410,7 +416,7 @@
       "languageVersion": "2.12"
     }
   ],
-  "generated": "2022-01-03T18:24:59.039757Z",
+  "generated": "2022-02-20T13:16:03.116545Z",
   "generator": "pub",
   "generatorVersion": "2.14.4"
 }

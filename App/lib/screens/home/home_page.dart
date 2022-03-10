@@ -6,6 +6,7 @@ import 'package:instagram/screens/home/feed/feed_page.dart';
 import 'package:instagram/screens/home/profile/profile_page.dart';
 import 'package:instagram/screens/home/reels/reels_page.dart';
 import 'package:instagram/screens/home/shop/shop_page.dart';
+import 'package:instagram/services/auth_service.dart';
 import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
@@ -63,7 +64,7 @@ class _HomePageState extends State<HomePage>
           MaterialPage(
               child: ProfilePage(
             inPageView: true,
-            user: connectedUser,
+            user: AuthSerivce.connectedUser!,
           ))
         ],
       ),

@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:instagram/exeptions/auth_service_exeptions.dart';
+import 'package:instagram/exeptions/more_exepction.dart';
+import 'package:instagram/screens/auth/components/custom_alert_dialog.dart';
 import 'package:instagram/screens/auth/components/custom_button.dart';
 import 'package:instagram/screens/auth/components/custom_form_field.dart';
 import 'package:instagram/screens/auth/register_page.dart';
+import 'package:instagram/services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -73,7 +77,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
               GestureDetector(
                 onTap: () {
-                  Navigator.of(context).pushReplacement(MaterialPageRoute(
+                  Navigator.of(context).push(MaterialPageRoute(
                     builder: (context) => const RegisterPage(),
                   ));
                 },
@@ -122,9 +126,30 @@ class _LoginPageState extends State<LoginPage> {
         CustomButton(
           text: "Log In",
           onPressed: () async {
-            await Future.delayed(const Duration(seconds: 5));
+            try {
+              await AuthSerivce.signIn(username, password);
+            } on WrongUsernameOrPasswordExeption {
+              showDialog(
+                context: context,
+                builder: (context) => const CustomAlertDialog(
+                  title: 'Wrong Details!',
+                  description: "Username or password is incorrent!",
+                  continueButton: "Ok",
+                ),
+              );
+            } on ServerErrorExeption {
+              showDialog(
+                context: context,
+                builder: (context) => const CustomAlertDialog(
+                  title: 'Server Error!',
+                  description:
+                      "Sorry, there is a problem with our server please try again later..",
+                  continueButton: "Ok",
+                ),
+              );
+            }
           },
-          disableWhen: () {
+          enableWhen: () {
             return username.isNotEmpty && password.isNotEmpty;
           },
         ),

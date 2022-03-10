@@ -6,6 +6,7 @@ import 'package:instagram/exeptions/more_exepction.dart';
 import 'package:instagram/exeptions/online_db_service_exeptions.dart';
 import 'package:instagram/models/comment.dart';
 import 'package:instagram/models/post.dart';
+import 'package:instagram/models/story.dart';
 import 'package:instagram/models/user.dart';
 import 'package:http/http.dart' as http;
 import 'package:instagram/services/auth_service.dart';
@@ -13,13 +14,18 @@ import 'package:instagram/services/auth_service.dart';
 class OnlineDBService {
   static const _serverApiUrl = "http://10.0.2.2:5000/api/";
 
-  static Future<User> getCurrentUser() async {
+  static Future<User> getConnectedUser() async {
     /*
-    Returns the current connected user
+    Returns the connected user
     */
 
-    var userId = await AuthSerivce.getUserId();
-    return await getUserById(userId);
+    var userId = await AuthSerivce.getConnectedUserId();
+    try {
+      return await getUserById(userId);
+    } on UserNotExistExeption {
+      await AuthSerivce.signOut();
+      throw NoUserLoggedInExeption();
+    }
   }
 
   static Future<User> getUserById(String userId) async {
@@ -27,27 +33,80 @@ class OnlineDBService {
     Returns user by id [userId]
     */
 
-    var response = await http
-        .get(Uri.parse(_serverApiUrl + "users/$userId?filter=byId"), headers: {
-      "authorization": await AuthSerivce.getAuthorizationHeader(),
-    });
+    var response = await http.get(
+        Uri.parse(_serverApiUrl + "users/$userId?searchBy=byId"),
+        headers: {
+          "authorization": await AuthSerivce.getAuthorizationHeader(),
+        });
 
-    if (response.statusCode == 400) {
-      var errorCode = jsonDecode(response.body)["errorCode"];
-
-      if (errorCode == ErrorCodes.postNotExist) {
-        throw UserNotExistExeption();
-      }
+    if (response.statusCode == 401) {
+      throw UnauthorizedException();
     }
     if (response.statusCode == 403) {
       throw ForbiddenExeption();
-    } else if (response.statusCode == 500) {
+    }
+    if (response.statusCode == 404) {
+      throw UserNotExistExeption();
+    }
+    if (response.statusCode == 500) {
       throw ServerErrorExeption();
     }
 
-    var user = User.fromJson(jsonDecode(response.body));
-    user.userId = userId;
-    return user;
+    return User.fromJson(response.body);
+  }
+
+  static Future<User> getUserByUsername(String username) async {
+    /*
+    Returns user by his username
+    */
+
+    var response = await http.get(
+        Uri.parse(_serverApiUrl + "users/$username?searchBy=byUsername"),
+        headers: {
+          "authorization": await AuthSerivce.getAuthorizationHeader(),
+        });
+
+    if (response.statusCode == 401) {
+      throw UnauthorizedException();
+    }
+    if (response.statusCode == 403) {
+      throw ForbiddenExeption();
+    }
+    if (response.statusCode == 404) {
+      throw UserNotExistExeption();
+    }
+    if (response.statusCode == 500) {
+      throw ServerErrorExeption();
+    }
+
+    return User.fromJson(response.body);
+  }
+
+  static Future<User> getUserByFullname(String fullname) async {
+    /*
+    Returns user by his fullname
+    */
+
+    var response = await http.get(
+        Uri.parse(_serverApiUrl + "users/$fullname?searchBy=byFullname"),
+        headers: {
+          "authorization": await AuthSerivce.getAuthorizationHeader(),
+        });
+
+    if (response.statusCode == 401) {
+      throw UnauthorizedException();
+    }
+    if (response.statusCode == 403) {
+      throw ForbiddenExeption();
+    }
+    if (response.statusCode == 404) {
+      throw UserNotExistExeption();
+    }
+    if (response.statusCode == 500) {
+      throw ServerErrorExeption();
+    }
+
+    return User.fromJson(jsonDecode(response.body));
   }
 
   static Future updateUser(User user) async {
@@ -57,10 +116,8 @@ class OnlineDBService {
     param 1: the user 
     */
 
-    // var userId = await AuthSerivce.getUserId();
-
     var response = await http.patch(
-      Uri.parse(_serverApiUrl + "users/${user.userId}/posts"),
+      Uri.parse(_serverApiUrl + "users/${user.id}"),
       headers: {
         'Content-type': 'application/json',
         "authorization": await AuthSerivce.getAuthorizationHeader(),
@@ -82,9 +139,17 @@ class OnlineDBService {
       if (errorCode == ErrorCodes.invalidUpdateValues) {
         throw InvalidUpdateValuesExeption();
       }
-    } else if (response.statusCode == 403) {
+    }
+    if (response.statusCode == 401) {
+      throw UnauthorizedException();
+    }
+    if (response.statusCode == 403) {
       throw ForbiddenExeption();
-    } else if (response.statusCode == 500) {
+    }
+    if (response.statusCode == 404) {
+      throw UserNotExistExeption();
+    }
+    if (response.statusCode == 500) {
       throw ServerErrorExeption();
     }
   }
@@ -95,30 +160,30 @@ class OnlineDBService {
 
     param 1: the id of the post owner
     param 2: the id of the post
+    param 3: include the publisher user object in the response?
     */
 
     var response = await http.get(
-        Uri.parse(_serverApiUrl + "users/$userId/posts/$postId"),
+        Uri.parse(_serverApiUrl +
+            "users/$userId/posts/$postId?includePublisherInResponse=${true}"),
         headers: {
           "authorization": await AuthSerivce.getAuthorizationHeader(),
         });
 
-    if (response.statusCode == 400) {
-      var errorCode = jsonDecode(response.body)["errorCode"];
-
-      if (errorCode == ErrorCodes.postNotExist) {
-        throw PostNotExistExeption();
-      }
-    } else if (response.statusCode == 403) {
+    if (response.statusCode == 401) {
+      throw UnauthorizedException();
+    }
+    if (response.statusCode == 403) {
       throw ForbiddenExeption();
-    } else if (response.statusCode == 500) {
+    }
+    if (response.statusCode == 404) {
+      throw PostNotExistExeption();
+    }
+    if (response.statusCode == 500) {
       throw ServerErrorExeption();
     }
 
-    var post = Post.fromJson(jsonDecode(response.body));
-    post.postId = postId;
-    post.ownerId = userId;
-    return post;
+    return Post.fromJson(jsonDecode(response.body));
   }
 
   static Future uploadPost(Post post) async {
@@ -128,7 +193,7 @@ class OnlineDBService {
     param 1: the post
     */
 
-    var userId = await AuthSerivce.getUserId();
+    var userId = await AuthSerivce.getConnectedUserId();
 
     var response = await http.post(
       Uri.parse(_serverApiUrl + "users/$userId/posts"),
@@ -148,9 +213,17 @@ class OnlineDBService {
       if (errorCode == ErrorCodes.invalidPost) {
         throw InvalidPostExeption();
       }
-    } else if (response.statusCode == 403) {
+    }
+    if (response.statusCode == 401) {
+      throw UnauthorizedException();
+    }
+    if (response.statusCode == 403) {
       throw ForbiddenExeption();
-    } else if (response.statusCode == 500) {
+    }
+    if (response.statusCode == 404) {
+      throw UserNotExistExeption();
+    }
+    if (response.statusCode == 500) {
       throw ServerErrorExeption();
     }
   }
@@ -162,7 +235,7 @@ class OnlineDBService {
     param 1: the post id
     */
 
-    var userId = await AuthSerivce.getUserId();
+    var userId = await AuthSerivce.getConnectedUserId();
 
     var response = await http.delete(
         Uri.parse(_serverApiUrl + "users/$userId/posts/$postId"),
@@ -170,45 +243,91 @@ class OnlineDBService {
           "authorization": await AuthSerivce.getAuthorizationHeader(),
         });
 
-    if (response.statusCode == 400) {
-      var errorCode = jsonDecode(response.body)["errorCode"];
-
-      if (errorCode == ErrorCodes.postNotExist) {
-        throw PostNotExistExeption();
-      }
-    } else if (response.statusCode == 403) {
+    if (response.statusCode == 401) {
+      throw UnauthorizedException();
+    }
+    if (response.statusCode == 403) {
       throw ForbiddenExeption();
-    } else if (response.statusCode == 500) {
+    }
+    if (response.statusCode == 404) {
+      throw PostNotExistExeption();
+    }
+    if (response.statusCode == 500) {
       throw ServerErrorExeption();
     }
   }
 
-  static Future<List<Post>> getPosts(String userId) async {
+  static Future<List<Post>> getPosts(String userId, int startFrom,
+      {bool includePublisherInResponse = true}) async {
     /*  
     Returns the posts of user
+
+    param 1: the user id
+    param 2: how much posts have we already loaded
+    param 3: to include the publisher in the response?
     */
 
-    var response = await http
-        .get(Uri.parse(_serverApiUrl + "users/$userId/posts"), headers: {
-      "authorization": await AuthSerivce.getAuthorizationHeader(),
-    });
+    var response = await http.get(
+        Uri.parse(_serverApiUrl +
+            "users/$userId/posts?startFrom=$startFrom&includePublisherInResponse=$includePublisherInResponse"),
+        headers: {
+          "authorization": await AuthSerivce.getAuthorizationHeader(),
+        });
 
-    if (response.statusCode == 400) {
-      var errorCode = jsonDecode(response.body)["errorCode"];
-
-      if (errorCode == ErrorCodes.userNotExist) {
-        throw UserNotExistExeption();
-      }
-    } else if (response.statusCode == 403) {
+    if (response.statusCode == 401) {
+      throw UnauthorizedException();
+    }
+    if (response.statusCode == 403) {
       throw ForbiddenExeption();
-    } else if (response.statusCode == 500) {
+    }
+    if (response.statusCode == 404) {
+      throw UserNotExistExeption();
+    }
+    if (response.statusCode == 500) {
       throw ServerErrorExeption();
     }
 
     List<Post> posts = [];
     for (var postObject in jsonDecode(response.body)) {
-      Post post = Post.fromJson(postObject);
-      post.ownerId = userId;
+      Post post = Post.fromMap(postObject);
+      posts.add(post);
+    }
+    return posts;
+  }
+
+  static Future<List<Post>> getFeedPosts(int startFrom) async {
+    /*  
+    Returns the posts of user's followings by date
+
+    param 1: the user id
+    param 2: how much posts have we already loaded
+    */
+
+    String userId = await AuthSerivce.getConnectedUserId();
+
+    var response = await http.get(
+        Uri.parse(_serverApiUrl +
+            "users/$userId/posts/feed?startFrom=$startFrom&includePublisherInResponse=${true}"),
+        headers: {
+          "authorization": await AuthSerivce.getAuthorizationHeader(),
+        });
+
+    if (response.statusCode == 401) {
+      throw UnauthorizedException();
+    }
+    if (response.statusCode == 403) {
+      throw ForbiddenExeption();
+    }
+    if (response.statusCode == 404) {
+      throw UserNotExistExeption();
+    }
+    if (response.statusCode == 500) {
+      throw ServerErrorExeption();
+    }
+
+    List<Post> posts = [];
+    for (var postObject in jsonDecode(response.body)) {
+      Post post = Post.fromMap(postObject);
       posts.add(post);
     }
     return posts;
@@ -225,33 +344,71 @@ class OnlineDBService {
     */
 
     var response = await http.get(
-        Uri.parse(
-            _serverApiUrl + "users/$userId/posts/$postId/comments/$commentId"),
+        Uri.parse(_serverApiUrl +
+            "users/$userId/posts/$postId/comments/$commentId?includePublisherInResponse=${true}"),
         headers: {
           "authorization": await AuthSerivce.getAuthorizationHeader(),
         });
 
-    if (response.statusCode == 400) {
-      var errorCode = jsonDecode(response.body)["errorCode"];
-
-      if (errorCode == ErrorCodes.userNotExist) {
-        throw UserNotExistExeption();
-      }
-      if (errorCode == ErrorCodes.userNotExist) {
-        throw PostNotExistExeption();
-      }
-      if (errorCode == ErrorCodes.commentNotExist) {
-        throw CommentNotExistExeption();
-      }
-    } else if (response.statusCode == 403) {
+    if (response.statusCode == 401) {
+      throw UnauthorizedException();
+    }
+    if (response.statusCode == 403) {
       throw ForbiddenExeption();
-    } else if (response.statusCode == 500) {
+    }
+    if (response.statusCode == 404) {
+      throw CommentNotExistExeption();
+    }
+    if (response.statusCode == 500) {
       throw ServerErrorExeption();
     }
 
     var comment = Comment.fromJson(jsonDecode(response.body));
     comment.postId = postId;
     return comment;
+  }
+
+  static Future<List<Comment>> getComments(
+      String userId, String postId, int startFrom,
+      {bool includePublisherInResponse = true}) async {
+    /*
+    Returns comments of post
+
+    param 1: the id of the post owner
+    param 2: the id of the post
+    param 3: how much comments have we already loaded
+    param 4: to include the publisher in the response?
+
+    */
+
+    var response = await http.get(
+        Uri.parse(_serverApiUrl +
+            "users/$userId/posts/$postId/comments?startFrom=$startFrom&includePublisherInResponse=$includePublisherInResponse"),
+        headers: {
+          "authorization": await AuthSerivce.getAuthorizationHeader(),
+        });
+
+    if (response.statusCode == 401) {
+      throw UnauthorizedException();
+    }
+    if (response.statusCode == 403) {
+      throw ForbiddenExeption();
+    }
+    if (response.statusCode == 404) {
+      throw PostNotExistExeption();
+    }
+    if (response.statusCode == 500) {
+      throw ServerErrorExeption();
+    }
+
+    List<Comment> comments = [];
+    for (var commentObject in jsonDecode(response.body)) {
+      var comment = Comment.fromMap(commentObject);
+      comment.postId = postId;
+      comments.add(comment);
+    }
+
+    return comments;
   }
 
   static Future uploadComment(
@@ -264,7 +421,7 @@ class OnlineDBService {
     param 3: the comment
     */
 
-    var userId = await AuthSerivce.getUserId();
+    var userId = await AuthSerivce.getConnectedUserId();
 
     var response = await http.post(
       Uri.parse(_serverApiUrl + "users/$userId/posts/$postId/comments"),
@@ -280,18 +437,20 @@ class OnlineDBService {
     if (response.statusCode == 400) {
       var errorCode = jsonDecode(response.body)["errorCode"];
 
-      if (errorCode == ErrorCodes.userNotExist) {
-        throw UserNotExistExeption();
-      }
-      if (errorCode == ErrorCodes.postNotExist) {
-        throw PostNotExistExeption();
-      }
       if (errorCode == ErrorCodes.invalidComment) {
         throw InvalidCommentExeption();
       }
-    } else if (response.statusCode == 403) {
+    }
+    if (response.statusCode == 401) {
+      throw UnauthorizedException();
+    }
+    if (response.statusCode == 403) {
       throw ForbiddenExeption();
-    } else if (response.statusCode == 500) {
+    }
+    if (response.statusCode == 404) {
+      throw PostNotExistExeption();
+    }
+    if (response.statusCode == 500) {
       throw ServerErrorExeption();
     }
   }
@@ -313,73 +472,88 @@ class OnlineDBService {
           "authorization": await AuthSerivce.getAuthorizationHeader(),
         });
 
-    if (response.statusCode == 400) {
-      var errorCode = jsonDecode(response.body)["errorCode"];
-
-      if (errorCode == ErrorCodes.userNotExist) {
-        throw UserNotExistExeption();
-      }
-      if (errorCode == ErrorCodes.postNotExist) {
-        throw PostNotExistExeption();
-      }
-      if (errorCode == ErrorCodes.commentNotExist) {
-        throw CommentNotExistExeption();
-      }
-    } else if (response.statusCode == 403) {
+    if (response.statusCode == 401) {
+      throw UnauthorizedException();
+    }
+    if (response.statusCode == 403) {
       throw ForbiddenExeption();
-    } else if (response.statusCode == 500) {
+    }
+    if (response.statusCode == 404) {
+      throw CommentNotExistExeption();
+    }
+    if (response.statusCode == 500) {
       throw ServerErrorExeption();
     }
   }
 
-  static Future<List<String>> getFollowers(String userId) async {
+  static Future<List<User>> getFollowers(String userId, int startFrom) async {
     /*  
     Returns the followers of user
+
+    param 1: the user id
+    param 1: how much followers have we already load
     */
 
-    var response = await http
-        .get(Uri.parse(_serverApiUrl + "users/$userId/followers"), headers: {
-      "authorization": await AuthSerivce.getAuthorizationHeader(),
-    });
+    var response = await http.get(
+        Uri.parse(
+            _serverApiUrl + "users/$userId/followers?startFrom=$startFrom"),
+        headers: {
+          "authorization": await AuthSerivce.getAuthorizationHeader(),
+        });
 
-    if (response.statusCode == 400) {
-      var errorCode = jsonDecode(response.body)["errorCode"];
-
-      if (errorCode == ErrorCodes.userNotExist) {
-        throw UserNotExistExeption();
-      }
-    } else if (response.statusCode == 403) {
+    if (response.statusCode == 401) {
+      throw UnauthorizedException();
+    }
+    if (response.statusCode == 403) {
       throw ForbiddenExeption();
-    } else if (response.statusCode == 500) {
+    }
+    if (response.statusCode == 404) {
+      throw UserNotExistExeption();
+    }
+    if (response.statusCode == 500) {
       throw ServerErrorExeption();
     }
 
-    return jsonDecode(response.body);
+    List<User> users = [];
+    for (var userObject in jsonDecode(response.body)) {
+      users.add(User.fromMap(userObject));
+    }
+    return users;
   }
 
-  static Future<List<String>> getFollowing(String userId) async {
+  static Future<List<User>> getFollowings(String userId, int startFrom) async {
     /*  
     Returns the following of user
+
+    param 1: the user id
+    param 2: how much following have we already load
     */
 
-    var response = await http
-        .get(Uri.parse(_serverApiUrl + "users/$userId/following"), headers: {
-      "authorization": await AuthSerivce.getAuthorizationHeader(),
-    });
+    var response = await http.get(
+        Uri.parse(
+            _serverApiUrl + "users/$userId/followings?startFrom=$startFrom"),
+        headers: {
+          "authorization": await AuthSerivce.getAuthorizationHeader(),
+        });
 
-    if (response.statusCode == 400) {
-      var errorCode = jsonDecode(response.body)["errorCode"];
-
-      if (errorCode == ErrorCodes.userNotExist) {
-        throw UserNotExistExeption();
-      }
-    } else if (response.statusCode == 403) {
+    if (response.statusCode == 401) {
+      throw UnauthorizedException();
+    }
+    if (response.statusCode == 403) {
       throw ForbiddenExeption();
-    } else if (response.statusCode == 500) {
+    }
+    if (response.statusCode == 404) {
+      throw UserNotExistExeption();
+    }
+    if (response.statusCode == 500) {
       throw ServerErrorExeption();
     }
 
-    return jsonDecode(response.body);
+    List<User> users = [];
+    for (var userObject in jsonDecode(response.body)) {
+      users.add(User.fromMap(userObject));
+    }
+    return users;
   }
 
   static Future followUser(String userId) async {
@@ -399,9 +573,6 @@ class OnlineDBService {
     if (response.statusCode == 400) {
       var errorCode = jsonDecode(response.body)["errorCode"];
 
-      if (errorCode == ErrorCodes.userNotExist) {
-        throw UserNotExistExeption();
-      }
       if (errorCode == ErrorCodes.cantFollowHimself) {
         throw UserCantFollowHimselfExeption();
       }
@@ -411,9 +582,17 @@ class OnlineDBService {
       if (errorCode == ErrorCodes.followRequestAlreadySent) {
         throw FollowRequestAlreadySentExeption();
       }
-    } else if (response.statusCode == 403) {
+    }
+    if (response.statusCode == 401) {
+      throw UnauthorizedException();
+    }
+    if (response.statusCode == 403) {
       throw ForbiddenExeption();
-    } else if (response.statusCode == 500) {
+    }
+    if (response.statusCode == 404) {
+      throw UserNotExistExeption();
+    }
+    if (response.statusCode == 500) {
       throw ServerErrorExeption();
     }
   }
@@ -435,18 +614,23 @@ class OnlineDBService {
     if (response.statusCode == 400) {
       var errorCode = jsonDecode(response.body)["errorCode"];
 
-      if (errorCode == ErrorCodes.userNotExist) {
-        throw UserNotExistExeption();
-      }
       if (errorCode == ErrorCodes.cantFollowHimself) {
         throw UserCantFollowHimselfExeption();
       }
       if (errorCode == ErrorCodes.alreadyUnfollowed) {
         throw UserAlreadyUnfollowedExeption();
       }
-    } else if (response.statusCode == 403) {
+    }
+    if (response.statusCode == 401) {
+      throw UnauthorizedException();
+    }
+    if (response.statusCode == 403) {
       throw ForbiddenExeption();
-    } else if (response.statusCode == 500) {
+    }
+    if (response.statusCode == 404) {
+      throw UserNotExistExeption();
+    }
+    if (response.statusCode == 500) {
       throw ServerErrorExeption();
     }
   }
@@ -458,7 +642,7 @@ class OnlineDBService {
     param 1: the id of the user to accept
     */
 
-    var connectedUserId = await AuthSerivce.getUserId();
+    var connectedUserId = await AuthSerivce.getConnectedUserId();
     var response = await http.post(
       Uri.parse(_serverApiUrl +
           "users/$connectedUserId/followRequests?userToAccept=$userToAccept"),
@@ -468,17 +652,18 @@ class OnlineDBService {
     );
 
     if (response.statusCode == 400) {
-      var errorCode = jsonDecode(response.body)["errorCode"];
-
-      if (errorCode == ErrorCodes.missingUserToAccept) {
-        throw MissingUserToAcceptExeption();
-      }
-      if (errorCode == ErrorCodes.userNotInFollowRequests) {
-        throw UserNotInFollowRequestsExeption();
-      }
-    } else if (response.statusCode == 403) {
+      throw MissingUserToAcceptExeption();
+    }
+    if (response.statusCode == 401) {
+      throw UnauthorizedException();
+    }
+    if (response.statusCode == 403) {
       throw ForbiddenExeption();
-    } else if (response.statusCode == 500) {
+    }
+    if (response.statusCode == 404) {
+      throw UserNotInFollowRequestsExeption();
+    }
+    if (response.statusCode == 500) {
       throw ServerErrorExeption();
     }
   }
@@ -490,7 +675,7 @@ class OnlineDBService {
     param 1: the id of the user to delete
     */
 
-    var connectedUserId = await AuthSerivce.getUserId();
+    var connectedUserId = await AuthSerivce.getConnectedUserId();
     var response = await http.delete(
       Uri.parse(_serverApiUrl +
           "users/$connectedUserId/followRequests?userToDelete=$userToDelete"),
@@ -500,17 +685,414 @@ class OnlineDBService {
     );
 
     if (response.statusCode == 400) {
+      throw MissingUserToAcceptExeption();
+    }
+    if (response.statusCode == 401) {
+      throw UnauthorizedException();
+    }
+    if (response.statusCode == 403) {
+      throw ForbiddenExeption();
+    }
+    if (response.statusCode == 404) {
+      throw UserNotInFollowRequestsExeption();
+    }
+    if (response.statusCode == 500) {
+      throw ServerErrorExeption();
+    }
+  }
+
+  static Future deleteFollowingRequest(String userToDelete) async {
+    /*
+    Deletes following request 
+
+    param 1: the id of the user to delete
+    */
+
+    var connectedUserId = await AuthSerivce.getConnectedUserId();
+    var response = await http.delete(
+      Uri.parse(_serverApiUrl +
+          "users/$connectedUserId/followingRequests?userToDelete=$userToDelete"),
+      headers: {
+        "authorization": await AuthSerivce.getAuthorizationHeader(),
+      },
+    );
+
+    if (response.statusCode == 400) {
+      throw MissingUserToAcceptExeption();
+    }
+    if (response.statusCode == 401) {
+      throw UnauthorizedException();
+    }
+    if (response.statusCode == 403) {
+      throw ForbiddenExeption();
+    }
+    if (response.statusCode == 404) {
+      throw UserNotInFollowRequestsExeption();
+    }
+    if (response.statusCode == 500) {
+      throw ServerErrorExeption();
+    }
+  }
+
+  static Future<Story> getStory(String userId, String storyId) async {
+    /*
+    Returns some story
+
+    param 1: the id of the story owner
+    param 2: the id of the story
+    */
+
+    var response = await http.get(
+        Uri.parse(_serverApiUrl + "users/$userId/stories/$storyId"),
+        headers: {
+          "authorization": await AuthSerivce.getAuthorizationHeader(),
+        });
+
+    if (response.statusCode == 401) {
+      throw UnauthorizedException();
+    }
+    if (response.statusCode == 403) {
+      throw ForbiddenExeption();
+    }
+    if (response.statusCode == 404) {
+      throw StoryNotExistExeption();
+    }
+    if (response.statusCode == 500) {
+      throw ServerErrorExeption();
+    }
+
+    var story = Story.fromJson(jsonDecode(response.body));
+    story.ownerUid = userId;
+    return story;
+  }
+
+  static Future<List<Story>> getLast24HoursStories(String userId) async {
+    /*
+    Returns all the stories from the last 24 hours
+
+    param 1: the id of stories' owner
+    */
+
+    var response = await http
+        .get(Uri.parse(_serverApiUrl + "users/$userId/stories/"), headers: {
+      "authorization": await AuthSerivce.getAuthorizationHeader(),
+    });
+
+    if (response.statusCode == 401) {
+      throw UnauthorizedException();
+    }
+    if (response.statusCode == 403) {
+      throw ForbiddenExeption();
+    }
+    if (response.statusCode == 404) {
+      throw UserNotExistExeption();
+    }
+    if (response.statusCode == 500) {
+      throw ServerErrorExeption();
+    }
+
+    List<Story> stories = [];
+    for (var storyObject in jsonDecode(response.body)) {
+      Story story = Story.fromMap(storyObject);
+      story.ownerUid = userId;
+      stories.add(story);
+    }
+    return stories;
+  }
+
+  static Future<List<Story>> getStoriesArchive() async {
+    /*
+    Returns the stories archive
+    */
+
+    String userId = await AuthSerivce.getConnectedUserId();
+
+    var response = await http.get(
+        Uri.parse(_serverApiUrl + "users/$userId/stories/archive"),
+        headers: {
+          "authorization": await AuthSerivce.getAuthorizationHeader(),
+        });
+
+    if (response.statusCode == 401) {
+      throw UnauthorizedException();
+    }
+    if (response.statusCode == 403) {
+      throw ForbiddenExeption();
+    }
+    if (response.statusCode == 404) {
+      throw UserNotExistExeption();
+    }
+    if (response.statusCode == 500) {
+      throw ServerErrorExeption();
+    }
+
+    List<Story> stories = [];
+    for (var storyObject in jsonDecode(response.body)) {
+      Story story = Story.fromJson(storyObject);
+      story.ownerUid = userId;
+      stories.add(story);
+    }
+    return stories;
+  }
+
+  static Future deleteStory(String storyId) async {
+    /*
+    Deletes story
+
+    param 1: the story id
+    */
+
+    var userId = await AuthSerivce.getConnectedUserId();
+
+    var response = await http.delete(
+        Uri.parse(_serverApiUrl + "users/$userId/stories/$storyId"),
+        headers: {
+          "authorization": await AuthSerivce.getAuthorizationHeader(),
+        });
+
+    if (response.statusCode == 401) {
+      throw UnauthorizedException();
+    }
+    if (response.statusCode == 403) {
+      throw ForbiddenExeption();
+    }
+    if (response.statusCode == 404) {
+      throw StoryNotExistExeption();
+    }
+    if (response.statusCode == 500) {
+      throw ServerErrorExeption();
+    }
+  }
+
+  static Future uploadStory(Story story) async {
+    /*
+    Uploads new story
+
+    param 1: the story
+    */
+
+    var userId = await AuthSerivce.getConnectedUserId();
+
+    var response = await http.post(
+      Uri.parse(_serverApiUrl + "users/$userId/stories"),
+      headers: {
+        'Content-type': 'application/json',
+        "authorization": await AuthSerivce.getAuthorizationHeader(),
+      },
+      body: jsonEncode({
+        'photoUrl': story.photoUrl,
+      }),
+    );
+
+    if (response.statusCode == 400) {
       var errorCode = jsonDecode(response.body)["errorCode"];
 
-      if (errorCode == ErrorCodes.missingUserToDelete) {
-        throw MissingUserToDeleteExeption();
+      if (errorCode == ErrorCodes.invalidStory) {
+        throw InvalidStoryExeption();
       }
-      if (errorCode == ErrorCodes.userNotInFollowRequests) {
-        throw UserNotInFollowRequestsExeption();
-      }
-    } else if (response.statusCode == 403) {
+    }
+    if (response.statusCode == 401) {
+      throw UnauthorizedException();
+    }
+    if (response.statusCode == 403) {
       throw ForbiddenExeption();
-    } else if (response.statusCode == 500) {
+    }
+    if (response.statusCode == 404) {
+      throw UserNotExistExeption();
+    }
+    if (response.statusCode == 500) {
+      throw ServerErrorExeption();
+    }
+  }
+
+  static Future<List<User>> whichOfMyFollowingPublishedStories(
+      int startFrom) async {
+    /*
+    Returns list of the followings who have published a story
+
+    param 1: how much followings have we already load
+    */
+
+    String userId = await AuthSerivce.getConnectedUserId();
+
+    var response = await http.get(
+        Uri.parse(_serverApiUrl +
+            "users/$userId/stories/following?startFrom=$startFrom"),
+        headers: {
+          "authorization": await AuthSerivce.getAuthorizationHeader(),
+        });
+
+    if (response.statusCode == 401) {
+      throw UnauthorizedException();
+    }
+    if (response.statusCode == 403) {
+      throw ForbiddenExeption();
+    }
+    if (response.statusCode == 404) {
+      throw UserNotExistExeption();
+    }
+    if (response.statusCode == 500) {
+      throw ServerErrorExeption();
+    }
+
+    List<User> users = [];
+    for (var item in jsonDecode(response.body)) {
+      users.add(User.fromMap(item));
+    }
+
+    return users;
+  }
+
+  static Future likePost(String userId, String postId) async {
+    /*
+    Likes post
+
+    param 1: the id of the post owner
+    param 2: the id of the post
+    */
+
+    var response = await http.post(
+      Uri.parse(_serverApiUrl + "users/$userId/posts/$postId/likes"),
+      headers: {
+        'Content-type': 'application/json',
+        "authorization": await AuthSerivce.getAuthorizationHeader(),
+      },
+    );
+
+    if (response.statusCode == 400) {
+      var errorCode = jsonDecode(response.body)["errorCode"];
+
+      if (errorCode == ErrorCodes.alreadyLiked) {
+        throw PostAlreadyLikedException();
+      }
+    }
+    if (response.statusCode == 401) {
+      throw UnauthorizedException();
+    }
+    if (response.statusCode == 403) {
+      throw ForbiddenExeption();
+    }
+    if (response.statusCode == 404) {
+      throw UserNotExistExeption();
+    }
+    if (response.statusCode == 500) {
+      throw ServerErrorExeption();
+    }
+  }
+
+  static Future unlikePost(String userId, String postId) async {
+    /*
+    Unlikes post
+
+    param 1: the id of the post owner
+    param 2: the id of the post
+    */
+
+    var response = await http.delete(
+      Uri.parse(_serverApiUrl + "users/$userId/posts/$postId/likes"),
+      headers: {
+        'Content-type': 'application/json',
+        "authorization": await AuthSerivce.getAuthorizationHeader(),
+      },
+    );
+
+    if (response.statusCode == 400) {
+      var errorCode = jsonDecode(response.body)["errorCode"];
+
+      if (errorCode == ErrorCodes.alreadyUnliked) {
+        throw PostAlreadyUnlikedException();
+      }
+    }
+    if (response.statusCode == 401) {
+      throw UnauthorizedException();
+    }
+    if (response.statusCode == 403) {
+      throw ForbiddenExeption();
+    }
+    if (response.statusCode == 404) {
+      throw UserNotExistExeption();
+    }
+    if (response.statusCode == 500) {
+      throw ServerErrorExeption();
+    }
+  }
+
+  static Future likeComment(
+      String userId, String postId, String commentId) async {
+    /*
+    Likes comment
+
+    param 1: the id of the post owner
+    param 2: the id of the post
+    param 3: the id of the comment
+    */
+
+    var response = await http.post(
+      Uri.parse(_serverApiUrl +
+          "users/$userId/posts/$postId/comments/$commentId/likes"),
+      headers: {
+        'Content-type': 'application/json',
+        "authorization": await AuthSerivce.getAuthorizationHeader(),
+      },
+    );
+
+    if (response.statusCode == 400) {
+      var errorCode = jsonDecode(response.body)["errorCode"];
+
+      if (errorCode == ErrorCodes.alreadyLiked) {
+        throw CommentAlreadyLikedException();
+      }
+    }
+    if (response.statusCode == 401) {
+      throw UnauthorizedException();
+    }
+    if (response.statusCode == 403) {
+      throw ForbiddenExeption();
+    }
+    if (response.statusCode == 404) {
+      throw UserNotExistExeption();
+    }
+    if (response.statusCode == 500) {
+      throw ServerErrorExeption();
+    }
+  }
+
+  static Future unlikeComment(
+      String userId, String postId, String commentId) async {
+    /*
+    Unlikes comment
+
+    param 1: the id of the post owner
+    param 2: the id of the post
+    param 3: the id of the comment
+    */
+
+    var response = await http.delete(
+      Uri.parse(_serverApiUrl +
+          "users/$userId/posts/$postId/comments/$commentId/likes"),
+      headers: {
+        'Content-type': 'application/json',
+        "authorization": await AuthSerivce.getAuthorizationHeader(),
+      },
+    );
+
+    if (response.statusCode == 400) {
+      var errorCode = jsonDecode(response.body)["errorCode"];
+
+      if (errorCode == ErrorCodes.alreadyUnliked) {
+        throw CommentAlreadyUnlikedException();
+      }
+    }
+    if (response.statusCode == 401) {
+      throw UnauthorizedException();
+    }
+    if (response.statusCode == 403) {
+      throw ForbiddenExeption();
+    }
+    if (response.statusCode == 404) {
+      throw UserNotExistExeption();
+    }
+    if (response.statusCode == 500) {
       throw ServerErrorExeption();
     }
   }

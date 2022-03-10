@@ -1,4 +1,4 @@
-const { userModel, getUserById } = require("../models/User");
+const { userModel, getUserById, userErrors } = require("../models/user_model");
 const { errorCodes } = require('../errorCodes')
 
 async function isFollowing(firstUserId, secondUserId) {
@@ -7,7 +7,7 @@ async function isFollowing(firstUserId, secondUserId) {
     */
 
     const user = await userModel.findOne({ _id: secondUserId })
-    if (user == null) {
+    if (user === null) {
         return false
     }
 
@@ -19,7 +19,7 @@ function doesRequesterOwn(req, res, next) {
     Checks if the requester is the owner of the user object 
 
     */
-    if (req.userId != req.params.userId) {
+    if (req.userId !== req.params.userId) {
         return res.sendStatus(403)
     }
 
@@ -31,16 +31,19 @@ async function doesHasPermission(req, res, next) {
     Checks if the requester has the permission to access some user data
     */
 
-    const user = await getUserById(req.params.userId)
+    try {
+        const user = await getUserById(req.params.userId)
 
-    if (user == null) {
-        return res.status(400).json({ 'errorCode': errorCodes.userNotExist })
-    }
-    if (user.isPrivate == true) {
-        if (req.userId != req.params.userId) {
+        if (user.isPrivate && req.userId !== req.params.userId) {
             if (!await isFollowing(req.userId, req.params.userId)) {
                 return res.sendStatus(403)
             }
+
+        }
+    }
+    catch (err) {
+        if (err === userErrors.userNotExistsError) {
+            return res.sendStatus(404)
         }
     }
 

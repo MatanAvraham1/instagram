@@ -1,9 +1,9 @@
-const { userModel, doesUsernameAlreadyUse, createUser, userErrors, login } = require('../models/User')
+const { userModel, doesUsernameAlreadyUse, createUser, userErrors, login } = require('../../models/user_model')
 const bcrypt = require('bcryptjs')
 const express = require('express')
 const jwt = require('jsonwebtoken')
 const authRouter = express.Router()
-const { errorCodes } = require('../errorCodes')
+const { errorCodes } = require('../../errorCodes')
 
 
 function generateToken(userId) {
@@ -13,13 +13,13 @@ function generateToken(userId) {
 function authenticateToken(req, res, next) {
     const authHeader = req.headers.authorization
 
-    if (authHeader != null) {
+    if (authHeader !== undefined) {
         const token = authHeader.split(' ')[1]
 
         if (jwt.verify(token, process.env.TOKEN_SECRET, (err, user) => {
 
             if (err) {
-                return res.sendStatus(403)
+                return res.sendStatus(401)
             }
 
             req.userId = user.userId
@@ -38,14 +38,14 @@ authRouter.post('/register', async (req, res) => {
     try {
         const userId = await createUser(req.body)
         const token = generateToken(userId)
-        return res.status(200).json({ jwt: token, userId: userId })
+        return res.status(201).json({ jwt: token, userId: userId })
     }
     catch (err) {
-        if (err == userErrors.usernameAlreadyUsedError) {
-            return res.status(400).json({ codeError: errorCodes.usernameAlreadyUsed })
+        if (err === userErrors.usernameAlreadyUsedError) {
+            return res.status(400).json({ errorCode: errorCodes.usernameAlreadyUsed })
         }
-        if (err == userErrors.invalidRegisterDetailsError) {
-            return res.status(400).json({ codeError: errorCodes.invalidUsernameOrPassword })
+        if (err === userErrors.invalidRegisterDetailsError) {
+            return res.status(400).json({ errorCode: errorCodes.invalidUsernameOrPassword })
         }
 
         console.log(err)
@@ -55,13 +55,13 @@ authRouter.post('/register', async (req, res) => {
 
 authRouter.post('/login', async (req, res) => {
     try {
-        var userId = await login(req.body)
+        let userId = await login(req.body)
         const token = generateToken(userId)
         return res.status(200).json({ jwt: token, userId: userId })
     }
     catch (err) {
-        if (err == userErrors.wrongLoginDetailsError) {
-            return res.status(400).json({ codeError: errorCodes.wrongUsernameOrPassword })
+        if (err === userErrors.wrongLoginDetailsError) {
+            return res.sendStatus(404);
         }
 
         console.log(err)

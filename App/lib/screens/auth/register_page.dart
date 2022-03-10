@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:instagram/exeptions/auth_service_exeptions.dart';
+import 'package:instagram/exeptions/more_exepction.dart';
+import 'package:instagram/screens/auth/components/custom_alert_dialog.dart';
 import 'package:instagram/screens/auth/components/custom_button.dart';
 import 'package:instagram/screens/auth/components/custom_form_field.dart';
-import 'package:instagram/screens/auth/login_page.dart';
 import 'package:instagram/services/auth_service.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -74,9 +76,7 @@ class _RegisterPageState extends State<RegisterPage> {
               ),
               GestureDetector(
                 onTap: () {
-                  Navigator.of(context).pushReplacement(MaterialPageRoute(
-                    builder: (context) => const LoginPage(),
-                  ));
+                  Navigator.of(context).pop();
                 },
                 child: Text(
                   "Log In.",
@@ -124,21 +124,37 @@ class _RegisterPageState extends State<RegisterPage> {
             text: "Register",
             onPressed: () async {
               try {
-                await AuthSerivce.register(username, password);
-                // Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => ,))
-              } catch (err) {
+                await AuthSerivce.signUp(username, password);
+                Navigator.of(context).pop();
+              } on InvalidUsernameOrPasswordExeption {
                 showDialog(
                   context: context,
-                  builder: (context) => Dialog(
-                    child: Container(
-                      height: 10,
-                      width: 10,
-                    ),
+                  builder: (context) => const CustomAlertDialog(
+                    title: "Invalid Details!",
+                    description: "The username or the password are invalid!",
+                  ),
+                );
+              } on UsernameAlreadyUsedExeption {
+                showDialog(
+                  context: context,
+                  builder: (context) => const CustomAlertDialog(
+                    title: "Invalid Username!",
+                    description: "This username is already used!",
+                  ),
+                );
+              } on ServerErrorExeption {
+                showDialog(
+                  context: context,
+                  builder: (context) => const CustomAlertDialog(
+                    title: 'Server Error!',
+                    description:
+                        "Sorry, there is a problem with our server please try again later..",
+                    continueButton: "Ok",
                   ),
                 );
               }
             },
-            disableWhen: () {
+            enableWhen: () {
               return username.isNotEmpty && password.isNotEmpty;
             }),
       ],

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -5,6 +6,9 @@ import 'package:http/http.dart' as http;
 import 'package:instagram/exeptions/auth_service_exeptions.dart';
 import 'package:instagram/exeptions/error_codes.dart';
 import 'package:instagram/exeptions/more_exepction.dart';
+import 'package:instagram/exeptions/online_db_service_exeptions.dart';
+import 'package:instagram/models/user.dart';
+import 'package:instagram/services/online_db_service.dart';
 
 class AuthSerivce {
   static const _serverApiUrl = "http://10.0.2.2:5000/api/";
@@ -12,6 +16,12 @@ class AuthSerivce {
     encryptedSharedPreferences: true,
   );
   static const _safeStorage = FlutterSecureStorage(aOptions: _androidOptions);
+  static final _streamController = StreamController<User?>();
+  static User? connectedUser;
+
+  static Stream<User?> get userChanges {
+    return _streamController.stream;
+  }
 
   static Future getAuthorizationHeader() async {
     /*
@@ -20,33 +30,6 @@ class AuthSerivce {
 
     var jwt = await _safeStorage.read(key: "jwt");
     return "Bearer $jwt";
-  }
-
-  static Future getUserId() async {
-    if (!await isUserLoggedIn()) {
-      throw NoUserLoggedInExeption();
-    }
-
-    return await _safeStorage.read(key: "userId");
-  }
-
-  static Future _saveJwt(String jwt) async {
-    /*
-    Saves jwt to the storage safely
-    
-    param 1: the token
-    */
-
-    await _safeStorage.write(key: "jwt", value: jwt);
-  }
-
-  static Future _deleteJwt() async {
-    /*
-    Deletes the jwt from storage 
-    */
-
-    const storage = FlutterSecureStorage(aOptions: _androidOptions);
-    await storage.delete(key: "jwt");
   }
 
   static Future isUserLoggedIn() async {
@@ -65,9 +48,56 @@ class AuthSerivce {
     return true;
   }
 
-  static Future register(String username, String password) async {
+  static Future _saveLoginDetails(String jwt, String userId) async {
     /*
-    Registers the user and saves the returned token
+    Saves the login details to safe storage (the jwt, the user id)
+    
+    param 1: the jwt
+    param 2: the user id
+    */
+
+    await _safeStorage.write(key: "jwt", value: jwt);
+    await _safeStorage.write(key: "userId", value: userId);
+  }
+
+  static Future _deleteLoginDetails() async {
+    /*
+    Deletes the login details from the safe storage (the jwt, the user id)
+    */
+
+    await _safeStorage.delete(key: "jwt");
+    await _safeStorage.delete(key: "userId");
+  }
+
+  static Future getConnectedUserId() async {
+    if (!await isUserLoggedIn()) {
+      throw NoUserLoggedInExeption();
+    }
+
+    return await _safeStorage.read(key: "userId");
+  }
+
+  static Future loadConnectedUser() async {
+    /*
+    Loads the saved user from the safe storage and adds to the userChanges stream
+    */
+
+    try {
+      var user = await OnlineDBService.getConnectedUser();
+      _streamController.add(user);
+      connectedUser = user;
+    } on NoUserLoggedInExeption {
+      _streamController.add(null);
+      connectedUser = null;
+    } on UnauthorizedException {
+      // TODO: refresh token
+      print("Refresh token!");
+    }
+  }
+
+  static Future signUp(String username, String password) async {
+    /*
+    Signs up user and saves the returned token
 
     param 1: the username
     param 2: the password
@@ -99,13 +129,17 @@ class AuthSerivce {
     var jwt = decodedResponse["jwt"];
     var userId = decodedResponse["userId"];
 
-    await _saveJwt(jwt);
-    await _safeStorage.write(key: "userId", value: userId);
+    await _saveLoginDetails(jwt, userId);
+
+    var user = await OnlineDBService.getConnectedUser();
+    _streamController.add(user);
+    connectedUser = user;
+    return user;
   }
 
-  static Future login(String username, String password) async {
+  static Future signIn(String username, String password) async {
     /*
-    Logins the user and saves the returned token
+    Signs in user and saves the returned token
 
     param 1: the username
     param 2: the password
@@ -121,12 +155,8 @@ class AuthSerivce {
       }),
     );
 
-    if (response.statusCode == 400) {
-      var errorCode = jsonDecode(response.body)["errorCode"];
-
-      if (errorCode == ErrorCodes.wrongUsernameOrPassword) {
-        throw WrongUsernameOrPasswordExeption();
-      }
+    if (response.statusCode == 404) {
+      throw WrongUsernameOrPasswordExeption();
     } else if (response.statusCode == 500) {
       throw ServerErrorExeption();
     }
@@ -135,16 +165,20 @@ class AuthSerivce {
     var jwt = decodedResponse["jwt"];
     var userId = decodedResponse["userId"];
 
-    await _saveJwt(jwt);
-    await _safeStorage.write(key: "userId", value: userId);
+    await _saveLoginDetails(jwt, userId);
+
+    var user = await OnlineDBService.getConnectedUser();
+    _streamController.add(user);
+    connectedUser = user;
+    return user;
   }
 
-  static Future logOut() async {
+  static Future signOut() async {
     /*
-    Log out the user
+    Signs out
     */
-
-    _deleteJwt();
-    await _safeStorage.delete(key: "userId");
+    await _deleteLoginDetails();
+    _streamController.add(null);
+    connectedUser = null;
   }
 }

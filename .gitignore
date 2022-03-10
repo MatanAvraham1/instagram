@@ -1,2 +1,3 @@
-./Server/.env
-./Server/node_modules
+Server/node_modules
+Server/.env
+ServerCopy

@@ -1,71 +1,103 @@
 import 'dart:convert';
 
 class User {
-  String userId;
+  String id;
   String username;
   String fullname;
   String bio;
+  String photoUrl;
   bool isPrivate;
 
   int followers;
-  int following;
+  int followings;
   int posts;
+  int stories;
+
+  bool isFollowedByMe;
+  bool isFollowMe;
+  bool isRequestedByMe;
+
   User({
-    required this.userId,
+    required this.id,
     required this.username,
     required this.fullname,
     required this.bio,
+    required this.photoUrl,
     required this.isPrivate,
     required this.followers,
-    required this.following,
+    required this.followings,
     required this.posts,
+    required this.stories,
+    required this.isFollowedByMe,
+    required this.isFollowMe,
+    required this.isRequestedByMe,
   });
 
   User copyWith({
-    String? userId,
+    String? id,
     String? username,
     String? fullname,
     String? bio,
+    String? photoUrl,
     bool? isPrivate,
     int? followers,
-    int? following,
+    int? followings,
     int? posts,
+    int? stories,
+    bool? isFollowedByMe,
+    bool? isFollowMe,
+    bool? isRequestedByMe,
   }) {
     return User(
-      userId: userId ?? this.userId,
+      id: id ?? this.id,
       username: username ?? this.username,
       fullname: fullname ?? this.fullname,
       bio: bio ?? this.bio,
+      photoUrl: photoUrl ?? this.photoUrl,
       isPrivate: isPrivate ?? this.isPrivate,
       followers: followers ?? this.followers,
-      following: following ?? this.following,
+      followings: followings ?? this.followings,
       posts: posts ?? this.posts,
+      stories: stories ?? this.stories,
+      isFollowedByMe: isFollowedByMe ?? this.isFollowedByMe,
+      isFollowMe: isFollowMe ?? this.isFollowMe,
+      isRequestedByMe: isRequestedByMe ?? this.isRequestedByMe,
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'userId': userId,
+      'id': id,
       'username': username,
       'fullname': fullname,
       'bio': bio,
+      'photoUrl': photoUrl,
       'isPrivate': isPrivate,
       'followers': followers,
-      'following': following,
+      'followings': followings,
       'posts': posts,
+      'stories': stories,
+      'isFollowedByMe': isFollowedByMe,
+      'isFollowMe': isFollowMe,
+      'isRequestedByMe': isRequestedByMe,
     };
   }
 
   factory User.fromMap(Map<String, dynamic> map) {
     return User(
-      userId: map['userId'] ?? '',
+      id: map['id'] ?? '',
       username: map['username'] ?? '',
       fullname: map['fullname'] ?? '',
       bio: map['bio'] ?? '',
+      photoUrl: map['photoUrl'] ?? '',
       isPrivate: map['isPrivate'] ?? false,
       followers: map['followers']?.toInt() ?? 0,
-      following: map['following']?.toInt() ?? 0,
+      followings: map['followings']?.toInt() ?? 0,
       posts: map['posts']?.toInt() ?? 0,
+      stories: map['stories']?.toInt() ?? 0,
+      isFollowedByMe: map['isFollowedByMe'] ?? false,
+      isFollowMe: map['isFollowMe'] ?? false,
+      isRequestedByMe: map['isRequestedByMe'] ?? false,
     );
   }
 
@@ -75,7 +107,7 @@ class User {
 
   @override
   String toString() {
-    return 'User(userId: $userId, username: $username, fullname: $fullname, bio: $bio, isPrivate: $isPrivate, followers: $followers, following: $following, posts: $posts)';
+    return 'User(id: $id, username: $username, fullname: $fullname, bio: $bio, photoUrl: $photoUrl, isPrivate: $isPrivate, followers: $followers, followings: $followings, posts: $posts, stories: $stories, isFollowedByMe: $isFollowedByMe, isFollowMe: $isFollowMe, isRequestedByMe: $isRequestedByMe)';
   }
 
   @override
@@ -83,25 +115,35 @@ class User {
     if (identical(this, other)) return true;
 
     return other is User &&
-        other.userId == userId &&
+        other.id == id &&
         other.username == username &&
         other.fullname == fullname &&
         other.bio == bio &&
+        other.photoUrl == photoUrl &&
         other.isPrivate == isPrivate &&
         other.followers == followers &&
-        other.following == following &&
-        other.posts == posts;
+        other.followings == followings &&
+        other.posts == posts &&
+        other.stories == stories &&
+        other.isFollowedByMe == isFollowedByMe &&
+        other.isFollowMe == isFollowMe &&
+        other.isRequestedByMe == isRequestedByMe;
   }
 
   @override
   int get hashCode {
-    return userId.hashCode ^
+    return id.hashCode ^
         username.hashCode ^
         fullname.hashCode ^
         bio.hashCode ^
+        photoUrl.hashCode ^
         isPrivate.hashCode ^
         followers.hashCode ^
-        following.hashCode ^
-        posts.hashCode;
+        followings.hashCode ^
+        posts.hashCode ^
+        stories.hashCode ^
+        isFollowedByMe.hashCode ^
+        isFollowMe.hashCode ^
+        isRequestedByMe.hashCode;
   }
 }

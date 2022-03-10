@@ -1,94 +1,126 @@
-// import 'package:flutter/material.dart';
-// import 'package:instagram/DB.dart';
-// import 'package:instagram/models/post.dart';
-// import 'package:instagram/models/user.dart';
-// import 'package:instagram/screens/home/components/comment_tile.dart';
-// import 'package:instagram/models/comment.dart';
-// import 'package:instagram/services/offline_db_service.dart';
+import 'package:flutter/material.dart';
 
-// class CommentsPage extends StatefulWidget {
-//   final Post post;
+import 'package:instagram/models/comment.dart';
+import 'package:instagram/models/post.dart';
+import 'package:instagram/screens/home/components/comment_tile.dart';
+import 'package:instagram/screens/home/components/loading_indicator.dart';
+import 'package:instagram/services/online_db_service.dart';
 
-//   const CommentsPage({
-//     Key? key,
-//     required this.post,
-//   }) : super(key: key);
+class CommentsPage extends StatefulWidget {
+  final Post post;
 
-//   @override
-//   State<CommentsPage> createState() => _CommentsPageState();
-// }
+  const CommentsPage({
+    Key? key,
+    required this.post,
+  }) : super(key: key);
 
-// class _CommentsPageState extends State<CommentsPage> {
-//   late final ScrollController _scrollController;
+  @override
+  State<CommentsPage> createState() => _CommentsPageState();
+}
 
-//   int commentsToShow = 10;
+class _CommentsPageState extends State<CommentsPage> {
+  final ScrollController _scrollController = ScrollController();
 
-//   @override
-//   void initState() {
-//     _scrollController = ScrollController();
+  List<Comment> comments = [];
 
-//     _scrollController.addListener(() async {
-//       if (_scrollController.position.pixels >=
-//           _scrollController.position.maxScrollExtent - 200) {
-//         setState(() {
-//           commentsToShow += 5;
-//         });
-//       }
-//     });
+  bool _isLoadingMoreComments = false;
+  bool _isLoadingComments = false;
 
-//     super.initState();
-//   }
+  void loadComments() {
+    // Load Comments
+    setState(() {
+      _isLoadingComments = true;
+    });
 
-//   @override
-//   void dispose() {
-//     _scrollController.dispose();
-//     super.dispose();
-//   }
+    OnlineDBService.getComments(
+            widget.post.publisher!.id, widget.post.id, comments.length)
+        .then((value) {
+      setState(() {
+        comments.addAll(value);
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text("Comments"),
-//       ),
-//       body: ListView.builder(
-//         controller: _scrollController,
-//         itemCount: widget.post.ownerComment.isNotEmpty
-//             ? (commentsToShow > widget.post.comments.length
-//                     ? widget.post.comments.length
-//                     : commentsToShow) +
-//                 1
-//             : (commentsToShow > widget.post.comments.length
-//                 ? widget.post.comments.length
-//                 : commentsToShow),
-//         itemBuilder: (context, index) {
-//           late final Comment comment;
-//           late final AppUser commentOwner;
+        _isLoadingComments = false;
+      });
+    });
+  }
 
-//           if (widget.post.ownerComment.isNotEmpty && index == 0) {
-//             commentOwner = OfflineDBService.getUserByUid(widget.post.ownerUid);
-//             comment = Comment(
-//                 comment: widget.post.ownerComment,
-//                 publishedAt: widget.post.publishedAt,
-//                 postUid: widget.post.postUid,
-//                 ownerUid: widget.post.ownerUid,
-//                 likes: 0);
-//           } else {
-//             commentOwner = users
-//                 .where((element) =>
-//                     element.uid == widget.post.comments[index - 1].ownerUid)
-//                 .first;
-//             comment = widget.post.comments[index - 1];
-//           }
+  void loadMoreComments() {
+    if (_isLoadingMoreComments) {
+      return;
+    }
 
-//           return CommentTile(
-//             commentOwner: commentOwner,
-//             comment: comment,
-//             post: widget.post,
-//             isFirstCommentInList: index == 0,
-//           );
-//         },
-//       ),
-//     );
-//   }
-// }
+    if (_scrollController.position.extentAfter < 500) {
+      setState(() {
+        _isLoadingMoreComments = true;
+      });
+      OnlineDBService.getComments(
+              widget.post.publisher!.id, widget.post.id, comments.length)
+          .then((value) {
+        setState(() {
+          comments.addAll(value);
+
+          _isLoadingMoreComments = false;
+        });
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    loadComments();
+    _scrollController.addListener(loadMoreComments);
+
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(
+          title: const Text("Comments"),
+        ),
+        body: _isLoadingComments
+            ? const Padding(
+                padding: EdgeInsets.only(top: 70),
+                child: LoadingIndicator(
+                  radius: 20,
+                  title: "Loading Comments",
+                  strokeWidth: 2,
+                ),
+              )
+            : ListView.builder(
+                controller: _scrollController,
+                itemCount: comments.length + 2,
+                itemBuilder: (context, index) => index == comments.length + 1
+                    ? _isLoadingMoreComments
+                        ? const LoadingIndicator(
+                            radius: 25,
+                            title: "Loading Comments",
+                            strokeWidth: 2,
+                          )
+                        : Container()
+                    : index == 0
+                        ? CommentTile(
+                            postPublisherId: widget.post.publisher!.id,
+                            comment: Comment(
+                                publisher: widget.post.publisher!,
+                                isLikedByMe: false,
+                                comment: widget.post.publisherComment,
+                                id: widget.post.id,
+                                postId: widget.post.id,
+                                publishedAt: widget.post.publishedAt,
+                                likes: widget.post.likes),
+                            isOwnerComment: true,
+                          )
+                        : CommentTile(
+                            postPublisherId: widget.post.publisher!.id,
+                            comment: comments[index - 1],
+                            isOwnerComment: false,
+                          )));
+  }
+}
