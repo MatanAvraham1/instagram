@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:instagram/presentation/my_flutter_app_icons.dart';
+import 'package:instagram/themes/themes.dart';
 import 'package:material_floating_search_bar/material_floating_search_bar.dart';
 
 import 'package:instagram/classes/number_helper.dart';
@@ -15,6 +16,7 @@ import 'package:instagram/screens/home/components/posts_page.dart';
 import 'package:instagram/screens/home/components/story_tile.dart';
 import 'package:instagram/services/auth_service.dart';
 import 'package:instagram/services/online_db_service.dart';
+import 'package:responsive_builder/responsive_builder.dart';
 
 class ProfilePage extends StatefulWidget {
   final User user;
@@ -120,241 +122,69 @@ class _ProfilePageState extends State<ProfilePage>
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    super.build(context);
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(user.username),
-        leadingWidth: user == connectedUser && widget.inPageView ? 16 : null,
-        leading: user == connectedUser ? const Icon(Icons.lock_outline) : null,
-        actions: user == connectedUser && widget.inPageView
-            ? [
-                CircularButton(
-                    onPressed: () {},
-                    icon: const Icon(
-                      MyFlutterApp.add_outlined,
-                      size: 9,
-                    )),
-                CircularButton(
-                    onPressed: () {
-                      AdaptiveTheme.of(context).toggleThemeMode();
-                    },
-                    icon: const Icon(Icons.menu))
-              ]
-            : [
-                CircularButton(
-                  onPressed: () {},
-                  icon: const Icon(Icons.notifications_outlined),
-                ),
-                CircularButton(
-                    onPressed: () {}, icon: const Icon(Icons.more_vert))
-              ],
-      ),
-      body: Center(
-        child: SizedBox(
-          width: 700,
-          child: RefreshIndicator(
-            onRefresh: () async {
-              followers = [];
-              followings = [];
-              posts = [];
-
-              var lastUser = user;
-              user = await OnlineDBService.getUserById(user.id);
-              if (lastUser == connectedUser) {
-                AuthSerivce.connectedUser = user;
-                connectedUser = user;
-              }
-
-              await loadPosts();
-              setState(() {});
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-              child: ListView(
-                children: [
-                  _buildInfo(),
-                  _buildButtonsBar(),
-                  if (!user.isPrivate ||
-                      (user.isPrivate && user.isFollowedByMe))
-                    Column(
-                      children: [
-                        _buildHighliglts(context),
-                        _buildPostsGridView()
-                      ],
-                    ),
-                ],
-              ),
+  Widget _buildInfo() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        // SizedBox(height: 95, width: 20, child: StoryTile(owner: user)),
+        Column(
+          children: [
+            CircleAvatar(
+              radius: 40,
+              backgroundImage: NetworkImage(user.photoUrl.isNotEmpty
+                  ? user.photoUrl
+                  : "https://thumbs.dreamstime.com/b/user-icon-trendy-flat-style-isolated-grey-background-user-symbol-user-icon-trendy-flat-style-isolated-grey-background-123663211.jpg"),
             ),
-          ),
+            const SizedBox(
+              height: 5,
+            ),
+            Text(
+              user.fullname,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+            ),
+          ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildPostsGridView() {
-    if (_isLoadingPosts) {
-      return const Padding(
-        padding: EdgeInsets.only(top: 70),
-        child: LoadingIndicator(
-          radius: 20,
-          title: "Loading Posts",
-          strokeWidth: 2,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              NumberHelper.getShortNumber(user.posts),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 3),
+            const Text(
+              'Posts',
+              style: TextStyle(fontSize: 16),
+            ),
+          ],
         ),
-      );
-    }
-
-    return Column(
-      children: [
-        const SizedBox(
-          height: 25,
-        ),
-        DefaultTabController(
-          length: 2,
-          initialIndex: 0,
-          child: Column(
-            children: [
-              const TabBar(tabs: [
-                Tab(
-                  icon: Icon(Icons.table_rows_sharp),
-                ),
-                Tab(
-                  icon: Icon(Icons.tag),
-                )
-              ]),
-              SizedBox(
-                height: 350,
-                child: TabBarView(children: [
-                  GridView.count(
-                    controller: _postsScrollController,
-                    crossAxisCount: 3,
-                    children: List.generate(
-                        posts.length + 1,
-                        (index) => index == posts.length
-                            ? _isLoadingMorePosts
-                                ? const LoadingIndicator(
-                                    radius: 25,
-                                    title: "Loading Posts",
-                                    strokeWidth: 2,
-                                  )
-                                : Container()
-                            : InkWell(
-                                onTap: () {
-                                  Navigator.of(context).push(MaterialPageRoute(
-                                    builder: (context) => PostsPage(
-                                      initialPostIndex: index,
-                                      posts: posts,
-                                      owner: user,
-                                    ),
-                                  ));
-                                },
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                      image: DecorationImage(
-                                          fit: BoxFit.cover,
-                                          image: NetworkImage(
-                                              posts[index].photosUrls.first))),
-                                ),
-                              )),
-                  ),
-                  GridView.count(
-                    crossAxisCount: 3,
-                    children: List.generate(
-                        20,
-                        (index) => Container(
-                              color: Colors.accents[
-                                  Random().nextInt(Colors.accents.length)],
-                            )),
-                  ),
-                ]),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Column _buildHighliglts(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(
-          height: 15,
-        ),
-        if (user == connectedUser)
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              Text(
-                "Story Highlighlts",
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-              SizedBox(
-                height: 4,
-              ),
-              Text(
-                "Keep your favorite stories on your profile",
-              ),
-              SizedBox(
-                height: 15,
-              ),
-            ],
-          ),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: List.generate(
-                10,
-                (index) => Padding(
-                      padding: const EdgeInsets.only(right: 25.0),
-                      child: Container(
-                        child: index > 0
-                            ? null
-                            : const Center(
-                                child: Icon(
-                                  Icons.add,
-                                  size: 30,
-                                ),
-                              ),
-                        height: 60,
-                        width: 60,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: index > 0
-                              ? Theme.of(context).canvasColor
-                              : Theme.of(context).scaffoldBackgroundColor,
-                          border: index > 0
-                              ? null
-                              : Border.all(
-                                  width: 1.2,
-                                  color: Theme.of(context).iconTheme.color!),
-                        ),
-                      ),
-                    )),
-          ),
-        ),
+        _buildFollowings(),
+        _buildFollowers(),
       ],
     );
   }
 
   Widget _buildButtonsBar() {
     List<Widget> arrowButton = [
-      SizedBox(
-        height: 40,
-        width: 40,
+      const SizedBox(width: 6),
+      ConstrainedBox(
+        constraints: const BoxConstraints(
+          minHeight: 40,
+          maxHeight: 40,
+          minWidth: 40,
+          maxWidth: 40,
+        ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(6),
           child: MaterialButton(
             padding: EdgeInsets.zero,
             onPressed: () {},
-            shape: Border.all(color: Colors.white, width: 0.3),
-            child: const Icon(
+            shape: Border.all(
+                color: Theme.of(context).iconTheme.color!, width: 0.3),
+            child: Icon(
               Icons.arrow_drop_down,
               size: 20,
-              color: Colors.white,
+              color: Theme.of(context).iconTheme.color!,
             ),
           ),
         ),
@@ -364,38 +194,61 @@ class _ProfilePageState extends State<ProfilePage>
 
     if (user == connectedUser) {
       buttons = [
-        SizedBox(
-          height: 40,
-          width: 400,
-          child: CustomButton(
-            expanded: true,
-            isOutlined: true,
-            enableWhen: () => true,
-            borderRadius: 12,
-            text: 'Edit Profile',
-            onPressed: () async {},
+        ConstrainedBox(
+          constraints: const BoxConstraints(
+            minHeight: 40,
+            maxHeight: 40,
+            minWidth: 100,
+            maxWidth: 500,
+          ),
+          child: SizedBox(
+            width: MediaQuery.of(context).size.width * 0.8,
+            child: CustomButton(
+              expanded: true,
+              isOutlined: true,
+              enableWhen: () => true,
+              borderRadius: 6,
+              text: 'Edit Profile',
+              onPressed: () async {},
+            ),
           ),
         )
       ];
     } else {
       buttons = [
-        Expanded(
-          flex: 5,
-          child: _buildFollowButon(),
+        ConstrainedBox(
+          constraints: const BoxConstraints(
+            minHeight: 40,
+            maxHeight: 40,
+            minWidth: 150,
+            maxWidth: 300,
+          ),
+          child: SizedBox(
+            width: MediaQuery.of(context).size.width * 0.4,
+            child: _buildFollowButon(),
+          ),
         ),
         const SizedBox(
           width: 7,
         ),
-        Expanded(
-          flex: 5,
-          child: CustomButton(
-            strokeHeight: 20,
-            borderRadius: 14,
-            expanded: true,
-            isOutlined: true,
-            enableWhen: () => true,
-            text: 'Message',
-            onPressed: () async {},
+        ConstrainedBox(
+          constraints: const BoxConstraints(
+            minHeight: 40,
+            maxHeight: 40,
+            minWidth: 150,
+            maxWidth: 300,
+          ),
+          child: SizedBox(
+            width: MediaQuery.of(context).size.width * 0.4,
+            child: CustomButton(
+              strokeHeight: 20,
+              borderRadius: 6,
+              expanded: true,
+              isOutlined: true,
+              enableWhen: () => true,
+              text: 'Message',
+              onPressed: () async {},
+            ),
           ),
         ),
       ];
@@ -407,14 +260,16 @@ class _ProfilePageState extends State<ProfilePage>
         Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [...buttons, ...arrowButton]),
+        const SizedBox(height: 20),
       ],
     );
   }
 
   CustomButton _buildFollowButon() {
     return CustomButton(
+        textColor: !user.isFollowedByMe ? Colors.white : null,
         strokeHeight: 20,
-        borderRadius: 14,
+        borderRadius: 6,
         expanded: true,
         enableWhen: () => true,
         isOutlined: user.isRequestedByMe ? true : user.isFollowedByMe,
@@ -445,50 +300,283 @@ class _ProfilePageState extends State<ProfilePage>
         });
   }
 
-  Widget _buildInfo() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            SizedBox(height: 95, width: 95, child: StoryTile(owner: user)),
-            CircleAvatar(
-              radius: 40,
-              backgroundImage: NetworkImage(user.photoUrl.isNotEmpty
-                  ? user.photoUrl
-                  : "https://thumbs.dreamstime.com/b/user-icon-trendy-flat-style-isolated-grey-background-user-symbol-user-icon-trendy-flat-style-isolated-grey-background-123663211.jpg"),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  NumberHelper.getShortNumber(user.posts),
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 3),
-                const Text(
-                  'Posts',
-                  style: TextStyle(fontSize: 16),
-                ),
-              ],
-            ),
-            _buildFollowings(),
-            _buildFollowers(),
-          ],
-        ),
-        Padding(
-          padding: const EdgeInsets.only(left: 16, top: 10),
-          child: Text(
-            user.fullname,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+
+    return Scaffold(
+      appBar: PreferredSize(
+        preferredSize: const Size(double.infinity, kToolbarHeight),
+        child: Container(
+          height: kToolbarHeight,
+          color: Theme.of(context).primaryColor,
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 700),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      user == connectedUser
+                          ? const Icon(
+                              Icons.lock_outline,
+                              color: Colors.white,
+                            )
+                          : const BackButton(
+                              color: Colors.white,
+                            ),
+                      Text(
+                        user.username,
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 16),
+                      ),
+                    ],
+                  ),
+                  user == connectedUser && widget.inPageView
+                      ? Row(
+                          children: [
+                            CircularButton(
+                                onPressed: () {},
+                                icon: const Icon(
+                                  MyFlutterApp.add_outlined,
+                                  color: Colors.white,
+                                  size: 9,
+                                )),
+                            CircularButton(
+                                onPressed: () {
+                                  AdaptiveTheme.of(context).toggleThemeMode();
+                                },
+                                icon:
+                                    const Icon(Icons.menu, color: Colors.white))
+                          ],
+                        )
+                      : Row(children: [
+                          CircularButton(
+                            onPressed: () {},
+                            icon: const Icon(Icons.notifications_outlined,
+                                color: Colors.white),
+                          ),
+                          CircularButton(
+                              onPressed: () {
+                                AdaptiveTheme.of(context).toggleThemeMode();
+                              },
+                              icon: const Icon(Icons.more_vert,
+                                  color: Colors.white))
+                        ]),
+                ],
+              ),
             ),
           ),
         ),
-      ],
+      ),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 700),
+          child: RefreshIndicator(
+            onRefresh: () async {
+              followers = [];
+              followings = [];
+              posts = [];
+
+              var lastUser = user;
+              user = await OnlineDBService.getUserById(user.id);
+              if (lastUser == connectedUser) {
+                AuthSerivce.connectedUser = user;
+                connectedUser = user;
+              }
+
+              await loadPosts();
+              setState(() {});
+            },
+            child: SingleChildScrollView(
+              scrollDirection: Axis.vertical,
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 500),
+                        child: _buildInfo()),
+                  ),
+                  _buildButtonsBar(),
+                  if (!user.isPrivate ||
+                      (user.isPrivate && user.isFollowedByMe))
+                    Column(
+                      children: [
+                        ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 600),
+                            child: _buildHighliglts(context)),
+                        _buildPostsGridView()
+                      ],
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPostsGridView() {
+    if (_isLoadingPosts) {
+      return const Padding(
+        padding: EdgeInsets.only(top: 70),
+        child: LoadingIndicator(
+          radius: 20,
+          title: "Loading Posts",
+          strokeWidth: 2,
+        ),
+      );
+    }
+
+    return ResponsiveBuilder(builder: (context, sizingInformation) {
+      return Column(
+        children: [
+          const SizedBox(
+            height: 25,
+          ),
+          DefaultTabController(
+            length: 2,
+            initialIndex: 0,
+            child: Column(
+              children: [
+                TabBar(tabs: [
+                  Tab(
+                    icon: Icon(
+                      Icons.table_rows_sharp,
+                      color: isLightMode(context) ? Colors.blue : null,
+                    ),
+                  ),
+                  Tab(
+                    icon: Icon(
+                      Icons.tag,
+                      color: isLightMode(context) ? Colors.blue : null,
+                    ),
+                  )
+                ]),
+                SizedBox(
+                  height: 350,
+                  child: TabBarView(children: [
+                    GridView.count(
+                      controller: _postsScrollController,
+                      crossAxisCount: 3,
+                      children: List.generate(
+                          posts.length + 1,
+                          (index) => index == posts.length
+                              ? _isLoadingMorePosts
+                                  ? const LoadingIndicator(
+                                      radius: 25,
+                                      title: "Loading Posts",
+                                      strokeWidth: 2,
+                                    )
+                                  : Container()
+                              : InkWell(
+                                  onTap: () {
+                                    Navigator.of(context)
+                                        .push(MaterialPageRoute(
+                                      builder: (context) => PostsPage(
+                                        initialPostIndex: index,
+                                        posts: posts,
+                                        owner: user,
+                                      ),
+                                    ));
+                                  },
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                        image: DecorationImage(
+                                            fit: BoxFit.cover,
+                                            image: NetworkImage(posts[index]
+                                                .photosUrls
+                                                .first))),
+                                  ),
+                                )),
+                    ),
+                    GridView.count(
+                      crossAxisCount: sizingInformation.isMobile ? 3 : 4,
+                      children: List.generate(
+                          20,
+                          (index) => Container(
+                                color: Colors.accents[
+                                    Random().nextInt(Colors.accents.length)],
+                              )),
+                    ),
+                  ]),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    });
+  }
+
+  Widget _buildHighliglts(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(
+            height: 15,
+          ),
+          if (user == connectedUser)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Text(
+                  "Story Highlighlts",
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                SizedBox(
+                  height: 4,
+                ),
+                Text(
+                  "Keep your favorite stories on your profile",
+                ),
+                SizedBox(
+                  height: 15,
+                ),
+              ],
+            ),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: List.generate(
+                  10,
+                  (index) => Padding(
+                        padding: const EdgeInsets.only(right: 25.0),
+                        child: Container(
+                          child: index > 0
+                              ? null
+                              : const Center(
+                                  child: Icon(
+                                    Icons.add,
+                                    size: 30,
+                                  ),
+                                ),
+                          height: 60,
+                          width: 60,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: index > 0
+                                ? isLightMode(context)
+                                    ? Colors.grey[300]
+                                    : Colors.grey[850]
+                                : Theme.of(context).scaffoldBackgroundColor,
+                            border: index > 0
+                                ? null
+                                : Border.all(
+                                    width: 1.2,
+                                    color: Theme.of(context).iconTheme.color!),
+                          ),
+                        ),
+                      )),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

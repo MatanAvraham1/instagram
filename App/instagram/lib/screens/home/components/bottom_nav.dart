@@ -1,4 +1,6 @@
+import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:instagram/themes/themes.dart';
 
 class BottomNav extends StatefulWidget {
   final void Function(int) onTap;
@@ -122,7 +124,9 @@ class _BottomNavItemState extends State<BottomNavItem> {
             color: widget.isSelected
                 ? Theme.of(context).bottomNavigationBarTheme.selectedItemColor
                 : isHover
-                    ? Colors.blue[50]
+                    ? isLightMode(context)
+                        ? Colors.blue[50]
+                        : Colors.grey[900]
                     : Theme.of(context)
                         .bottomNavigationBarTheme
                         .unselectedItemColor,

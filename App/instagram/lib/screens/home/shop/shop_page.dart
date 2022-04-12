@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:material_floating_search_bar/material_floating_search_bar.dart';
+import 'package:responsive_builder/responsive_builder.dart';
 
 class ShopPage extends StatefulWidget {
   const ShopPage({Key? key}) : super(key: key);
@@ -47,15 +48,17 @@ class _ShopPageState extends State<ShopPage>
         ),
       ],
       controller: floatingSearchBarController,
-      body: GridView.count(
-        crossAxisCount: 3,
-        children: List.generate(
-            30,
-            (index) => Container(
-                  color:
-                      Colors.accents[Random().nextInt(Colors.accents.length)],
-                )),
-      ),
+      body: ResponsiveBuilder(builder: (context, sizingInformation) {
+        return GridView.count(
+          crossAxisCount: sizingInformation.isMobile ? 3 : 4,
+          children: List.generate(
+              30,
+              (index) => Container(
+                    color:
+                        Colors.accents[Random().nextInt(Colors.accents.length)],
+                  )),
+        );
+      }),
       hint: 'Search...',
       scrollPadding: const EdgeInsets.only(top: 16, bottom: 56),
       transitionDuration: const Duration(milliseconds: 800),

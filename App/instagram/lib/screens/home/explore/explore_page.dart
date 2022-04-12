@@ -4,6 +4,7 @@ import 'package:instagram/models/user_model.dart';
 import 'package:instagram/screens/home/profile/profile_page.dart';
 import 'package:instagram/services/online_db_service.dart';
 import 'package:material_floating_search_bar/material_floating_search_bar.dart';
+import 'package:responsive_builder/responsive_builder.dart';
 
 class ExplorePage extends StatefulWidget {
   const ExplorePage({Key? key}) : super(key: key);
@@ -51,14 +52,16 @@ class _ExplorePageState extends State<ExplorePage>
         ),
       ],
       controller: floatingSearchBarController,
-      body: GridView.count(
-        crossAxisCount: 3,
-        children: List.generate(
-            30,
-            (index) => Container(
-                  color:
-                      Colors.accents[Random().nextInt(Colors.accents.length)],
-                )),
+      body: ResponsiveBuilder(
+        builder: (context, sizingInformation) => GridView.count(
+          crossAxisCount: sizingInformation.isMobile ? 3 : 4,
+          children: List.generate(
+              30,
+              (index) => Container(
+                    color:
+                        Colors.accents[Random().nextInt(Colors.accents.length)],
+                  )),
+        ),
       ),
 
       hint: 'Search...',
@@ -117,6 +120,8 @@ class _ExplorePageState extends State<ExplorePage>
                             return Column(
                                 children: [snapshot.data!]
                                     .map((e) => ListTile(
+                                          contentPadding:
+                                              const EdgeInsets.all(8),
                                           onTap: () {
                                             Navigator.of(context)
                                                 .push(MaterialPageRoute(
@@ -130,8 +135,10 @@ class _ExplorePageState extends State<ExplorePage>
                                                 color: Colors.black),
                                           ),
                                           leading: CircleAvatar(
-                                            backgroundImage:
-                                                NetworkImage(e.photoUrl),
+                                            backgroundImage: NetworkImage(e
+                                                    .photoUrl.isNotEmpty
+                                                ? e.photoUrl
+                                                : "https://thumbs.dreamstime.com/b/user-icon-trendy-flat-style-isolated-grey-background-user-symbol-user-icon-trendy-flat-style-isolated-grey-background-123663211.jpg"),
                                           ),
                                         ))
                                     .toList());
