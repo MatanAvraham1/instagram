@@ -10,63 +10,65 @@ const { errorCodes } = require('../../errorCodes')
 
 
 // Returns the posts of user's followings by  date
-// postsRouter.get('/feed', authenticateToken, doesHasPermission, async (req, res) => {
-//     try {
-//         const startFromPostIndex = req.query.startFrom
-//         const endOnPostIndex = startFromPostIndex + 15
-//         if (startFromPostIndex === undefined) {
-//             return res.sendStatus(400)
-//         }
+postsRouter.get('/feed', authenticateToken, doesHasPermission, async (req, res) => {
+    try {
+        return res.json([]) // TODO : fix that
 
-//         let includePublisherInResponse = false
-//         if (req.query.includePublisherInResponse) {
-//             includePublisherInResponse = true
-//         }
+        const startFromPostIndex = req.query.startFrom
+        const endOnPostIndex = startFromPostIndex + 15
+        if (startFromPostIndex === undefined) {
+            return res.sendStatus(400)
+        }
 
-//         let response = []
-//         const posts = await getFeedPosts(req.params.userId)
+        let includePublisherInResponse = false
+        if (req.query.includePublisherInResponse) {
+            includePublisherInResponse = true
+        }
 
-//         for (const post of posts.slice(startFromPostIndex, endOnPostIndex > posts.length ? posts.length : endOnPostIndex)) {
+        let response = []
+        const posts = await getFeedPosts(req.params.userId)
 
-//             const _post = {
-//                 'photosUrls': post.photosUrls,
-//                 'comments': post.comments.length,
-//                 'taggedUsers': post.taggedUsers,
-//                 'publishedAt': post.publishedAt,
-//                 'likes': post.likes.length,
-//                 'publisherComment': post.publisherComment,
-//                 'location': post.location,
-//                 'isLikedByMe': post.likes.includes(req.userId),
-//                 'id': post._id
-//             }
-//             if (includePublisherInResponse) {
-//                 const user = await userModel.findOne({ "posts._id": post._id })
-//                 _post['publisher'] = {
-//                     username: user.username,
-//                     fullname: user.fullname,
-//                     bio: user.bio,
-//                     photoUrl: user.photoUrl,
-//                     isPrivate: user.isPrivate,
-//                     followers: user.followers.length,
-//                     followings: user.followings.length,
-//                     posts: user.posts.length,
-//                     stories: (await getLast24HoursStories(user._id, false)).length,
-//                     isFollowMe: user.followings.includes(req.userId),
-//                     isFollowedByMe: user.followers.includes(req.userId),
-//                     isRequestedByMe: user.followRequests.includes(req.userId),
-//                     id: user._id
-//                 }
-//             }
-//             response.push(_post)
-//         }
+        for (const post of posts.slice(startFromPostIndex, endOnPostIndex > posts.length ? posts.length : endOnPostIndex)) {
 
-//         return res.status(200).json(response)
-//     }
-//     catch (err) {
-//         console.log(err)
-//         res.sendStatus(500)
-//     }
-// })
+            const _post = {
+                'photosUrls': post.photosUrls,
+                'comments': post.comments.length,
+                'taggedUsers': post.taggedUsers,
+                'publishedAt': post.publishedAt,
+                'likes': post.likes.length,
+                'publisherComment': post.publisherComment,
+                'location': post.location,
+                'isLikedByMe': post.likes.includes(req.userId),
+                'id': post._id
+            }
+            if (includePublisherInResponse) {
+                const user = await userModel.findOne({ "posts._id": post._id })
+                _post['publisher'] = {
+                    username: user.username,
+                    fullname: user.fullname,
+                    bio: user.bio,
+                    photoUrl: user.photoUrl,
+                    isPrivate: user.isPrivate,
+                    followers: user.followers.length,
+                    followings: user.followings.length,
+                    posts: user.posts.length,
+                    stories: (await getLast24HoursStories(user._id, false)).length,
+                    isFollowMe: user.followings.includes(req.userId),
+                    isFollowedByMe: user.followers.includes(req.userId),
+                    isRequestedByMe: user.followRequests.includes(req.userId),
+                    id: user._id
+                }
+            }
+            response.push(_post)
+        }
+
+        return res.status(200).json(response)
+    }
+    catch (err) {
+        console.log(err)
+        res.sendStatus(500)
+    }
+})
 
 postsRouter.get('/', authenticateToken, doesHasPermission, async (req, res) => {
     /*
@@ -77,7 +79,7 @@ postsRouter.get('/', authenticateToken, doesHasPermission, async (req, res) => {
     */
 
     try {
-        const startFromPostIndex = req.query.startFrom
+        const startFromPostIndex = parseInt(req.query.startFrom)
         if (startFromPostIndex === undefined || !Number.isInteger(startFromPostIndex)) {
             return res.sendStatus(400)
         }

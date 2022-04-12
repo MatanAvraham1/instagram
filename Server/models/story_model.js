@@ -1,8 +1,6 @@
-const { bool, boolean } = require("joi")
 const Joi = require("joi")
 const mongoose = require("mongoose")
-const { getFeedPosts } = require("./post_model")
-const { getUserById, updateUser, userErrors, userModel, getFollowings, doesUserExists } = require("./user_model")
+const { getUserById, userErrors, userModel, doesUserExists, getFollowings } = require("./user_model")
 
 const storyErrors = {
     storyNotExist: "story doesn't exist!",
@@ -62,7 +60,7 @@ async function doesStoryExists(storyId) {
     Returns if story exists true/false
     */
 
-    if (await userModel.findById(storyId, { "_id": 1 }) === null) {
+    if (await storyModel.findById(storyId, { "_id": 1 }) === null) {
         return false
     }
     else {
@@ -253,21 +251,19 @@ async function whichOfMyFollowingsPublishedStories(userId, startUserIndex, quant
 
     try {
 
+        const response = []
 
-        // storyModel.w
-        let response = []
+        const followings = await getFollowings(userId, startUserIndex, quantity)
 
-        for (const following of await getFollowings(userId, startUserIndex, quantity, false, true)) {
+        for (const following of followings) {
             if ((await getLast24HoursStories(following._id, false, 0, 1)).length > 0) {
                 response.push(following)
             }
-
-            return response
         }
+
+        return response
     }
     catch (err) {
-
-
         throw err
     }
 
@@ -278,5 +274,21 @@ function getHoursDifference(date1, date2) {
 }
 
 
+async function deleteStoriesOf(userId) {
+    /*
+    Deletes all stories uploaded by [userId]
+    */
 
-module.exports = { getViewers, storyModel, addViewer, getHoursDifference, addStory, getStory, whichOfMyFollowingsPublishedStories, storyErrors, deleteStory, isStoryValidate, getStoriesArchive, getLast24HoursStories }
+    await storyModel.deleteMany({ owner: userId })
+}
+
+async function removeViewsOf(userId) {
+    /*
+    Removes all the views of [userId]
+    */
+
+    await storyModel.updateMany({ viewers: { $in: [userId] }, $pull: { viewers: userId } })
+}
+
+
+module.exports = { deleteStoriesOf, removeViewsOf, getViewers, addViewer, getHoursDifference, addStory, getStory, whichOfMyFollowingsPublishedStories, storyErrors, deleteStory, isStoryValidate, getStoriesArchive, getLast24HoursStories }

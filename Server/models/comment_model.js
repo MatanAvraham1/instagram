@@ -175,7 +175,7 @@ async function isCommentLiked(commentId, whoLikerId) {
 
     try {
 
-        if (!await doesCommentExist(postId)) {
+        if (!await doesCommentExist(commentId)) {
             throw commentErrors.commentNotExist
         }
 

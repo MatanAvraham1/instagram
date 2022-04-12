@@ -81,7 +81,7 @@ commentRouter.get('/', authenticateToken, doesHasPermission, async (req, res) =>
     const howMuchCommentToReturn = 30
 
     try {
-        const startFromCommentIndex = req.query.startFrom
+        const startFromCommentIndex = parseInt(req.query.startFrom)
         if (startFromCommentIndex === undefined || !Number.isInteger(startFromCommentIndex)) {
             return res.sendStatus(400)
         }

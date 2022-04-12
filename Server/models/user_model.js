@@ -1,8 +1,8 @@
 const Joi = require('joi')
 const mongoose = require('mongoose')
 const bcrypt = require('bcryptjs')
-const { storyModel } = require('./story_model')
-const { postModel } = require('./post_model')
+// const { deletePostsOf } = require('./post_model')
+// const { deleteStoriesOf, removeViewsOf } = require('./story_model')
 
 const userErrors = {
     userNotExistsError: "user doesn't exists!",
@@ -126,6 +126,9 @@ async function login(data) {
     try {
         if (isLoginValid(data)) {
             const user = await userModel.findOne({ username: data.username }, { password: 1 })
+            if (user == null) {
+                throw userErrors.wrongLoginDetailsError
+            }
 
             if (await bcrypt.compare(data.password, user.password)) {
                 return user._id
@@ -241,9 +244,11 @@ async function deleteUser(userId) {
 
         await userModel.findByIdAndDelete(userId)
         await userModel.updateMany({ followers: { $in: [userId] } }, { $pull: { followers: userId } })
-        await postModel.deleteMany({ owners: { $in: [userId] } })
-        await storyModel.deleteMany({ owner: userId })
-        await storyModel.updateMany({ viewers: { $in: [userId] }, $pull: { viewers: userId } })
+
+        await deletePostsOf(userId)
+
+        await deleteStoriesOf(userId)
+        await removeViewsOf(userId)
 
         //TODO: add chats and messages
     }
@@ -666,19 +671,16 @@ async function getFollowers(userId, startFollowerIndex, quantity, hidePrivateFie
     }
 }
 
-async function getFollowings(userId, startFollowingIndex, quantity, hidePrivateFields = false, hideOwnerFields = true) {
+async function getFollowings(userId, startFollowingIndex, quantity) {
     /*
    Returns the users which followed by the user
 
    param 1: the id of the user
    param 2: from which follower to start
    param 3: how much followers to return
-   param 4: hide the private fields of the followers? (like stories length)
-   param 5: hide the owner field of the followers? (like followRequests length)
    */
 
     try {
-
         if (! await doesUserExists(userId)) {
             throw userErrors.userNotExistsError
         }
@@ -687,7 +689,7 @@ async function getFollowings(userId, startFollowingIndex, quantity, hidePrivateF
 
         const followingsId = await userModel.aggregate([{ $match: { followers: { $in: [userId] } } }, { $project: { _id: 1 } }]).skip(startFollowingIndex).limit(quantity);
         for (const { _id } of followingsId) {
-            followings.push(await getUserById(_id, hidePrivateFields, hideOwnerFields))
+            followings.push(await getUserById(_id, false, true))
         }
 
         return followings
@@ -697,4 +699,4 @@ async function getFollowings(userId, startFollowingIndex, quantity, hidePrivateF
     }
 }
 
-module.exports = { doesUserExists, isRequested, isFollow, getFollowingRequests, getFollowRequests, getFollowers, getFollowings, userErrors, userModel, login, createUser, updateUser, deleteUser, doesUsernameAlreadyUsed, getUserById, getUserByUsername, getUserByFullname, followUser, unfollowUser, acceptFollowRequest, deleteFollowRequest, clearFollowRequests, clearFollowingRequests }
+module.exports = { userErrors, userModel, login, createUser, updateUser, deleteUser, doesUserExists, doesUsernameAlreadyUsed, getUserById, getUserByUsername, getUserByFullname, isFollow, isRequested, followUser, unfollowUser, acceptFollowRequest, deleteFollowRequest, clearFollowRequests, clearFollowingRequests, getFollowRequests, getFollowingRequests, getFollowers, getFollowings }

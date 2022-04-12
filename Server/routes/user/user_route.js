@@ -5,7 +5,6 @@ const mongoose = require('mongoose')
 const { userErrors, getUserById, getUserByUsername, getUserByFullname, deleteUser, followUser, unfollowUser, acceptFollowRequest, deleteFollowRequest, getFollowers, isFollow, isRequested, getFollowings, updateUser } = require('../../models/user_model')
 const { authenticateToken } = require('./auth_route')
 const { doesRequesterOwn, doesHasPermission } = require('../../helpers/privacyHelper')
-const { getLast24HoursStories } = require('../../models/story_model')
 const { errorCodes } = require('../../errorCodes')
 
 
@@ -26,6 +25,7 @@ userRouter.get('/:userToSearch', authenticateToken, async (req, res) => {
     // TODO: Checks if req.query.searchBy string\idObject\etc..
 
     try {
+        let isOwner
         let user
 
         if (req.query.searchBy === 'byUsername') {
@@ -46,12 +46,23 @@ userRouter.get('/:userToSearch', authenticateToken, async (req, res) => {
             delete user.followRequests
             delete user.followingRequests
         }
+        else {
+            isOwner = true
+        }
+
         // If the requester doesn't follow the user
-        if (user.isPrivate && !await isFollow(req.userId, req.params.userId)) {
+        const isFollowedByMe = await isFollow(req.userId, req.params.userId)
+        if (user.isPrivate && !isFollowedByMe) {
             delete user.stories
         }
 
-        return res.status(200).json(user)
+        return res.status(200).json({
+            user: user,
+            isFollowedByMe: isOwner ? false : isFollowedByMe,
+            isFollowMe: isOwner ? false : await isFollow(user._id.toString(), req.userId),
+            isRequestedByMe: isOwner ? false : await isRequested(req.userId, user._id.toString()),
+            isRequestMe: isOwner ? false : await isRequested(user._id.toString(), req.userId),
+        })
     }
     catch (err) {
 
@@ -140,7 +151,7 @@ userRouter.get('/:userId/followings', authenticateToken, doesHasPermission, asyn
 
         const response = []
 
-        const followings = await getFollowings(req.params.userId, startFromUserIndex, howMuchUsersToReturn, false, true)
+        const followings = await getFollowings(req.params.userId, startFromUserIndex, howMuchUsersToReturn)
         for (const following of followings) {
             response.push({
                 user: following,

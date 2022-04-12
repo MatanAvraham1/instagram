@@ -246,6 +246,14 @@ async function isPostLiked(postId, whoLikerId) {
     }
 }
 
+async function deletePostsOf(userId) {
+    /*
+    Deletes all posts uploaded by [userId]
+    */
+
+    await postModel.deleteMany({ owners: { $in: [userId] } })
+}
+
 async function getFeedPosts(requesterId) {
     /*
     Returns the posts of the user's followings by date
@@ -277,4 +285,4 @@ async function getFeedPosts(requesterId) {
 }
 
 
-module.exports = { doesPostExist, isPostLiked, postModel, getFeedPosts, unlikePost, likePost, deletePost, addPost, getPosts, postErrors, getPostById }
+module.exports = { deletePostsOf, doesPostExist, isPostLiked, postModel, getFeedPosts, unlikePost, likePost, deletePost, addPost, getPosts, postErrors, getPostById }

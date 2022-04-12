@@ -17,7 +17,7 @@ storiesRouter.get('/following', authenticateToken, doesRequesterOwn, async (req,
     */
 
     try {
-        const startFromUserIndex = req.query.startFrom
+        const startFromUserIndex = parseInt(req.query.startFrom)
         if (startFromUserIndex === undefined || !Number.isInteger(startFromUserIndex)) {
             return res.sendStatus(400)
         }
@@ -28,6 +28,8 @@ storiesRouter.get('/following', authenticateToken, doesRequesterOwn, async (req,
         for (const user of users) {
             response.push({
                 user: user,
+                isFollowedByMe: true,
+                isRequestedByMe: false,
                 isFollowMe: await isFollow(user._id.toString(), req.userId),
                 isRequestMe: await isRequested(user._id.toString(), req.userId)
             })
@@ -52,7 +54,7 @@ storiesRouter.get('/archive', authenticateToken, doesRequesterOwn, async (req, r
     */
 
     try {
-        const startFromStoryIndex = req.query.startFrom
+        const startFromStoryIndex = parseInt(req.query.startFrom)
         if (startFromStoryIndex === undefined || !Number.isInteger(startFromStoryIndex)) {
             return res.sendStatus(400)
         }
@@ -124,7 +126,7 @@ storiesRouter.get('/', authenticateToken, doesHasPermission, async (req, res) =>
     */
 
     try {
-        const startFromStoryIndex = req.query.startFrom
+        const startFromStoryIndex = parseInt(req.query.startFrom)
         if (startFromStoryIndex === undefined || !Number.isInteger(startFromStoryIndex)) {
             return res.sendStatus(400)
         }
