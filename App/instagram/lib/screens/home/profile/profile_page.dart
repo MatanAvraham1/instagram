@@ -318,7 +318,7 @@ class _ProfilePageState extends State<ProfilePage>
                 children: [
                   Row(
                     children: [
-                      user == connectedUser
+                      user == connectedUser && widget.inPageView
                           ? const Icon(
                               Icons.lock_outline,
                               color: Colors.white,

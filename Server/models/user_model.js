@@ -658,7 +658,7 @@ async function getFollowers(userId, startFollowerIndex, quantity, hidePrivateFie
         const followersId = (await userModel.findById(userId, { password: 0, username: 0, __v: 0, _id: 0, fullname: 0, bio: 0, photoUrl: 0, isPrivate: 0, followRequests: 0, followers: { $slice: [startFollowerIndex, endFollowerIndex] } })).followers
 
         for (const id of followersId) {
-            followers.push(await userModel.getUserById(id, hidePrivateFields, hideOwnerFields))
+            followers.push(await getUserById(id, hidePrivateFields, hideOwnerFields))
         }
         return followers
     }
