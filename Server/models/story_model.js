@@ -1,12 +1,7 @@
 const Joi = require("joi")
 const mongoose = require("mongoose")
+const appErrors = require("../appErrors")
 const { getUserById, userErrors, userModel, doesUserExists, getFollowings } = require("./user_model")
-
-const storyErrors = {
-    storyNotExist: "story doesn't exist!",
-    invalidStory: "invalid story!",
-    viewerNotExists: "Can't add viewer becuase the viewer doesn't exists!"
-}
 
 const storyModel = mongoose.model("Story", mongoose.Schema({
     owner: {
@@ -30,7 +25,7 @@ const storyModel = mongoose.model("Story", mongoose.Schema({
         default: false,
     },
 
-    viewersLength: {
+    viewersCount: {
         type: Number,
         default: 0,
     }
@@ -43,7 +38,7 @@ function isStoryValidate(data) {
         publishedAt: Joi.date().default(Date.now),
         viewers: Joi.array().default([]),
         deleted: Joi.boolean().default(false), // TODO : fix that
-        viewersLength: Joi.number().default(0),
+        viewersCount: Joi.number().default(0),
     })
 
     const value = scheme.validate(data)
@@ -87,12 +82,12 @@ async function addStory(story) {
 
             const storyObject = storyModel(story)
             await storyObject.save()
-            await userModel.findByIdAndUpdate(story.owner, { $inc: { storiesLength: 1 } })
+            await userModel.findByIdAndUpdate(story.owner, { $inc: { storiesCount: 1 } })
 
             return storyObject._id
         }
         else {
-            throw storyErrors.invalidStory
+            throw appErrors.invalidStory
         }
     }
     catch (err) {
@@ -111,11 +106,11 @@ async function deleteStory(storyId) {
     try {
 
         if (!await doesStoryExists(storyId)) {
-            throw storyErrors.storyNotExist
+            throw appErrors.storyNotExist
         }
 
         await storyModel.findByIdAndDelete(storyId)
-        await userModel.findByIdAndUpdate(story.owner, { $inc: { storiesLength: -1 } })
+        await userModel.findByIdAndUpdate(story.owner, { $inc: { storiesCount: -1 } })
     }
     catch (err) {
         throw err
@@ -131,11 +126,11 @@ async function getStory(storyId) {
     */
 
     try {
-        const projectQuery = { viewers: "$viewersLength", owner: 1, photoUrl: 1, publishedAt: 1, deleted: 1 }
+        const projectQuery = { viewers: "$viewersCount", owner: 1, photoUrl: 1, publishedAt: 1, deleted: 1 }
         const story = await storyModel.aggregate([{ $match: { _id: mongoose.Types.ObjectId(storyId) } }, { $project: projectQuery }]).limit(1)
 
         if (story.length === 0) {
-            throw storyErrors.storyNotExist
+            throw appErrors.storyNotExist
         }
 
         return story
@@ -155,14 +150,14 @@ async function addViewer(storyId, viewerId) {
     */
 
     if (!await doesStoryExists(storyId)) {
-        throw storyErrors.storyNotExist
+        throw appErrors.storyNotExist
     }
 
     if (!await doesUserExists(viewerId)) {
-        throw storyErrors.viewerNotExists
+        throw appErrors.viewerNotExists
     }
 
-    await storyModel.findByIdAndUpdate(storyId, { $addToSet: { viewers: viewerId }, $inc: { viewersLength: 1 } })
+    await storyModel.findByIdAndUpdate(storyId, { $addToSet: { viewers: viewerId }, $inc: { viewersCount: 1 } })
 }
 
 async function getViewers(storyId, startViewerIndex, quantity) {
@@ -187,7 +182,7 @@ async function getViewers(storyId, startViewerIndex, quantity) {
     }
     catch (err) {
         if (err == "TypeError: Cannot read property 'viewers' of null") {
-            throw storyErrors.storyNotExist
+            throw appErrors.storyNotExist
         }
 
         throw err
@@ -205,7 +200,7 @@ async function getStoriesArchive(userId, startStoryIndex, quantity) {
     */
 
     try {
-        const projectQuery = { viewers: "$viewersLength", owner: 1, photoUrl: 1, publishedAt: 1, deleted: 1 }
+        const projectQuery = { viewers: "$viewersCount", owner: 1, photoUrl: 1, publishedAt: 1, deleted: 1 }
         const stories = await storyModel.aggregate([{ $match: { owner: userId } }, { $project: projectQuery }]).skip(startStoryIndex).limit(quantity)
 
         return stories
@@ -229,7 +224,7 @@ async function getLast24HoursStories(userId, deleted, startStoryIndex, quantity)
     */
 
     try {
-        const projectQuery = { viewers: "$viewersLength", owner: 1, photoUrl: 1, publishedAt: 1, deleted: 1 }
+        const projectQuery = { viewers: "$viewersCount", owner: 1, photoUrl: 1, publishedAt: 1, deleted: 1 }
         const stories = await storyModel.aggregate([{ $match: { owner: userId, deleted: deleted, publishedAt: { $gt: new Date(Date.now() - 24 * 60 * 60 * 1000) } } }, { $project: projectQuery }]).skip(startStoryIndex).limit(quantity)
 
         return stories
@@ -291,4 +286,4 @@ async function removeViewsOf(userId) {
 }
 
 
-module.exports = { deleteStoriesOf, removeViewsOf, getViewers, addViewer, getHoursDifference, addStory, getStory, whichOfMyFollowingsPublishedStories, storyErrors, deleteStory, isStoryValidate, getStoriesArchive, getLast24HoursStories }
+module.exports = { deleteStoriesOf, removeViewsOf, getViewers, addViewer, getHoursDifference, addStory, getStory, whichOfMyFollowingsPublishedStories, deleteStory, isStoryValidate, getStoriesArchive, getLast24HoursStories }

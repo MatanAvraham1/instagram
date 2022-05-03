@@ -1,13 +1,8 @@
 const Joi = require("joi")
 const mongoose = require("mongoose")
+const appErrors = require("../appErrors")
 const { getUserById, userErrors, userModel } = require("./user_model")
 
-const postErrors = {
-    postNotExistsError: "post doesn't exist!",
-    invalidPostError: "invalid post!",
-    alreadyLikedError: "already liked!",
-    alreadyUnlikedError: 'already unliked!'
-}
 
 const postModel = mongoose.model("Post", mongoose.Schema({
     owners: {
@@ -39,11 +34,12 @@ const postModel = mongoose.model("Post", mongoose.Schema({
         default: []
     },
 
-    commentsLength: {
+
+    commentsCount: {
         type: Number,
         default: 0,
     },
-    likesLength: {
+    likesCount: {
         type: Number,
         default: 0,
     },
@@ -57,9 +53,10 @@ function isPostValidate(data) {
         location: Joi.string().default(""),
         photosUrls: Joi.array().required().min(1),
         taggedUsers: Joi.array().default([]),
-        comments: Joi.array().default([]),
         publishedAt: Joi.date().default(Date.now),
-        likes: Joi.array().default([])
+        likes: Joi.array().default([]),
+        likesCount: Joi.defaults(0),
+        commentsCount: Joi.defaults(0),
     })
 
     const value = scheme.validate(data)
@@ -79,9 +76,9 @@ async function getPostById(postId) {
     */
 
     try {
-        const post = await postModel.aggregate([{ $match: { _id: mongoose.Types.ObjectId(postId) } }, { $project: { owners: 1, publisherComment: 1, location: 1, photosUrls: 1, comments: "$commentsLength", likes: "$likesLength", taggedUsers: 1, publishedAt: 1 } }]).limit(1)
+        const post = await postModel.aggregate([{ $match: { _id: mongoose.Types.ObjectId(postId) } }, { $project: { owners: 1, publisherComment: 1, location: 1, photosUrls: 1, comments: "$commentsCount", likes: "$likesCount", taggedUsers: 1, publishedAt: 1 } }]).limit(1)
         if (post === null) {
-            throw postErrors.postNotExistsError
+            throw appErrors.postNotExistsError
         }
 
         return post
@@ -101,7 +98,7 @@ async function getPosts(userId, startPostIndex, quantity) {
     */
 
     try {
-        const posts = await postModel.aggregate([{ $match: { owners: { $in: [userId] } } }, { $project: { owners: 1, publisherComment: 1, location: 1, photosUrls: 1, comments: "$commentsLength", likes: "$likesLength", taggedUsers: 1, publishedAt: 1 } }]).skip(startPostIndex).limit(quantity)
+        const posts = await postModel.aggregate([{ $match: { owners: { $in: [userId] } } }, { $project: { owners: 1, publisherComment: 1, location: 1, photosUrls: 1, comments: "$commentsCount", likes: "$likesCount", taggedUsers: 1, publishedAt: 1 } }]).skip(startPostIndex).limit(quantity)
         return posts
     }
     catch (err) {
@@ -109,7 +106,7 @@ async function getPosts(userId, startPostIndex, quantity) {
     }
 }
 
-async function addPost(post) {
+async function addPost(owners, publisherComment, location, photoUrls, taggedUsers, comments, publishedAt) {
     /*
     Adds new post
 
@@ -124,13 +121,13 @@ async function addPost(post) {
             await postObject.save()
 
             for (const owner of post.owners) {
-                await userModel.findByIdAndUpdate(owner, { $inc: { postsLength: 1 } })
+                await userModel.findByIdAndUpdate(owner, { $inc: { postsCount: 1 } })
             }
 
             return postObject._id
         }
         else {
-            throw postErrors.invalidPostError
+            throw appErrors.invalidPostError
         }
     }
     catch (err) {
@@ -150,12 +147,12 @@ async function deletePost(postId) {
         await postModel.findByIdAndDelete(postId)
 
         for (const owner of owners) {
-            await userModel.findByIdAndUpdate(owner, { $inc: { postsLength: -1 } })
+            await userModel.findByIdAndUpdate(owner, { $inc: { postsCount: -1 } })
         }
     }
     catch (err) {
         if (err == "TypeError: Cannot destructure property 'owners' of '(intermediate value)' as it is null.") {
-            throw postErrors.postNotExistsError
+            throw appErrors.postNotExistsError
         }
 
         throw err
@@ -188,10 +185,10 @@ async function likePost(postId, whoLikedId) {
     try {
 
         if (await isPostLiked(postId, whoLikedId)) {
-            throw postErrors.alreadyLikedError
+            throw appErrors.alreadyLikedError
         }
 
-        await postModel.findByIdAndUpdate(postId, { $addToSet: { likes: whoLikedId }, $inc: { likesLength: 1 } })
+        await postModel.findByIdAndUpdate(postId, { $addToSet: { likes: whoLikedId }, $inc: { likesCount: 1 } })
     }
     catch (err) {
         throw err
@@ -209,10 +206,10 @@ async function unlikePost(postId, whoUnlikedId) {
     try {
 
         if (!await isPostLiked(postId, whoLikedId)) {
-            throw postErrors.alreadyUnlikedError
+            throw appErrors.alreadyUnlikedError
         }
 
-        await postModel.findByIdAndUpdate(postId, { $pull: { likes: whoUnlikedId }, $inc: { likesLength: -1 } })
+        await postModel.findByIdAndUpdate(postId, { $pull: { likes: whoUnlikedId }, $inc: { likesCount: -1 } })
     }
     catch (err) {
         throw err
@@ -230,7 +227,7 @@ async function isPostLiked(postId, whoLikerId) {
     try {
 
         if (!await doesPostExist(postId)) {
-            throw postErrors.postNotExistsError
+            throw appErrors.postNotExistsError
         }
 
         const post = await postModel.findOne({ _id: mongoose.Types.ObjectId(postId), likes: { $in: [whoLikerId] } })
@@ -285,4 +282,4 @@ async function getFeedPosts(requesterId) {
 }
 
 
-module.exports = { deletePostsOf, doesPostExist, isPostLiked, postModel, getFeedPosts, unlikePost, likePost, deletePost, addPost, getPosts, postErrors, getPostById }
+module.exports = { deletePostsOf, doesPostExist, isPostLiked, postModel, getFeedPosts, unlikePost, likePost, deletePost, addPost, getPosts, getPostById }

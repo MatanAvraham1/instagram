@@ -1,15 +1,13 @@
 require('dotenv').config()
 const mongoose = require('mongoose');
-const { getCommentById, addComment, getComments } = require('../models/comment_model');
-const { deletePost } = require('../models/post_model');
-const { getUserByUsername, getUserById, createUser, followUser, unfollowUser, deleteFollowRequest, acceptFollowRequest, getFollowingRequests, getFollowers, getFollowRequests, clearFollowRequests, clearFollowingRequests, getFollowings, doesUserExists, deleteUser } = require('../models/user_model')
-
+const { deleteChat, createChat } = require('../models/chat_model');
+const { updateUser } = require('../models/user_model');
 // Connects to the database
 mongoose.connect(process.env.DATABASE_URL).then((result) => {
     console.log("Connected to db!");
     setTimeout(async () => {
 
-        console.log(parseInt("fdfd") == NaN)
+        updateUser("622f97a321c0085366f3b237", "dvir hamalshin")
 
     }, 0)
 }).catch((err) => {

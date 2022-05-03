@@ -1,14 +1,8 @@
 const Joi = require("joi")
 const mongoose = require("mongoose")
+const appErrors = require("../appErrors")
 const { postErrors, getPostById, doesPostExist } = require("./post_model")
 const { userErrors, getUserById, updateUser, doesUserExists } = require("./user_model")
-
-const commentErrors = {
-    commentNotExist: "comment doesn't exists!",
-    invalidCommentError: "invalid comment!",
-    alreadyLikedError: 'already liked!',
-    alreadyUnlikedError: 'already unliked!',
-}
 
 const commentModel = mongoose.model("Comment", mongoose.Schema({
     publisherId: {
@@ -32,7 +26,7 @@ const commentModel = mongoose.model("Comment", mongoose.Schema({
         default: Date.now,
     },
 
-    likesLength: {
+    likesCount: {
         type: Number,
         default: 0,
     }
@@ -65,9 +59,9 @@ async function getCommentById(commentId) {
     */
 
     try {
-        const comment = await commentModel.findById(commentId, { publihserId: 1, postId: 1, comment: 1, likes: "$likesLength", publishedAt: 1, _id: 1 })
+        const comment = await commentModel.findById(commentId, { publihserId: 1, postId: 1, comment: 1, likes: "$likesCount", publishedAt: 1, _id: 1 })
         if (comment === null) {
-            throw commentErrors.commentNotExist
+            throw appErrors.commentNotExist
         }
 
         return comment
@@ -88,7 +82,7 @@ async function getComments(postId, startFromCommentIndex, quantity) {
     */
 
     try {
-        const comments = await commentModel.find({ postId: postId }, { publihserId: 1, postId: 1, comment: 1, likes: "$likesLength", publishedAt: 1, _id: 1 }).skip(startFromCommentIndex).limit(quantity)
+        const comments = await commentModel.find({ postId: postId }, { publihserId: 1, postId: 1, comment: 1, likes: "$likesCount", publishedAt: 1, _id: 1 }).skip(startFromCommentIndex).limit(quantity)
         return comments
     }
     catch (err) {
@@ -121,7 +115,7 @@ async function addComment(comment) {
             return commentObject._id
         }
         else {
-            throw commentErrors.invalidCommentError
+            throw appErrors.invalidCommentError
         }
     }
     catch (err) {
@@ -153,7 +147,7 @@ async function deleteComment(commentId) {
 
     try {
         if (! await doesCommentExist(commentId)) {
-            throw commentErrors.commentNotExist
+            throw appErrors.commentNotExist
         }
 
         await commentModel.findByIdAndDelete(commentId)
@@ -176,7 +170,7 @@ async function isCommentLiked(commentId, whoLikerId) {
     try {
 
         if (!await doesCommentExist(commentId)) {
-            throw commentErrors.commentNotExist
+            throw appErrors.commentNotExist
         }
 
         const comment = await commentModel.findOne({ _id: mongoose.Types.ObjectId(commentId), likes: { $in: [whoLikerId] } })
@@ -203,11 +197,11 @@ async function likeComment(commentId, whoLikedId) {
     try {
 
         if (await isCommentLiked(commentId, whoLikedId)) {
-            throw commentErrors.alreadyLikedError
+            throw appErrors.alreadyLikedError
         }
 
 
-        await commentModel.findByIdAndUpdate(commentId, { $addToSet: { likes: whoLikedId }, $inc: { likesLength: 1 } })
+        await commentModel.findByIdAndUpdate(commentId, { $addToSet: { likes: whoLikedId }, $inc: { likesCount: 1 } })
     }
     catch (err) {
         throw err
@@ -228,10 +222,10 @@ async function unlikeComment(commentId, whoUnlikedId) {
     try {
 
         if (!await isCommentLiked(commentId, whoLikedId)) {
-            throw commentErrors.alreadyUnlikedError
+            throw appErrors.alreadyUnlikedError
         }
 
-        await postModel.findByIdAndUpdate(commentId, { $pull: { likes: whoUnlikedId }, $inc: { likesLength: -1 } })
+        await postModel.findByIdAndUpdate(commentId, { $pull: { likes: whoUnlikedId }, $inc: { likesCount: -1 } })
     }
     catch (err) {
         throw err
@@ -239,4 +233,4 @@ async function unlikeComment(commentId, whoUnlikedId) {
 }
 
 
-module.exports = { commentModel, getComments, commentErrors, getCommentById, isCommentValidate, addComment, deleteComment, likeComment, unlikeComment }
+module.exports = { commentModel, getComments, getCommentById, isCommentValidate, addComment, deleteComment, likeComment, unlikeComment }

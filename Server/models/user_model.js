@@ -1,26 +1,7 @@
 const Joi = require('joi')
 const mongoose = require('mongoose')
 const bcrypt = require('bcryptjs')
-// const { deletePostsOf } = require('./post_model')
-// const { deleteStoriesOf, removeViewsOf } = require('./story_model')
-
-const userErrors = {
-    userNotExistsError: "user doesn't exists!",
-    usernameAlreadyUsedError: "the username is already used!",
-
-    userToFollowNotExistsError: "The user to follow doesn't exists!",
-    userToUnfollowNotExistsError: "The user to unfollow doesn't exists!",
-
-    alreadyFollowedError: "the first user already followed the seconds user!",
-    alreadyUnfollowedError: "the first user doesn't follow the second user!",
-    followRequestAlreadySentError: "follow request has been already sent!",
-    followRequestNotExistsError: "the follow request doesn't exists!",
-
-    invalidRegisterDetailsError: "invalid register details!",
-    invalidUpdateDetailsError: "invalid update details!",
-    wrongLoginDetailsError: "wrong login deatils!",
-    cantFollowHimself: "user can't follow himself"
-}
+const appErrors = require('../appErrors')
 
 const userModel = mongoose.model("User", mongoose.Schema({
     username: {
@@ -33,15 +14,15 @@ const userModel = mongoose.model("User", mongoose.Schema({
     },
     fullname: {
         type: String,
-        default: "",
+        default: null,
     },
     bio: {
         type: String,
-        default: "",
+        default: null,
     },
     photoUrl: {
         type: String,
-        default: "",
+        default: null,
     },
     followers: {
         type: Array,
@@ -57,27 +38,27 @@ const userModel = mongoose.model("User", mongoose.Schema({
     },
 
     // Length of arrays
-    followersLength: {
+    followersCount: {
         type: Number,
         default: 0,
     },
-    followingsLength: {
+    followingsCount: {
         type: Number,
         default: 0,
     },
-    followRequestsLength: {
+    followRequestsCount: {
         type: Number,
         default: 0,
     },
-    followingRequestsLength: {
+    followingRequestsCount: {
         type: Number,
         default: 0,
     },
-    storiesLength: {
+    storiesCount: {
         type: Number,
         default: 0,
     },
-    postsLength: {
+    postsCount: {
         type: Number,
         default: 0,
     }
@@ -100,11 +81,11 @@ const isLoginValid = isRegisterValid
 
 function isUpdateValid(data) {
     const scheme = Joi.object({
-        username: Joi.string(),
-        fullname: Joi.string().min(0),
-        bio: Joi.string().min(0),
-        isPrivate: Joi.boolean(),
-        photoUrl: Joi.string().uri(),
+        username: Joi.string().default(undefined),
+        fullname: Joi.string().default(undefined),
+        bio: Joi.string().default(undefined),
+        isPrivate: Joi.boolean().default(undefined),
+        photorUl: Joi.string().uri().default(undefined),
     })
     const value = scheme.validate(data)
 
@@ -115,7 +96,7 @@ function isUpdateValid(data) {
     return false
 }
 
-async function login(data) {
+async function login(username, password) {
     /*
     Logins 
     Returns the user id
@@ -123,35 +104,28 @@ async function login(data) {
     param 1: the user object
     */
 
-    try {
-        if (isLoginValid(data)) {
-            const user = await userModel.findOne({ username: data.username }, { password: 1 })
-            if (user == null) {
-                throw userErrors.wrongLoginDetailsError
-            }
+    if (isLoginValid({
+        username: username,
+        password: password,
+    })) {
+        const user = await userModel.findOne({ username: username }, { password: 1 })
+        if (user == null) {
+            throw appErrors.wrongLoginDetailsError
+        }
 
-            if (await bcrypt.compare(data.password, user.password)) {
-                return user._id
-            }
-            else {
-                throw userErrors.wrongLoginDetailsError
-            }
+        if (await bcrypt.compare(password, user.password)) {
+            return user._id
         }
         else {
-            throw userErrors.wrongLoginDetailsError
+            throw appErrors.wrongLoginDetailsError
         }
     }
-    catch (err) {
-        if (err === userErrors.userNotExistsError) {
-            throw userErrors.wrongLoginDetailsError
-        }
-
-        throw err
+    else {
+        throw appErrors.invalidLoginDetailsError
     }
-
 }
 
-async function createUser(data) {
+async function createUser(username, password) {
     /*
     Creates a new user (register...)
     Returns the created user id
@@ -159,76 +133,76 @@ async function createUser(data) {
     param 1: the user object
     */
 
-    try {
-        if (isRegisterValid(data)) {
-            if (await doesUsernameAlreadyUsed(data.username)) {
-                throw userErrors.usernameAlreadyUsedError
-            }
-
-            const hashedPassword = await bcrypt.hash(data.password, 10);
-            const user = new userModel({ username: data.username, password: hashedPassword })
-            const { _id } = await user.save()
-
-            return _id.toString()
+    if (isRegisterValid({
+        username: username,
+        password: password
+    })) {
+        if (await doesUsernameAlreadyUsed(username)) {
+            throw appErrors.usernameAlreadyUsedError
         }
-        else {
-            throw userErrors.invalidRegisterDetailsError
-        }
-    }
-    catch (err) {
-        throw err
-    }
 
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const user = new userModel({ username: username, password: hashedPassword })
+        const { _id } = await user.save()
+
+        return _id
+    }
+    else {
+        throw appErrors.invalidRegisterDetailsError
+    }
 }
 
-async function updateUser(userId, data) {
+
+async function updateUser(userId, username = undefined, fullname = undefined, bio = undefined, isPrivate = undefined, photoUrl = undefined) {
     /*
     Updates user
 
     param 1: the user id
-    param 2: user object
+    param 2 - 6: updateable fields
     */
 
-    try {
-        if (isUpdateValid(data)) {
-            const user = await getUserById(userId)
+    if (isUpdateValid({
+        username: username,
+        fullname: fullname,
+        bio: bio,
+        isPrivate: isPrivate,
+        photoUrl: photoUrl,
+    })) {
 
-            if (data.username !== undefined && data.username !== user.username) {
+        const user = await getUserById(userId)
 
-                if (await doesUsernameAlreadyUsed(data.username)) {
-                    throw userErrors.usernameAlreadyUsedError
-                }
-                await userModel.findByIdAndUpdate(userId, { $set: { username: data.username } })
-            }
-            if (data.fullname !== undefined && data.fullname !== user.fullname) {
-                await userModel.findByIdAndUpdate(userId, { $set: { fullname: data.fullname } })
-            }
-            if (data.bio !== undefined && data.bio !== user.bio) {
-                await userModel.findByIdAndUpdate(userId, { $set: { bio: data.bio } })
-            }
-            if (data.photoUrl !== undefined && data.photoUrl !== user.photoUrl) {
-                await userModel.findByIdAndUpdate(userId, { $set: { photoUrl: data.photoUrl } })
-            }
-            if (data.isPrivate !== undefined && data.isPrivate !== user.isPrivate) {
+        if (username !== undefined && username !== user.username) {
 
-                // If changed from false to true
-                // Clears the follow requests
-                if (!data.isPrivate) {
-                    await clearFollowRequests(userId)
-                }
-                await userModel.findByIdAndUpdate(userId, { $set: { isPrivate: data.isPrivate } })
+            if (await doesUsernameAlreadyUsed(username)) {
+                throw appErrors.usernameAlreadyUsedError
             }
-
+            await userModel.findByIdAndUpdate(userId, { $set: { username: username } })
         }
-        else {
-            throw userErrors.invalidUpdateDetailsError
+        if (fullname !== undefined && fullname !== user.fullname) {
+            await userModel.findByIdAndUpdate(userId, { $set: { fullname: fullname } })
         }
-    }
-    catch (err) {
-        throw err
-    }
+        if (bio !== undefined && bio !== user.bio) {
+            await userModel.findByIdAndUpdate(userId, { $set: { bio: bio } })
+        }
+        if (photoUrl !== undefined && photoUrl !== user.photoUrl) {
+            await userModel.findByIdAndUpdate(userId, { $set: { photoUrl: photoUrl } })
+        }
+        if (isPrivate !== undefined && isPrivate !== user.isPrivate) {
 
+            // If changed from false to true
+            // Clears the follow requests
+            if (!isPrivate) {
+                await clearFollowRequests(userId)
+            }
+            await userModel.findByIdAndUpdate(userId, { $set: { isPrivate: isPrivate } })
+        }
+
+    }
+    else {
+        throw appErrors.invalidUpdateDetailsError
+    }
 }
+
 
 async function deleteUser(userId) {
     /*
@@ -237,24 +211,19 @@ async function deleteUser(userId) {
     param 1: the user id
     */
 
-    try {
-        if (! await doesUserExists(userId)) {
-            throw userErrors.userNotExistsError
-        }
-
-        await userModel.findByIdAndDelete(userId)
-        await userModel.updateMany({ followers: { $in: [userId] } }, { $pull: { followers: userId } })
-
-        await deletePostsOf(userId)
-
-        await deleteStoriesOf(userId)
-        await removeViewsOf(userId)
-
-        //TODO: add chats and messages
+    if (! await doesUserExists(userId)) {
+        throw appErrors.userNotExistsError
     }
-    catch (err) {
-        throw err
-    }
+
+    await userModel.findByIdAndDelete(userId)
+    await userModel.updateMany({ followers: { $in: [userId] } }, { $pull: { followers: userId } })
+
+    await deletePostsOf(userId)
+
+    await deleteStoriesOf(userId) // TODO: fix that
+    await removeViewsOf(userId)
+
+    //TODO: add chats and messages
 }
 
 async function doesUserExists(userId) {
@@ -284,7 +253,7 @@ async function doesUsernameAlreadyUsed(username) {
     }
     catch (err) {
 
-        if (err === userErrors.userNotExistsError) {
+        if (err === appErrors.userNotExistsError) {
             return false
         }
 
@@ -302,19 +271,19 @@ async function getUserById(userId, hidePrivateFields = false, hideOwnerFields = 
     */
 
     try {
-        const projectQuery = { posts: "$postsLength", followings: "$followingsLength", followers: "$followersLength", username: 1, fullname: 1, bio: 1, photoUrl: 1, isPrivate: 1 }
+        const projectQuery = { posts: "$postsCount", followings: "$followingsCount", followers: "$followersCount", username: 1, fullname: 1, bio: 1, photoUrl: 1, isPrivate: 1 }
         if (!hidePrivateFields) {
-            projectQuery.stories = "$storiesLength"
+            projectQuery.stories = "$storiesCount"
         }
         if (!hideOwnerFields) {
-            projectQuery.followRequests = "$followRequestsLength"
-            projectQuery.followingRequests = "$followingRequestsLength"
+            projectQuery.followRequests = "$followRequestsCount"
+            projectQuery.followingRequests = "$followingRequestsCount"
         }
 
         const user = await userModel.aggregate([{ $match: { _id: mongoose.Types.ObjectId(userId) } }, { $project: projectQuery }]).limit(1)
 
         if (user.length === 0) {
-            throw userErrors.userNotExistsError
+            throw appErrors.userNotExistsError
         }
 
         return user[0]
@@ -336,18 +305,18 @@ async function getUserByUsername(username, hidePrivateFields = false, hideOwnerF
     */
 
     try {
-        const projectQuery = { posts: "$postsLength", followings: "$followingsLength", followers: "$followersLength", username: 1, fullname: 1, bio: 1, photoUrl: 1, isPrivate: 1 }
+        const projectQuery = { posts: "$postsCount", followings: "$followingsCount", followers: "$followersCount", username: 1, fullname: 1, bio: 1, photoUrl: 1, isPrivate: 1 }
         if (!hidePrivateFields) {
-            projectQuery.stories = "$storiesLength"
+            projectQuery.stories = "$storiesCount"
         }
         if (!hideOwnerFields) {
-            projectQuery.followRequests = "$followRequestsLength"
-            projectQuery.followingRequests = "$followingRequestsLength"
+            projectQuery.followRequests = "$followRequestsCount"
+            projectQuery.followingRequests = "$followingRequestsCount"
         }
         const user = await userModel.aggregate([{ $match: { username: username } }, { $project: projectQuery }]).limit(1)
 
         if (user.length === 0) {
-            throw userErrors.userNotExistsError
+            throw appErrors.userNotExistsError
         }
 
         return user[0]
@@ -367,18 +336,18 @@ async function getUserByFullname(fullname, hidePrivateFields = false, hideOwnerF
     */
 
     try {
-        const projectQuery = { posts: "$postsLength", followings: "$followingsLength", followers: "$followersLength", username: 1, fullname: 1, bio: 1, photoUrl: 1, isPrivate: 1 }
+        const projectQuery = { posts: "$postsCount", followings: "$followingsCount", followers: "$followersCount", username: 1, fullname: 1, bio: 1, photoUrl: 1, isPrivate: 1 }
         if (!hidePrivateFields) {
-            projectQuery.stories = "$storiesLength"
+            projectQuery.stories = "$storiesCount"
         }
         if (!hideOwnerFields) {
-            projectQuery.followRequests = "$followRequestsLength"
-            projectQuery.followingRequests = "$followingRequestsLength"
+            projectQuery.followRequests = "$followRequestsCount"
+            projectQuery.followingRequests = "$followingRequestsCount"
         }
         const user = await userModel.aggregate([{ $match: { fullname: fullname } }, { $project: projectQuery }]).limit(1)
 
         if (user.length === 0) {
-            throw userErrors.userNotExistsError
+            throw appErrors.userNotExistsError
         }
 
         return user[0]
@@ -426,31 +395,31 @@ async function followUser(firstUserId, secondUserId) {
     try {
 
         if (! await doesUserExists(firstUserId)) {
-            throw userErrors.userNotExistsError
+            throw appErrors.userNotExistsError
         }
         if (! await doesUserExists(secondUserId)) {
-            throw userErrors.userToFollowNotExistsError
+            throw appErrors.userToFollowNotExistsError
         }
 
         if (firstUserId === secondUserId) {
-            throw userErrors.cantFollowHimself
+            throw appErrors.cantFollowHimself
         }
         if (await isFollow(firstUserId, secondUserId)) {
-            throw userErrors.alreadyFollowedError
+            throw appErrors.alreadyFollowedError
         }
         if (await isRequested(firstUserId, secondUserId)) {
-            throw userErrors.followRequestAlreadySentError
+            throw appErrors.followRequestAlreadySentError
         }
 
         const secondUser = await getUserById(secondUserId)
 
         if (!secondUser.isPrivate) {
-            await userModel.findByIdAndUpdate(secondUserId, { $addToSet: { followers: firstUserId }, $inc: { followersLength: 1 } })
-            await userModel.findByIdAndUpdate(firstUserId, { $inc: { followingsLength: 1 } })
+            await userModel.findByIdAndUpdate(secondUserId, { $addToSet: { followers: firstUserId }, $inc: { followersCount: 1 } })
+            await userModel.findByIdAndUpdate(firstUserId, { $inc: { followingsCount: 1 } })
         }
         else {
-            await userModel.findByIdAndUpdate(secondUserId, { $addToSet: { followRequests: firstUserId }, $inc: { followRequestsLength: 1 } })
-            await userModel.findByIdAndUpdate(firstUserId, { $inc: { followingRequestsLength: 1 } })
+            await userModel.findByIdAndUpdate(secondUserId, { $addToSet: { followRequests: firstUserId }, $inc: { followRequestsCount: 1 } })
+            await userModel.findByIdAndUpdate(firstUserId, { $inc: { followingRequestsCount: 1 } })
         }
     }
     catch (err) {
@@ -469,21 +438,21 @@ async function unfollowUser(firstUserId, secondUserId) {
 
     try {
         if (! await doesUserExists(firstUserId)) {
-            throw userErrors.userNotExistsError
+            throw appErrors.userNotExistsError
         }
         if (! await doesUserExists(secondUserId)) {
-            throw userErrors.userToUnfollowNotExistsError
+            throw appErrors.userToUnfollowNotExistsError
         }
 
         if (firstUserId === secondUserId) {
-            throw userErrors.cantFollowHimself
+            throw appErrors.cantFollowHimself
         }
         if (!(await isFollow(firstUserId, secondUserId))) {
-            throw userErrors.alreadyUnfollowedError
+            throw appErrors.alreadyUnfollowedError
         }
 
-        await userModel.findByIdAndUpdate(secondUserId, { $pull: { followers: firstUserId }, $inc: { followersLength: -1 } })
-        await userModel.findByIdAndUpdate(firstUserId, { $inc: { followingsLength: -1 } })
+        await userModel.findByIdAndUpdate(secondUserId, { $pull: { followers: firstUserId }, $inc: { followersCount: -1 } })
+        await userModel.findByIdAndUpdate(firstUserId, { $inc: { followingsCount: -1 } })
     }
     catch (err) {
         throw err
@@ -500,11 +469,11 @@ async function acceptFollowRequest(firstUserId, secondUserId) {
 
     try {
         if (!(await isRequested(firstUsSerId, secondUserId))) {
-            throw userErrors.followRequestNotExistsError
+            throw appErrors.followRequestNotExistsError
         }
 
-        await userModel.findByIdAndUpdate(secondUserId, { $pull: { followRequests: firstUserId }, $inc: { followRequestsLength: -1, followersLength: 1 }, $addToSet: { followers: firstUserId } })
-        await userModel.findByIdAndUpdate(firstUserId, { $inc: { followingsLength: 1, followingRequestsLength: -1 } })
+        await userModel.findByIdAndUpdate(secondUserId, { $pull: { followRequests: firstUserId }, $inc: { followRequestsCount: -1, followersCount: 1 }, $addToSet: { followers: firstUserId } })
+        await userModel.findByIdAndUpdate(firstUserId, { $inc: { followingsCount: 1, followingRequestsCount: -1 } })
     }
     catch (err) {
         throw err
@@ -521,11 +490,11 @@ async function deleteFollowRequest(firstUserId, secondUserId) {
 
     try {
         if (!(await isRequested(firstUserId, secondUserId))) {
-            throw userErrors.followRequestNotExistsError
+            throw appErrors.followRequestNotExistsError
         }
 
-        await userModel.findByIdAndUpdate(secondUserId, { $pull: { followRequests: firstUserId }, $inc: { followRequestsLength: -1 } })
-        await userModel.findByIdAndUpdate(firstUserId, { $inc: { followingRequestsLength: -1 } })
+        await userModel.findByIdAndUpdate(secondUserId, { $pull: { followRequests: firstUserId }, $inc: { followRequestsCount: -1 } })
+        await userModel.findByIdAndUpdate(firstUserId, { $inc: { followingRequestsCount: -1 } })
     }
     catch (err) {
         throw err
@@ -545,8 +514,8 @@ async function clearFollowRequests(userId) {
         do {
             users = await getFollowRequests(userId, 0, 5)
             for (const { _id } of users) {
-                await userModel.findByIdAndUpdate(_id.toString(), { $inc: { followingRequestsLength: -1 } })
-                await userModel.findByIdAndUpdate(userId, { $pull: { followRequests: _id.toString() }, $inc: { followRequestsLength: -1 } })
+                await userModel.findByIdAndUpdate(_id.toString(), { $inc: { followingRequestsCount: -1 } })
+                await userModel.findByIdAndUpdate(userId, { $pull: { followRequests: _id.toString() }, $inc: { followRequestsCount: -1 } })
             }
         } while (users.length > 0);
     }
@@ -564,11 +533,11 @@ async function clearFollowingRequests(userId) {
 
     try {
         if (! await doesUserExists(userId)) {
-            throw userErrors.userNotExistsError
+            throw appErrors.userNotExistsError
         }
 
-        await userModel.updateMany({ followRequests: { $in: [userId] } }, { $pull: { followRequests: userId }, $inc: { followRequestsLength: -1 } })
-        await userModel.findByIdAndUpdate(userId, { $inc: { followingRequestsLength: -1 } })
+        await userModel.updateMany({ followRequests: { $in: [userId] } }, { $pull: { followRequests: userId }, $inc: { followRequestsCount: -1 } })
+        await userModel.findByIdAndUpdate(userId, { $inc: { followingRequestsCount: -1 } })
     }
     catch (err) {
         throw err
@@ -600,7 +569,7 @@ async function getFollowRequests(userId, startRequestIndex, quantity, hidePrivat
     catch (err) {
 
         if (err == "TypeError: Cannot read property 'followRequests' of null") {
-            throw userErrors.userNotExistsError
+            throw appErrors.userNotExistsError
         }
 
         throw err
@@ -620,16 +589,16 @@ async function getFollowingRequests(userId, startRequestIndex, quantity, hidePri
 
     try {
         if (! await doesUserExists(userId)) {
-            throw userErrors.userNotExistsError
+            throw appErrors.userNotExistsError
         }
 
-        const projectQuery = { followings: "$followingsLength", followers: "$followersLength", username: 1, fullname: 1, bio: 1, photoUrl: 1, isPrivate: 1 }
+        const projectQuery = { followings: "$followingsCount", followers: "$followersCount", username: 1, fullname: 1, bio: 1, photoUrl: 1, isPrivate: 1 }
         if (!hidePrivateFields) {
-            projectQuery.stories = "$storiesLength"
+            projectQuery.stories = "$storiesCount"
         }
         if (!hideOwnerFields) {
-            projectQuery.followRequests = "$followRequestsLength"
-            projectQuery.followingRequests = "$followingRequestsLength"
+            projectQuery.followRequests = "$followRequestsCount"
+            projectQuery.followingRequests = "$followingRequestsCount"
         }
 
         return await userModel.aggregate([{ $match: { followRequests: { $in: [userId] } } }, { $project: projectQuery }]).skip(startRequestIndex).limit(quantity)
@@ -664,7 +633,7 @@ async function getFollowers(userId, startFollowerIndex, quantity, hidePrivateFie
     }
     catch (err) {
         if (err == "TypeError: Cannot read property 'followers' of null") {
-            throw userErrors.userNotExistsError
+            throw appErrors.userNotExistsError
         }
 
         throw err
@@ -682,7 +651,7 @@ async function getFollowings(userId, startFollowingIndex, quantity) {
 
     try {
         if (! await doesUserExists(userId)) {
-            throw userErrors.userNotExistsError
+            throw appErrors.userNotExistsError
         }
 
         const followings = []
@@ -699,4 +668,4 @@ async function getFollowings(userId, startFollowingIndex, quantity) {
     }
 }
 
-module.exports = { userErrors, userModel, login, createUser, updateUser, deleteUser, doesUserExists, doesUsernameAlreadyUsed, getUserById, getUserByUsername, getUserByFullname, isFollow, isRequested, followUser, unfollowUser, acceptFollowRequest, deleteFollowRequest, clearFollowRequests, clearFollowingRequests, getFollowRequests, getFollowingRequests, getFollowers, getFollowings }
+module.exports = { userModel, login, createUser, updateUser, deleteUser, doesUserExists, doesUsernameAlreadyUsed, getUserById, getUserByUsername, getUserByFullname, isFollow, isRequested, followUser, unfollowUser, acceptFollowRequest, deleteFollowRequest, clearFollowRequests, clearFollowingRequests, getFollowRequests, getFollowingRequests, getFollowers, getFollowings }

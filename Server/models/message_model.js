@@ -1,13 +1,7 @@
 const mongoose = require("mongoose")
 const Joi = require('joi')
 const { getChatById, chatErrors, updateChat } = require("./chat_model")
-
-const messageErrors = {
-    messageNotExist: "message doesn't exist!",
-    invalidMessage: "invalid message!",
-    alreadyLikedError: "the message is already liked!",
-    alreadyUnlikedError: "the message is already unliked!"
-}
+const appErrors = require("../appErrors")
 
 
 const messageModel = mongoose.model("Message", mongoose.Schema({
@@ -26,6 +20,11 @@ const messageModel = mongoose.model("Message", mongoose.Schema({
     likes: {
         type: String,
         default: [],
+    },
+
+    likesCount: {
+        type: Number,
+        default: 0,
     }
 }))
 
@@ -35,7 +34,8 @@ function isMessageValidate(data) {
         sentBy: Joi.string().required(),
         sentAt: Joi.date().default(Date.now),
         message: Joi.string().required(),
-        likes: Joi.array().default([])
+        likes: Joi.array().default([]),
+        likesCount: Joi.defaults(0), // TODO: check that
     })
 
     const value = scheme.validate(data)
@@ -45,6 +45,21 @@ function isMessageValidate(data) {
     }
 
     return false
+}
+async function getMessages(chatId, startMessageIndex, quantity) {
+    /*
+    Returns messages of chat
+
+    param 1: the id of the chat
+    param 2: from which message to start
+    param 3: how much messages to return
+    */
+
+    if (!(await isChatExists(chatId))) {
+        throw chatErrors.chatNotExist
+    }
+
+    return await messageModel.find({ chatId: chatId }).skip(startMessageIndex).limit(quantity)
 }
 
 
@@ -58,30 +73,40 @@ async function addMessage(chatId, message) {
     return: message id
     */
 
-    try {
-        if (isMessageValidate(message)) {
-            const message = messageModel(message)
-            const chat = getChatById(chatId);
-            chat.messages.push(message)
-            await updateChat(chatId, chat)
+    if (isMessageValidate(message)) {
+        const message = messageModel(message)
+        const { _id } = await message.save()
 
-            return message.id;
-        }
-        else {
-            throw messageErrors.invalidMessage
-        }
+        return _id;
     }
-    catch (err) {
-        if (err == chatErrors.chatNotExist) {
-            throw chatErrors.chatNotExist
-        }
-
-        throw err
+    else {
+        throw appErrors.invalidMessage
     }
 }
 
+async function getMessage(messageId) {
 
-async function deleteMessage(chatId, messageId) {
+    const message = await messageModel.findById(messageId)
+    if (message === null) {
+        throw appErrors.messageNotExist
+    }
+
+    return message
+}
+
+async function isMessageExist(messageId) {
+    try {
+        getMessage(messageId)
+        return true
+    }
+    catch (err) {
+        if (err == appErrors.messageNotExist) {
+            return false
+        }
+    }
+}
+
+async function deleteMessage(messageId) {
     /*
     Deletes message from chat
 
@@ -90,85 +115,62 @@ async function deleteMessage(chatId, messageId) {
     */
 
     try {
-        const chat = await getChatById(chatId)
-        const messageIndex = chat.messages.findIndex((message) => message._id.toString() === messageId.toString())
-        if (messageIndex === -1) {
-            throw messageErrors.messageNotExist
-        }
-
-        chat.messages.splice(messageIndex, 1)
-        await updateChat(chatId, chat)
+        await messageModel.findByIdAndDelete(messageId)
     }
     catch (err) {
-        if (err == chatErrors.chatNotExist) {
-            throw chatErrors.chatNotExist
-        }
-
-        throw err
+        throw appErrors.messageNotExist
     }
+
 }
 
-async function likeMessage(chatId, messageId, likedById) {
+async function isMessageLiked(messageId, likedById) {
+
+    const message = await messageModel.findOne({ id: mongoose.Types.ObjectId(messageId), likes: { $in: [likedById] } })
+    if (message === null) {
+        return false
+    }
+
+    return true
+}
+
+async function likeMessage(messageId, likedById) {
     /*
     Likes messsage
 
-    param 1: the id of the chat which include the message 
-    param 2: the id of the message
-    param 3: the id of the liker
+    param 1: the id of the message
+    param 2: the id of the liker
     */
 
-    try {
-        const chat = await getChatById(chatId)
-        const messageIndex = chat.messages.findIndex((message) => message._id.toString() === messageId.toString())
-        if (messageIndex === -1) {
-            throw messageErrors.messageNotExist
-        }
-
-        if (chat.messages[messageIndex].likes.includes(likedById)) {
-            throw messageErrors.alreadyLikedError
-        }
-        chat.messages[messageIndex].likes.push(likedById)
-        await updateChat(chatId, chat)
+    if (!(await isMessageExist(messageId))) {
+        throw appErrors.messageNotExist
     }
-    catch (err) {
-        if (err == chatErrors.chatNotExist) {
-            throw chatErrors.chatNotExist
-        }
 
-        throw err
+    if (await isMessageLiked(messageId, likedById)) {
+        throw appErrors.alreadyLikedError
     }
+
+    await messageModel.findByIdAndUpdate(messageId, { $addToSet: { likes: likedById }, $inc: { likesCount: 1 } })
 }
 
-async function unlikeMessage(chatId, messageId, likedById) {
+async function unlikeMessage(messageId, likedById) {
     /*
     Unlikes messsage
 
-    param 1: the id of the chat which include the message 
-    param 2: the id of the message
-    param 3: the id of the unliker
+    param 1: the id of the message
+    param 2: the id of the liker
     */
 
-    try {
-        const chat = await getChatById(chatId)
-        const messageIndex = chat.messages.findIndex((message) => message._id.toString() === messageId.toString())
-        if (messageIndex === -1) {
-            throw messageErrors.messageNotExist
-        }
-
-        const likeIndex = chat.messages[messageIndex].likes.findIndex((like) => like === likedById)
-        if (likeIndex === -1) {
-            throw messageErrors.alreadyUnlikedError
-        }
-
-        chat.messages[messageIndex].likes.splice(likeIndex, 1)
-        await updateChat(chatId, chat)
-    }
-    catch (err) {
-        if (err == chatErrors.chatNotExist) {
-            throw chatErrors.chatNotExist
-        }
-
-        throw err
+    if (!(await isMessageExist(messageId))) {
+        throw appErrors.messageNotExist
     }
 
+    if (!(await isMessageLiked(messageId, likedById))) {
+        throw appErrors.alreadyUnlikedError
+    }
+
+    await messageModel.findByIdAndUpdate(messageId, { $pull: { likes: likedById }, $inc: { likesCount: -1 } })
 }
+
+
+
+module.exports = { messageModel, isMessageValidate, getMessages, addMessage, getMessage, isMessageExist, deleteMessage, isMessageLiked, likeMessage, unlikeMessage }
