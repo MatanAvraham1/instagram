@@ -1,4 +1,4 @@
-export const commentsDb = Object.freeze({
+const commentsDb = Object.freeze({
     insert: async (comment) => {
         // Insert comment
     },
@@ -12,3 +12,5 @@ export const commentsDb = Object.freeze({
         // Returns some comments of post 
     },
 })
+
+module.exports = { commentsDb }

@@ -1,5 +1,19 @@
-export const Username = Object.freeze({
-    isValid: (plainText) => {
-        // Checks if username validate
+const { UsersDB } = require("../Adapters/DB/users_db")
+
+const Username = Object.freeze({
+    isValid: (username) => {
+        // Checks if username valid
+
+        return true
+    },
+    isUsed: async (username) => {
+        return (await UsersDB.isUsernameUsed(username))
+    },
+    generate: () => {
+        // Generate Id
+
+        return "Generated username"
     }
 })
+
+module.exports = { Username }

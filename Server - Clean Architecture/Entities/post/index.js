@@ -1,6 +1,10 @@
-import { buildMakePost } from "./post_entity";
-import { Id } from "../../CustomHelpers/Id_helper";
-import { PhotosChecker } from "../../CustomHelpers/Photos_checker";
-import { TextChecker } from "../../CustomHelpers/Text_checker";
+const { buildMakePost } = require("./post_entity")
+const { Id } = require("../../CustomHelpers/Id_helper")
+const { PhotosChecker } = require("../../CustomHelpers/Photos_checker")
+const { TextChecker } = require("../../CustomHelpers/Text_checker")
+const { AppError } = require("../../app_error")
 
-export const makePost = buildMakePost({ Id, PhotosChecker, TextChecker })
+
+const makePost = buildMakePost({ Id, PhotosChecker, TextChecker, AppError })
+
+module.exports = { makePost }

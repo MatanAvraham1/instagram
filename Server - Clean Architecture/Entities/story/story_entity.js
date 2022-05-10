@@ -1,22 +1,23 @@
-export function buildMakeStory({ Id, StoryStructure }) {
+function buildMakeStory({ Id, StoryStructure, AppError }) {
     return function makeStory({ publisherId, structure }) {
 
 
         if (!Id.isValid(publisherId)) {
-            throw new Error("Story must have valid publisherId.")
+            throw new AppError('Story must have valid publisher Id.')
         }
 
-        const response = StoryStructure.valid(structure)
-        if (!response.success) {
-            throw new Error("Story must have valid structure: " + response.error)
+        if (!StoryStructure.isValid(structure)) {
+            throw new AppError('Story must have valid story structure.')
         }
 
         return Object.freeze({
             structure: structure,
             publisherId: publisherId,
             id: Id.generate(),
-            createdOn: Date.now(),
+            createdAt: Date.now(),
         })
 
     }
 }
+
+module.exports = { buildMakeStory }

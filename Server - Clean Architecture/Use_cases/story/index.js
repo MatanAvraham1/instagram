@@ -1,8 +1,12 @@
-import { storiesDb } from "../../Adapters/DB/stories_db";
-import { buildAddStory } from "./add_story"
-import { buildDeleteStoryById } from "./delete_story_by_id"
-import { buildGetStoryByid } from "./get_story_by_id"
+const { storiesDb } = require("../../Adapters/DB/stories_db")
+const { buildAddStory } = require("./add_story")
+const { buildDeleteStoryById } = require("./delete_story_by_id")
+const { buildGetStoryByid } = require("./get_story_by_id")
+const { Id } = require("../../CustomHelpers/Id_helper")
+const { AppError } = require("../../app_error")
 
-export const addStory = buildAddStory({ storiesDb })
-export const deleteStoryById = buildDeleteStoryById({ storiesDb })
-export const getStoryById = buildGetStoryByid({ storiesDb })
+const addStory = buildAddStory({ storiesDb })
+const deleteStoryById = buildDeleteStoryById({ storiesDb, Id, AppError })
+const getStoryById = buildGetStoryByid({ storiesDb, Id, AppError })
+
+module.exports = { addStory, deleteStoryById, getStoryById }

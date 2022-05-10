@@ -1,8 +1,12 @@
-import { postsDb } from "../../Adapters/DB/posts_db";
-import { buildAddPost } from "./add_post"
-import { buildDeletePostById } from "./delete_post_by_id"
-import { buildGetPostByid } from "./get_post_by_id"
+const { postsDb } = require("../../Adapters/DB/posts_db")
+const { buildAddPost } = require("./add_post")
+const { buildDeletePostById } = require("./delete_post_by_id")
+const { buildGetPostByid } = require("./get_post_by_id")
+const { Id } = require("../../CustomHelpers/Id_helper")
+const { AppError } = require("../../app_error")
 
-export const addPost = buildAddPost({ postsDb })
-export const deletePostById = buildDeletePostById({ postsDb })
-export const getPostById = buildGetPostByid({ postsDb })
+const addPost = buildAddPost({ postsDb })
+const deletePostById = buildDeletePostById({ postsDb, Id, AppError })
+const getPostById = buildGetPostByid({ postsDb, Id, AppError })
+
+module.exports = { addPost, deletePostById, getPostById }

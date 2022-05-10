@@ -1,8 +1,12 @@
-import { commentsDb } from "../../Adapters/DB/comments_db";
-import { buildAddComment } from "./add_comment"
-import { buildDeleteCommentById } from "./delete_comment_by_id"
-import { buildGetCommentByid } from "./get_comment_by_id"
+const { commentsDb } = require("../../Adapters/DB/comments_db")
+const { buildAddComment } = require("./add_comment")
+const { buildDeleteCommentById } = require("./delete_comment_by_id")
+const { buildGetCommentByid } = require("./get_comment_by_id")
+const { Id } = require("../../CustomHelpers/Id_helper")
+const { AppError } = require("../../app_error")
 
-export const addComment = buildAddComment({ commentsDb })
-export const deleteCommentById = buildDeleteCommentById({ commentsDb })
-export const getCommentById = buildGetCommentByid({ commentsDb })
+const addComment = buildAddComment({ commentsDb })
+const deleteCommentById = buildDeleteCommentById({ commentsDb, Id, AppError })
+const getCommentById = buildGetCommentByid({ commentsDb, Id, AppError })
+
+module.exports = { addComment, deleteCommentById, getCommentById }

@@ -1,5 +1,8 @@
-import { Id } from "../../CustomHelpers/Id_helper";
-import { TextChecker } from "../../CustomHelpers/Text_checker";
-import { buildMakeComment } from "./comment_entity";
+const { AppError } = require("../../app_error")
+const { Id } = require("../../CustomHelpers/Id_helper")
+const { TextChecker } = require("../../CustomHelpers/Text_checker")
+const { buildMakeComment } = require("./comment_entity")
 
-export const makeComment = buildMakeComment({ Id, TextChecker })
+const makeComment = buildMakeComment({ Id, TextChecker, AppError })
+
+module.exports = { makeComment }

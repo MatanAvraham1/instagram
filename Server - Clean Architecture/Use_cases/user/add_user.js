@@ -1,9 +1,12 @@
-import { makeUser } from "../../Entities/user";
+const { makeUser } = require("../../Entities/user")
 
-export function buildAddUser({ usersDb }) {
+function buildAddUser({ UsersDB }) {
     return async function addUser({ username, password }) {
-        const user = makeUser({ username, password })
+        const user = await makeUser({ username, password })
 
-        await usersDb.insert(user)
+        await UsersDB.insert(user)
+        return user.id
     }
 }
+
+module.exports = { buildAddUser }

@@ -1,23 +1,40 @@
-export function buildMakeUser({ Id, Password, Username }) {
-    return function makeUser({ username, password }) {
+function buildMakeUser({ Id, Password, Username, AppError }) {
+    return async function makeUser({ username, password }) {
 
 
-        let response = Username.isValid(username)
-        if (!response.success) {
-            throw new Error("User must have valid username :" + response.error)
+        if (!Username.isValid(username)) {
+            throw new AppError('User must have valid username.')
         }
 
-        response = Password.isValid(password)
-        if (!response.success) {
-            throw new Error("User must have valid password :" + response.error)
+        if (!await Username.isUsed(username)) {
+            throw new AppError('User must have unused username.')
+        }
+
+        if (!Username.isValid(username)) {
+            throw new AppError('User must have valid password.')
         }
 
         return Object.freeze({
             username: username,
-            password: Password.hash(password),
+            password: await Password.hash(password),
             id: Id.generate(),
-            createdOn: Date.now(),
+            createdAt: Date.now(),
+
+            fullname: null,
+            bio: null,
+            isPrivate: false,
+
+            followers: 0,
+            followings: 0,
+            posts: 0,
+
+            stories: 0,
+
+            followRequests: 0,
+            followingRequests: 0,
         })
 
     }
 }
+
+module.exports = { buildMakeUser }

@@ -1,4 +1,4 @@
-export const postsDb = Object.freeze({
+const postsDb = Object.freeze({
     insert: async (post) => {
         // Insert post
     },
@@ -12,3 +12,5 @@ export const postsDb = Object.freeze({
         // Returns some posts of user 
     },
 })
+
+module.exports = { postsDb }

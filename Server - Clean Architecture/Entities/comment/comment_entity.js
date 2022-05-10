@@ -1,16 +1,18 @@
-export function buildMakeComment({ Id, TextChecker }) {
+function buildMakeComment({ Id, TextChecker, AppError }) {
     return function makeComment({ publisherId, postId, comment }) {
 
+
         if (!Id.isValid(publisherId)) {
-            throw new Error("Comment must have valid publisherId.")
+            throw new AppError('Comment must have valid publisher id.')
         }
+
 
         if (!Id.isValid(postId)) {
-            throw new Error("Comment must have valid postId.")
+            throw new AppError('Comment must have valid post id.')
         }
 
-        if (!TextChecker.isValid(comment)) {
-            throw new Error("Comment must have valid comment.")
+        if (!TextChecker.checkValidate(comment)) {
+            throw new AppError('Comment must have valid comment.')
         }
 
         return Object.freeze({
@@ -18,8 +20,10 @@ export function buildMakeComment({ Id, TextChecker }) {
             postId: postId,
             comment: comment,
             id: Id.generate(),
-            createdOn: Date.now(),
+            createdAt: Date.now(),
         })
 
     }
 }
+
+module.exports = { buildMakeComment }

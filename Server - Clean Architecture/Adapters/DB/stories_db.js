@@ -1,4 +1,4 @@
-export const storiesDb = Object.freeze({
+const storiesDb = Object.freeze({
     insert: async (story) => {
         // Insert story
     },
@@ -12,3 +12,5 @@ export const storiesDb = Object.freeze({
         // Returns some stories of user 
     },
 })
+
+module.exports = { storiesDb }

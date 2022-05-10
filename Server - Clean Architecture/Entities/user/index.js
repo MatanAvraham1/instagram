@@ -1,6 +1,9 @@
-import { buildMakeUser } from "./user_entity";
-import { Id } from "../../CustomHelpers/Id_helper";
-import { Password } from "../../CustomHelpers/Password_helper";
-import { Username } from "../../CustomHelpers/Username_helper";
+const { buildMakeUser } = require('./user_entity')
+const { Id } = require("../../CustomHelpers/Id_helper")
+const { Password } = require("../../CustomHelpers/Password_helper")
+const { Username } = require("../../CustomHelpers/Username_helper")
+const { AppError } = require('../../app_error')
 
-export const makeUser = buildMakeUser({ Id, Password, Username })
+const makeUser = buildMakeUser({ Id, Password, Username, AppError })
+
+module.exports = { makeUser }

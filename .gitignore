@@ -1,3 +1,4 @@
 Server/node_modules/
 Server/.env
-ServerCopy/
+Server - Clean Architecture/node_modules
+Server - Clean Architecture/.env

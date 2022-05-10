@@ -1,5 +1,8 @@
-import { Id } from "../../CustomHelpers/Id_helper";
-import { StoryStructure } from "../../CustomHelpers/Story_Structure";
-import { buildMakeStory } from "./story_entity";
+const { Id } = require("../../CustomHelpers/Id_helper")
+const { StoryStructure } = require("../../CustomHelpers/Story_Structure")
+const { buildMakeStory } = require("./story_entity")
+const { AppError } = require('../../app_error')
 
-export const makeStory = buildMakeStory({ Id, StoryStructure })
+const makeStory = buildMakeStory({ Id, StoryStructure, AppError })
+
+module.exports = { makeStory }

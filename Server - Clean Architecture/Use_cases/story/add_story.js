@@ -1,9 +1,11 @@
-import { makeStory } from "../../Entities/story"
+const { makeStory } = require("../../Entities/story")
 
-export function buildAddStory({ storiesDb }) {
+function buildAddStory({ storiesDb }) {
     return async function addStory({ publisherId, structure }) {
         const story = makeStory({ publisherId, structure })
 
         await storiesDb.insert(story)
     }
 }
+
+module.exports = { buildAddStory }
