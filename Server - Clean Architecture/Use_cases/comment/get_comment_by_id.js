@@ -1,4 +1,4 @@
-function buildGetCommentByid({ commentsDb, Id, AppError }) {
+function buildGetCommentByid({ CommentsDB, Id, AppError }) {
     return async function getUserById({ commentId }) {
 
 
@@ -6,7 +6,7 @@ function buildGetCommentByid({ commentsDb, Id, AppError }) {
             throw new AppError("Can't get comment by invalid id.")
         }
 
-        return await commentsDb.findById(commentId)
+        return await CommentsDB.findById(commentId)
     }
 }
 

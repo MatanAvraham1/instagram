@@ -61,7 +61,7 @@ class UsersDB {
     static async findById(userId) {
         // returns user by id
 
-        const user = await userModel.findById(userId)
+        const user = await userModel.findById(userId, { followers: 0, followRequests: 0 })
 
         if (user == null) {
             throw new AppError("User doesn't exist.")
@@ -73,13 +73,13 @@ class UsersDB {
     static async findByUsername(username) {
         // Returns user by username
 
-        const user = await userModel.findOne({ username: username })
+        const user = await userModel.findOne({ username: username }, { followers: 0, followRequests: 0 })
 
         return userObjectFromDbObject(user)
     }
 
     static async isUsernameUsed(username) {
-        const user = await userModel.findOne({ username: username })
+        const user = await userModel.findOne({ username: username }, { followers: 0, followRequests: 0 })
 
         return user == null
     }
@@ -129,7 +129,7 @@ class UsersDB {
     static async isFollow(firstUserId, secondUserId) {
         // Returns if the first user follow the second user
 
-        const user = await userModel.findOne({ _id: mongoose.Types.ObjectId(secondUserId), followers: { $in: [firstUserId] } })
+        const user = await userModel.findOne({ _id: mongoose.Types.ObjectId(secondUserId), followers: { $in: [firstUserId] } }, { followers: 0, followRequests: 0 })
         return user != null
     }
 
@@ -159,7 +159,7 @@ class UsersDB {
             createdAt: 0,
             __v: 0,
             followers: { $slice: [startFromIndex, startFromIndex + quantity] }
-        })).followers
+        }, { followRequests: 0 })).followers
 
 
         for (const id of followersId) {
@@ -199,77 +199,13 @@ class UsersDB {
 
         await userModel.findByIdAndUpdate(userId, changes)
     }
+
+    static async doesUserExist(userId) {
+        const user = await userModel.findById(userId, { followers: 0, followRequests: 0 })
+
+        return user == null
+    }
 }
-
-
-// const usersDb = Object.freeze({
-//     checkLogin: async (username, password) => {
-//         // Checks login details
-
-//         const user = await userModel.findOne({ username: username }, { password: 1 })
-//         if (user == null) {
-//             return null
-//         }
-
-//         if (await Password.checkPassword(user.password, password)) {
-//             return user._id.toString()
-//         }
-//         else {
-//             return null
-//         }
-//     },
-//     insert: async (user) => {
-//         // Enters user to db
-
-//         const userObject = new userModel({ username: user.username, password: user.password, _id: user.id, createdAt: user.createdAt })
-//         await userObject.save()
-//     },
-//     deleteById: async (userId) => {
-//         // Deletes user by id
-
-//         await userModel.findByIdAndDelete(userId)
-//     },
-//     findById: async (userId) => {
-//         // returns user by id
-
-//         const user = await userModel.findById(userId)
-
-//         return userObjectFromDbObject(user)
-//     },
-//     findByUsername: async (username) => {
-//         // Returns user by username
-
-//         const user = await userModel.findOne({ username: username })
-
-//         return userObjectFromDbObject(user)
-//     },
-//     followUser: async (firstUserId, secondUserId) => {
-//         // makes first user follow second user
-
-
-
-//         await userModel.findByIdAndUpdate(firstUserId, { $inc: { followingsCount: 1 } })
-//         await userModel.findByIdAndUpdate(secondUserId, { $inc: { followersCount: 1 }, $addToSet: { followers: firstUserId } })
-//     },
-//     unfollowUser: async (firstUserId, secondUserId) => {
-//         // makes first user unfollow second user
-
-//         await userModel.findByIdAndUpdate(firstUserId, { $inc: { followingsCount: -1 } })
-//         await userModel.findByIdAndUpdate(secondUserId, { $inc: { followersCount: -1 }, $pull: { followers: firstUserId } })
-//     },
-//     acceptFollowRequest: async (firstUserId, secondUserId) => {
-//         // accepts follow request which first user sent to second
-
-//         await userModel.findByIdAndUpdate(firstUserId, { $inc: { followingRequestsCount: -1 }, $inc: { followingsCount: 1 } })
-//         await userModel.findByIdAndUpdate(secondUserId, { $inc: { followRequestsCount: -1 }, $inc: { followers: 1 }, $pull: { followRequests: firstUserId }, $addToSet: { followers: firstUserId } })
-//     },
-//     declineFollowRequest: async (firstUserId, secondUserId) => {
-//         // decline follow request which first user sent to second
-
-//         await userModel.findByIdAndUpdate(firstUserId, { $inc: { followingRequestsCount: -1 } })
-//         await userModel.findByIdAndUpdate(secondUserId, { $inc: { followRequestsCount: -1 }, $pull: { followRequests: firstUserId } })
-//     },
-// })
 
 function userObjectFromDbObject(dbObject) {
     // Returns user object from db user object

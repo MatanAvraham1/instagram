@@ -1,10 +1,11 @@
 const { makeComment } = require("../../Entities/comment")
 
-function buildAddComment({ commentsDb }) {
-    return async function addComment({ publisherId, structure }) {
-        const comment = makeComment({ publisherId, structure })
+function buildAddComment({ CommentsDB }) {
+    return async function addComment({ publisherId, postId, comment, replyToComment = null }) {
+        const comment = makeComment({ publisherId, postId, comment, replyToComment })
 
-        await commentsDb.insert(comment)
+        await CommentsDB.insert(comment)
+        return comment.id
     }
 }
 

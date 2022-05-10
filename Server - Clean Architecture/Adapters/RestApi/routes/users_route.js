@@ -1,8 +1,9 @@
 
 const express = require('express')
-const { authenticateToken, doesOwn, doesHasPermission } = require('../middleware')
+const { authenticateToken, doesOwnUserObject } = require('../middleware')
 const { getUserById, deleteUserById, updateFields } = require('../../../Use_cases/user/index')
 const { AppError } = require('../../../app_error');
+const { AuthenticationService } = require('../../../CustomHelpers/Authantication');
 
 const userRouter = express.Router()
 
@@ -42,7 +43,7 @@ userRouter.get('/:userId', authenticateToken, (req, res) => {
 })
 
 // Deletes user
-userRouter.delete('/:userId', authenticateToken, doesOwn, (req, res) => {
+userRouter.delete('/:userId', authenticateToken, doesOwnUserObject, (req, res) => {
     const userId = req.params.userId
 
     deleteUserById({ userId }).then((user) => {
@@ -83,7 +84,14 @@ userRouter.put('/', authenticateToken, (req, res) => {
 })
 
 // Gets followers of user
-userRouter.get('/:userId/followers', authenticateToken, doesHasPermission, (req, res) => {
+userRouter.get('/:userId/followers', authenticateToken, (req, res) => {
+
+    const firstUserId = req.userId
+    const secondUserId = req.params.userId
+    const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
+    if (!doesHasPermission) {
+        return res.sendStatus(403)
+    }
 
     const userId = req.params.userId
     const startIndex = parseInt(req.query.startIndex)

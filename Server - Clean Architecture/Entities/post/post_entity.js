@@ -1,9 +1,17 @@
-function buildMakePost({ Id, PhotosChecker, TextChecker, AppError }) {
-    return function makePost({ publisherId, taggedUsers, photos, publisherComment }) {
+function buildMakePost({ Id, Location, PhotosChecker, TextChecker, AppError, UsersDB }) {
+    return function makePost({ publisherId, photos, publisherComment = null, location = null, taggedUsers = [] }) {
 
 
         if (!Id.isValid(publisherId)) {
             throw new AppError('Post must have valid publisher id.')
+        }
+
+        if (!(await UsersDB.doesUserExist(publisherId))) {
+            throw new AppError('Post must have existing publisher.')
+        }
+
+        if (!Location.isValid(location)) {
+            throw new AppError('Post must have valid location.')
         }
 
         for (const taggedUser of taggedUsers) {
@@ -20,16 +28,24 @@ function buildMakePost({ Id, PhotosChecker, TextChecker, AppError }) {
         }
 
 
-        if (!TextChecker.checkValidate(publisherComment)) {
-            throw new AppError('Post must have valid publisher comment.')
+        if (publisherComment != null) {
+            if (!TextChecker.checkValidate(publisherComment)) {
+                throw new AppError('Post must have valid publisher comment.')
+            }
         }
+
 
         return Object.freeze({
             publisherId: publisherId,
             taggedUsers: taggedUsers,
             photos: photos,
+            location: location,
+            publisherComment: publisherComment,
             id: Id.generate(),
             createdAt: Date.now(),
+
+            comments: 0,
+            likes: 0,
         })
 
     }

@@ -2,7 +2,7 @@
 const express = require('express')
 const { userRouter } = require('./routes/user_route')
 const { authRouter } = require('./routes/auth_route')
-const { friendShipsRouter } = require('./routes/friendships')
+const { friendShipsRouter } = require('./routes/friendships_route')
 
 function startServer() {
     // Creates the express app

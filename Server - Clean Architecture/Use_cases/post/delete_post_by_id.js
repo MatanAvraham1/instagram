@@ -1,11 +1,11 @@
-function buildDeletePostById({ postsDb, AppError }) {
+function buildDeletePostById({ PostsDB, Id, AppError }) {
     return async function deletePostById({ postId }) {
 
         if (!Id.isValid(postId)) {
             throw new AppError("Can't delete post by invalid id.")
         }
 
-        await postsDb.deleteById(postId)
+        await PostsDB.deleteById(postId)
     }
 }
 

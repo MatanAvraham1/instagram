@@ -1,11 +1,12 @@
-const { makePost } = require("../../Entities/post"
+const { makePost } = require("../../Entities/post")
 
-function buildAddPost({ postsDb }) {
-        return async function addPost({ publisherId, structure }) {
-            const post = makePost({ publisherId, structure })
+function buildAddPost({ PostsDB }) {
+    return async function addPost({ publisherId, photos, publisherComment = null, location = null, taggedUsers = [] }) {
+        const post = makePost({ publisherId, photos, publisherComment, location, taggedUsers })
 
-            await postsDb.insert(post)
-        }
+        await PostsDB.insert(post)
+        return post.id
     }
+}
 
 module.exports = { buildAddPost }

@@ -5,6 +5,7 @@ function buildAddStory({ storiesDb }) {
         const story = makeStory({ publisherId, structure })
 
         await storiesDb.insert(story)
+        return story.id
     }
 }
 

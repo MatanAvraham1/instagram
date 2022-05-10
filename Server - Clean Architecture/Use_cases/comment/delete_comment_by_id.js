@@ -1,11 +1,11 @@
-function buildDeleteCommentById({ commentsDb, Id, AppError }) {
+function buildDeleteCommentById({ CommentsDB, Id, AppError }) {
     return async function deleteCommentById({ commentId }) {
 
         if (!Id.isValid(commentId)) {
             throw new AppError("Can't delete comment by invalid id.")
         }
 
-        await commentsDb.deleteById(commentId)
+        await CommentsDB.deleteById(commentId)
     }
 }
 
