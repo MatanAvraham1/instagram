@@ -7,6 +7,10 @@ function buildUpdateFields({ UsersDB, Id, Username, Fullname, Bio, AppError }) {
             throw new AppError("Can't update fields of user by invalid id.")
         }
 
+        if (!(await UsersDB.doesUserExist(userId))) {
+            throw new AppError('User does not exist.')
+        }
+
         if (newUsername != undefined) {
             if (!Username.isValid(newUsername)) {
                 throw new AppError("Can't update fields when username is invalid.")

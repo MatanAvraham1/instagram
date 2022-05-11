@@ -5,6 +5,10 @@ function buildGetPostByid({ PostsDB, Id, AppError }) {
             throw new AppError("Can't get post by invalid id.")
         }
 
+        if (!(await PostsDB.doesPostExist(postId))) {
+            throw new AppError("Post doesn't exist.")
+        }
+
         return await PostsDB.findById(postId)
     }
 }

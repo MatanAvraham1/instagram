@@ -54,6 +54,8 @@ class UsersDB {
     static async deleteById(userId) {
         // Deletes user by id
 
+        // TODO: unfollow everyone, delete posts, delete stories, delete comments
+
         await userModel.findByIdAndDelete(userId)
     }
 

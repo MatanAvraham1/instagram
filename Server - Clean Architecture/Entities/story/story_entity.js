@@ -9,6 +9,7 @@ function buildMakeStory({ Id, StoryStructure, AppError, UsersDB }) {
         if (!(await UsersDB.doesUserExist(publisherId))) {
             throw new AppError('Story must have existing publisher.')
         }
+
         if (!StoryStructure.isValid(structure)) {
             throw new AppError('Story must have valid story structure.')
         }
@@ -17,6 +18,10 @@ function buildMakeStory({ Id, StoryStructure, AppError, UsersDB }) {
             structure: structure,
             publisherId: publisherId,
             id: Id.generate(),
+
+            likes: 0,
+            viewers: 0,
+
             createdAt: Date.now(),
         })
 

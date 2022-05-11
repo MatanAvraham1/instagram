@@ -5,6 +5,10 @@ function buildDeleteUserById({ UsersDB, Id, AppError }) {
             throw new AppError("Can't delete user by invalid id.")
         }
 
+        if (!(await UsersDB.doesUserExist(userId))) {
+            throw new AppError("User doesn't exist.")
+        }
+
         await UsersDB.deleteById(userId)
     }
 }

@@ -10,6 +10,14 @@ function buildDeclineFollowRequest({ UsersDB, Id, AppError }) {
             throw new AppError("Can't decline a follow request of user by invalid id.")
         }
 
+        if (!(await UsersDB.doesUserExist(firstUserId))) {
+            throw new AppError("User (${firstUserId}) doesn't exist.")
+        }
+
+        if (!(await UsersDB.doesUserExist(secondUserId))) {
+            throw new AppError("User (${secondUserId}) doesn't exist.")
+        }
+
         if (firstUserId == secondUserId) {
             throw new AppError("User can't have follow request of himself.")
         }

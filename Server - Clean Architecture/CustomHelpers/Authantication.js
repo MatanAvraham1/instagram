@@ -28,6 +28,9 @@ class AuthenticationService {
     static async hasPermission(firstUserId, secondUserId) {
         // Checks if the first user has permission to look about private things of second user (like posts etc..)
 
+        if (firstUserId == secondUserId) {
+            return true
+        }
 
         const user = await UsersDB.findById(secondUserId)
         if (!user.isPrivate) {

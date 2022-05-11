@@ -6,6 +6,10 @@ function buildGetCommentByid({ CommentsDB, Id, AppError }) {
             throw new AppError("Can't get comment by invalid id.")
         }
 
+        if (!(await CommentsDB.doesCommentExist(commentId))) {
+            throw new AppError("Comment doesn't exist.")
+        }
+
         return await CommentsDB.findById(commentId)
     }
 }

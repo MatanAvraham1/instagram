@@ -1,11 +1,15 @@
-function buildDeleteStoryById({ storiesDb, Id, AppError }) {
+function buildDeleteStoryById({ StoriesDB, Id, AppError }) {
     return async function deleteStoryById({ storyId }) {
 
         if (!Id.isValid(storyId)) {
             throw new AppError("Can't delete story by invalid id.")
         }
 
-        await storiesDb.deleteById(storyId)
+        if (!(await StoriesDB.doesStoryExist(storyId))) {
+            throw new AppError("Story doesn't exist.")
+        }
+
+        await StoriesDB.deleteById(storyId)
     }
 }
 

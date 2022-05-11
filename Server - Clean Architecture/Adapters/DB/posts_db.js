@@ -60,6 +60,28 @@ class PostsDB {
         return posts
     }
 
+    static async likePost(postId, whoLikeId) {
+        /*
+        Adds like to the post [postId] by [whoLikeId]
+
+        param 1: the post id
+        param 2: the liker id
+        */
+
+        await postModel.findByIdAndUpdate(postId, { $addToSet: { likes: whoLikeId } })
+    }
+
+    static async unlikePost(postId, whoLikeId) {
+        /*
+        Unlikes the post [postId] by [whoLikeId]
+
+        param 1: the post id
+        param 2: the liker id
+        */
+
+        await postModel.findByIdAndUpdate(postId, { $pull: { likes: whoLikeId } })
+    }
+
 }
 
 

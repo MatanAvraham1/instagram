@@ -14,6 +14,14 @@ function buildUnfollowUser({ UsersDB, Id, AppError }) {
             throw new AppError("User can't follow himself.")
         }
 
+        if (!(await UsersDB.doesUserExist(firstUserId))) {
+            throw new AppError("User (${firstUserId}) doesn't exist.")
+        }
+
+        if (!(await UsersDB.doesUserExist(secondUserId))) {
+            throw new AppError("User (${secondUserId}) doesn't exist.")
+        }
+
         await UsersDB.unfollowUser(firstUserId, secondUserId)
     }
 }

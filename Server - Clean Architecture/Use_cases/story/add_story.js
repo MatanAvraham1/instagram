@@ -1,10 +1,10 @@
 const { makeStory } = require("../../Entities/story")
 
-function buildAddStory({ storiesDb }) {
+function buildAddStory({ StoriesDB }) {
     return async function addStory({ publisherId, structure }) {
         const story = makeStory({ publisherId, structure })
 
-        await storiesDb.insert(story)
+        await StoriesDB.insert(story)
         return story.id
     }
 }

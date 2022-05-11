@@ -1,6 +1,6 @@
 const mongoose = require('mongoose')
 
-const commentModel = mongoose.model("Comment", mongoose.Schema({
+const storyModel = mongoose.model("Story", mongoose.Schema({
     _id: {
         type: mongoose.Types.ObjectId,
         required: true,
@@ -10,21 +10,16 @@ const commentModel = mongoose.model("Comment", mongoose.Schema({
         type: String,
         required: true,
     },
-    postId: {
-        type: String,
+    structure: {
+        type: Array,
         required: true,
     },
-    replyToComment: {
-        type: String,
-        default: null
-    },
-    comment: {
-        type: String,
-        required: true
-    },
-
 
     likes: {
+        type: Array,
+        default: []
+    },
+    viewers: {
         type: Array,
         default: []
     },
@@ -33,7 +28,7 @@ const commentModel = mongoose.model("Comment", mongoose.Schema({
         type: Number,
         default: 0
     },
-    repliesCount: {
+    viewersCount: {
         type: Number,
         default: 0
     },
@@ -44,4 +39,4 @@ const commentModel = mongoose.model("Comment", mongoose.Schema({
     }
 }))
 
-module.exports = { commentModel }
+module.exports = { storyModel }

@@ -42,6 +42,7 @@ function buildMakeComment({ Id, TextChecker, AppError, UsersDB, PostsDB, Comment
             createdAt: Date.now(),
 
             likes: 0,
+            replies: 0,
         })
 
     }

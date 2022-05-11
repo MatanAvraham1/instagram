@@ -1,6 +1,7 @@
 const express = require('express')
-const { getStoryById, addStory, deleteStoryById } = require('../../../Use_cases/story')
-const { authenticateToken, doesOwnPostObject } = require('../middleware')
+const { AuthenticationService } = require('../../../CustomHelpers/Authantication')
+const { getStoryById, addStory, deleteStoryById, getStoriesByPublisherId } = require('../../../Use_cases/story')
+const { authenticateToken, doesOwnStoryObject } = require('../middleware')
 const storiesRouter = express.Router()
 
 // Add story
@@ -53,7 +54,7 @@ storiesRouter.get('/:storyId', authenticateToken, (req, res) => {
 
 
 // Deletes story
-storiesRouter.delete('/:storyId', authenticateToken, doesOwnPostObject, (req, res) => {
+storiesRouter.delete('/:storyId', authenticateToken, doesOwnStoryObject, (req, res) => {
     const storyId = req.params.storyId
 
     deleteStoryById(storyId).then(() => {
@@ -67,3 +68,56 @@ storiesRouter.delete('/:storyId', authenticateToken, doesOwnPostObject, (req, re
         console.error(error)
     })
 })
+
+// Gets stories by publisher
+storiesRouter.get('/', authenticateToken, (req, res) => {
+    const publisherId = req.query.publisherId
+    const startIndex = parseInt(req.query.startIndex)
+
+    if (!Number.isInteger(startIndex)) {
+        return res.status(400).json("Invalid start index.")
+    }
+
+    getStoriesByPublisherId(publisherId, startIndex).then((stories) => {
+
+        const firstUserId = req.userId
+        const secondUserId = publisherId
+        const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
+        if (!doesHasPermission) {
+            return res.sendStatus(403)
+        }
+
+        const returnedList = []
+        for (const story of stories) {
+
+            const objectToReturn = {
+                id: story.id,
+                publisherId: story.publisherId,
+                structure: story.structure,
+                createdAt: story.createdAt
+            }
+
+
+            // If same person
+            if (firstUserId == publisherId) {
+                objectToReturn.viewers = stories.viewers
+                objectToReturn.likes = stories.likes
+            }
+
+            returnedList.push(objectToReturn)
+        }
+
+
+        res.sendStatus(200).json(returnedList)
+    }).catch((error) => {
+        if (error instanceof AppError) {
+            return res.status(400).json(error.message)
+        }
+
+        res.sendStatus(500)
+        console.error(error)
+    })
+})
+
+
+module.exports = { storiesRouter }

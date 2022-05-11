@@ -1,12 +1,23 @@
-const { storiesDb } = require("../../Adapters/DB/stories_db")
+const { StoriesDB } = require("../../Adapters/DB/stories_db")
 const { buildAddStory } = require("./add_story")
 const { buildDeleteStoryById } = require("./delete_story_by_id")
 const { buildGetStoryByid } = require("./get_story_by_id")
 const { Id } = require("../../CustomHelpers/Id_helper")
 const { AppError } = require("../../app_error")
+const { buildLikeStoryById } = require("./like_story_by_id")
+const { buildUnlikeStoryById } = require("./unlike_story_by_id")
+const { UsersDB } = require("../../Adapters/DB/users_db")
+const { buildGetStoriesByPublisherId } = require("./get_stories_by_publisher_id")
+const { buildViewStory } = require("./view_story")
+const { buildUnviewStory } = require("./unview_story")
 
-const addStory = buildAddStory({ storiesDb })
-const deleteStoryById = buildDeleteStoryById({ storiesDb, Id, AppError })
-const getStoryById = buildGetStoryByid({ storiesDb, Id, AppError })
+const addStory = buildAddStory({ StoriesDB })
+const deleteStoryById = buildDeleteStoryById({ StoriesDB, Id, AppError })
+const getStoryById = buildGetStoryByid({ StoriesDB, Id, AppError })
+const likeStoryById = buildLikeStoryById({ UsersDB, StoriesDB, Id, AppError })
+const unlikeStoryById = buildUnlikeStoryById({ UsersDB, StoriesDB, Id, AppError })
+const viewStory = buildViewStory({ UsersDB, StoriesDB, Id, AppError })
+const unviewStory = buildUnviewStory({ UsersDB, StoriesDB, Id, AppError })
+const getStoriesByPublisherId = buildGetStoriesByPublisherId({ UsersDB, StoriesDB, Id, AppError })
 
-module.exports = { addStory, deleteStoryById, getStoryById }
+module.exports = { addStory, deleteStoryById, getStoryById, likeStoryById, unlikeStoryById, getStoriesByPublisherId, viewStory, unviewStory }

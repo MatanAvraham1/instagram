@@ -52,6 +52,33 @@ async function doesOwnUserObject(req, res, next) {
     }
 }
 
+async function doesOwnStoryObject(req, res, next) {
+
+    try {
+
+        if (!Id.isValid(req.params.storyId)) {
+            return res.status(400).json("Can't perfrom request of invalid id.")
+        }
+
+        const story = await StoriesDB.findById(req.params.postId)
+
+        if (story.publisherId != req.userId) {
+            return res.sendStatus(403)
+        }
+
+        next()
+    }
+    catch (err) {
+        if (err instanceof AppError) {
+            return res.status(400).json(err.message)
+        }
+
+        console.log(err)
+        return res.sendStatus(500)
+    }
+}
+
+
 async function doesOwnPostObject(req, res, next) {
 
     try {
@@ -118,4 +145,4 @@ async function doesOwnCommentObject(req, res, next) {
 //     next()
 // }
 
-module.exports = { authenticateToken, doesOwnUserObject, doesOwnPostObject, doesOwnCommentObject }
+module.exports = { authenticateToken, doesOwnUserObject, doesOwnStoryObject, doesOwnPostObject, doesOwnCommentObject }
