@@ -1,36 +1,36 @@
-function buildMakeComment({ Id, TextChecker, AppError, UsersDB, PostsDB, CommentsDB }) {
+function buildMakeComment({ Id, TextChecker, AppError, AppErrorMessages, UsersDB, PostsDB, CommentsDB }) {
     return async function makeComment({ publisherId, postId, comment }) {
 
 
         if (!Id.isValid(publisherId)) {
-            throw new AppError('Comment must have valid publisher id.')
+            throw new AppError(AppErrorMessages.invalidPublisherId)
         }
 
         if (!(await UsersDB.doesUserExist(publisherId))) {
-            throw new AppError('Comment must have existing publisher.')
+            throw new AppError(AppErrorMessages.publisherDoesNotExist)
         }
 
         if (!Id.isValid(postId)) {
-            throw new AppError('Comment must have valid post id.')
+            throw new AppError(AppErrorMessages.invalidPostId)
         }
 
         if (!(await PostsDB.doesPostExist(postId))) {
-            throw new AppError('Comment must have existing post.')
+            throw new AppError(AppErrorMessages.postDoesNotExist)
         }
 
         if (replyToComment != null) {
             if (!Id.isValid(replyToComment)) {
-                throw new AppError('Comment must have valid reply to comment id.')
+                throw new AppError(AppErrorMessages.invalidCommentId)
             }
 
             if (!(await CommentsDB.doesCommentExist(replyToComment))) {
-                throw new AppError('Comment must have existing reply to comment.')
+                throw new AppError(AppErrorMessages.commentDoesNotExist)
             }
         }
 
 
         if (!TextChecker.checkValidate(comment)) {
-            throw new AppError('Comment must have valid comment.')
+            throw new AppError(AppErrorMessages.invalidComment)
         }
 
         return Object.freeze({

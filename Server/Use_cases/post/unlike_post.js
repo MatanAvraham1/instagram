@@ -1,20 +1,20 @@
-function buildUnlikePost({ UsersDB, PostsDB, Id, AppError }) {
+function buildUnlikePost({ UsersDB, PostsDB, Id, AppError, AppErrorMessages }) {
     return async function unlikePost({ postId, likerId }) {
 
         if (!Id.isValid(likerId)) {
-            throw new AppError("Can't unlike post by invalid user id.")
+            throw new AppError(AppErrorMessages.invalidUserId)
         }
 
         if (!Id.isValid(postId)) {
-            throw new AppError("Can't unlike post by invalid post id.")
+            throw new AppError(AppErrorMessages.invalidPostId)
         }
 
         if (!(await UsersDB.doesUserExist(likerId))) {
-            throw new AppError("User doesn't exist.")
+            throw new AppError(AppErrorMessages.userDoesNotExist)
         }
 
         if (!(await PostsDB.doesPostExist(postId))) {
-            throw new AppError("Post doesn't exist.")
+            throw new AppError(AppErrorMessages.postDoesNotExist)
         }
 
         return await PostsDB.unlikePost(postId, likerId)

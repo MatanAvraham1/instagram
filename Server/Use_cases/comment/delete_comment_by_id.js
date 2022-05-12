@@ -1,12 +1,12 @@
-function buildDeleteCommentById({ CommentsDB, Id, AppError }) {
+function buildDeleteCommentById({ CommentsDB, Id, AppError, AppErrorMessages }) {
     return async function deleteCommentById({ commentId }) {
 
         if (!Id.isValid(commentId)) {
-            throw new AppError("Can't delete comment by invalid id.")
+            throw new AppError(AppErrorMessages.invalidCommentId)
         }
 
         if (!(await CommentsDB.doesCommentExist(commentId))) {
-            throw new AppError("Comment doesn't exist.")
+            throw new AppError(AppErrorMessages.commentDoesNotExist)
         }
 
         await CommentsDB.deleteById(commentId)

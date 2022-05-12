@@ -1,7 +1,7 @@
 const { userModel } = require("./schemes/user_scheme")
 const { Password } = require("../../CustomHelpers/Password_helper")
 const { default: mongoose } = require("mongoose")
-const { AppError } = require("../../app_error")
+const { AppError, AppErrorMessages } = require("../../app_error")
 
 class UsersDB {
     static async checkLogin(username, password) {
@@ -66,7 +66,7 @@ class UsersDB {
         const user = await userModel.findById(userId, { followers: 0, followRequests: 0 })
 
         if (user == null) {
-            throw new AppError("User doesn't exist.")
+            throw new AppError(AppErrorMessages.userDoesNotExist)
         }
 
         return userObjectFromDbObject(user)

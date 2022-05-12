@@ -1,25 +1,25 @@
-function buildDeclineFollowRequest({ UsersDB, Id, AppError }) {
+function buildDeclineFollowRequest({ UsersDB, Id, AppError, AppErrorMessages }) {
     return async function declineFollowRequest({ firstUserId, secondUserId }) {
 
         // checks if first user follow second user
 
         if (!Id.isValid(firstUserId)) {
-            throw new AppError("Can't check by invalid id (${firstUserId}).")
+            throw new AppError(AppErrorMessages.invalidUserId)
         }
         if (!Id.isValid(secondUserId)) {
-            throw new AppError("Can't check by invalid id (${secondUserId}).")
-        }
-
-        if (!(await UsersDB.doesUserExist(firstUserId))) {
-            throw new AppError("User (${firstUserId}) doesn't exist.")
-        }
-
-        if (!(await UsersDB.doesUserExist(secondUserId))) {
-            throw new AppError("User (${secondUserId}) doesn't exist.")
+            throw new AppError(AppErrorMessages.invalidUserId)
         }
 
         if (firstUserId == secondUserId) {
-            throw new AppError("User can't follow request of himself.")
+            throw new AppError(AppErrorMessages.userCanNotFollowHimself)
+        }
+
+        if (!(await UsersDB.doesUserExist(firstUserId))) {
+            throw new AppError(AppErrorMessages.userDoesNotExist)
+        }
+
+        if (!(await UsersDB.doesUserExist(secondUserId))) {
+            throw new AppError(AppErrorMessages.userDoesNotExist)
         }
 
         await UsersDB.isFollow(firstUserId, secondUserId)

@@ -1,3 +1,4 @@
+const { AppError, AppErrorMessages } = require("../../app_error")
 const { postModel } = require("./schemes/post_scheme")
 
 
@@ -28,7 +29,7 @@ class PostsDB {
         const post = await postModel.findById(postId, { likes: 0 })
 
         if (post == null) {
-            throw new AppError("Post doesn't exist.")
+            throw new AppError(AppErrorMessages.postDoesNotExist)
         }
 
         return postObjectFromDbObject(post)

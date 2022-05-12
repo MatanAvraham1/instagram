@@ -1,12 +1,12 @@
-function buildGetCommentsByPostId({ PostsDB, CommentsDB, Id, AppError }) {
+function buildGetCommentsByPostId({ PostsDB, CommentsDB, Id, AppError, AppErrorMessages }) {
     return async function getCommentsByPostId({ postId, startFromIndex }) {
 
         if (!Id.isValid(postId)) {
-            throw new AppError("Can't get comments by invalid post id.")
+            throw new AppError(AppErrorMessages.invalidPostId)
         }
 
         if (!(await PostsDB.doesPostExist(postId))) {
-            throw new AppError("Post doesn't exist.")
+            throw new AppError(AppErrorMessages.postDoesNotExist)
         }
 
         return await CommentsDB.findByPostId(postId, startFromIndex, 30)

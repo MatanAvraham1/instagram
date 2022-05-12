@@ -1,12 +1,12 @@
-function buildGetPostsByPublisherId({ UsersDB, PostsDB, Id, AppError }) {
+function buildGetPostsByPublisherId({ UsersDB, PostsDB, Id, AppError, AppErrorMessages }) {
     return async function getPostsByPublisherId({ startFromIndex, publisherId }) {
 
         if (!Id.isValid(publisherId)) {
-            throw new AppError("Can't get posts by invalid publisher id.")
+            throw new AppError(AppErrorMessages.invalidPublisherId)
         }
 
         if (!(await UsersDB.doesUserExist(publisherId))) {
-            throw new AppError("Post publisher doesn't exist.")
+            throw new AppError(AppErrorMessages.publisherDoesNotExist)
         }
 
         return await PostsDB.findByPublisher(publisherId, startFromIndex, 10)

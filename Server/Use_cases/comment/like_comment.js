@@ -1,20 +1,20 @@
-function buildLikeCommentById({ UsersDB, CommentsDB, Id, AppError }) {
+function buildLikeCommentById({ UsersDB, CommentsDB, Id, AppError, AppErrorMessages }) {
     return async function likeCommentById({ commentId, likerId }) {
 
         if (!Id.isValid(likerId)) {
-            throw new AppError("Can't like comment by invalid user id.")
+            throw new AppError(AppErrorMessages.invalidUserId)
         }
 
         if (!Id.isValid(commentId)) {
-            throw new AppError("Can't like comment by invalid comment id.")
+            throw new AppError(AppErrorMessages.invalidCommentId)
         }
 
         if (!(await UsersDB.doesUserExist(likerId))) {
-            throw new AppError("User doesn't exist.")
+            throw new AppError(AppErrorMessages.userDoesNotExist)
         }
 
         if (!(await CommentsDB.doesCommentExist(commentId))) {
-            throw new AppError("Comment doesn't exist.")
+            throw new AppError(AppErrorMessages.commentDoesNotExist)
         }
 
         return await CommentsDB.likeComment(commentId, likerId)

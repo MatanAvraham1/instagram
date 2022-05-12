@@ -1,17 +1,17 @@
-function buildMakeUser({ Id, Password, Username, AppError }) {
+function buildMakeUser({ Id, Password, Username, AppError, AppErrorMessages }) {
     return async function makeUser({ username, password }) {
 
 
         if (!Username.isValid(username)) {
-            throw new AppError('User must have valid username.')
+            throw new AppError(AppErrorMessages.invalidUsername)
         }
 
         if (!await Username.isUsed(username)) {
-            throw new AppError('User must have unused username.')
+            throw new AppError(AppErrorMessages.usedUsername)
         }
 
-        if (!Username.isValid(username)) {
-            throw new AppError('User must have valid password.')
+        if (!Password.isValid(username)) {
+            throw new AppError(AppErrorMessages.InvalidPassword)
         }
 
         return Object.freeze({

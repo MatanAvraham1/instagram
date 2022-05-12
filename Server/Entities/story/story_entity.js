@@ -1,17 +1,17 @@
-function buildMakeStory({ Id, StoryStructure, AppError, UsersDB }) {
+function buildMakeStory({ Id, StoryStructure, AppError, AppErrorMessages, UsersDB }) {
     return async function makeStory({ publisherId, structure }) {
 
 
         if (!Id.isValid(publisherId)) {
-            throw new AppError('Story must have valid publisher Id.')
+            throw new AppError(AppErrorMessages.invalidPublisherId)
         }
 
         if (!(await UsersDB.doesUserExist(publisherId))) {
-            throw new AppError('Story must have existing publisher.')
+            throw new AppError(AppErrorMessages.publisherDoesNotExist)
         }
 
         if (!StoryStructure.isValid(structure)) {
-            throw new AppError('Story must have valid story structure.')
+            throw new AppError(AppErrorMessages.invalidStoryStructure)
         }
 
         return Object.freeze({

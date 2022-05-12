@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken')
-const { AppError } = require('../app_error')
+const { AppError, AppErrorMessages } = require('../app_error')
 const { getUserById, isFollow } = require('../Use_cases/user')
 
 
@@ -15,7 +15,7 @@ class AuthenticationService {
         jwt.verify(token, process.env.TOKEN_SECRET, (err, object) => {
 
             if (err) {
-                throw new AppError("Invalid jwt.")
+                throw new AppError(AppErrorMessages.invalidJwt)
             }
 
 

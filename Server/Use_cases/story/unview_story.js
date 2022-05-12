@@ -1,20 +1,20 @@
-function buildUnviewStory({ UsersDB, StoriesDB, Id, AppError }) {
+function buildUnviewStory({ UsersDB, StoriesDB, Id, AppError, AppErrorMessages }) {
     return async function unviewStoryById({ storyId, viewerId }) {
 
         if (!Id.isValid(viewerId)) {
-            throw new AppError("Can't unview story by invalid user id.")
+            throw new AppError(AppErrorMessages.invalidUserId)
         }
 
         if (!Id.isValid(storyId)) {
-            throw new AppError("Can't unview story by invalid story id.")
+            throw new AppError(AppErrorMessages.invalidStoryId)
         }
 
         if (!(await UsersDB.doesUserExist(viewerId))) {
-            throw new AppError("User doesn't exist.")
+            throw new AppError(AppErrorMessages.userDoesNotExist)
         }
 
         if (!(await StoriesDB.doesStoryExist(storyId))) {
-            throw new AppError("Story doesn't exist.")
+            throw new AppError(AppErrorMessages.storyDoesNotExist)
         }
 
         return await StoriesDB.unviewStory(storyId, viewerId)

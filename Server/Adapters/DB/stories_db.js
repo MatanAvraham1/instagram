@@ -1,3 +1,4 @@
+const { AppErrorMessages, AppError } = require("../../app_error")
 const { storyModel } = require("./schemes/story_scheme")
 
 
@@ -27,7 +28,7 @@ class StoriesDB {
         const story = await storyModel.findById(storyId, { likes: 0, viewers: 0 })
 
         if (story == null) {
-            throw new AppError("Story doesn't exist.")
+            throw new AppError(AppErrorMessages.storyDoesNotExist)
         }
 
         return storyObjectFromDbObject(story)

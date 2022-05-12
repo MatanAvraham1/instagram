@@ -1,3 +1,4 @@
+const { AppError, AppErrorMessages } = require("../../app_error")
 const { commentModel } = require("./schemes/comment_scheme")
 
 
@@ -46,7 +47,7 @@ class CommentsDB {
         const comment = await commentModel.findById(commentId, { likes: 0 })
 
         if (comment == null) {
-            throw new AppError("Comment doesn't exist.")
+            throw new AppError(AppErrorMessages.commentDoesNotExist)
         }
 
         return commentObjectFromDbObject(post)

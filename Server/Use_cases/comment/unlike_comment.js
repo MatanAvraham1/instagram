@@ -1,20 +1,20 @@
-function buildUnlikeCommentById({ UsersDB, CommentsDB, Id, AppError }) {
+function buildUnlikeCommentById({ UsersDB, CommentsDB, Id, AppError, AppErrorMessages }) {
     return async function unlikeCommentById({ commentId, likerId }) {
 
         if (!Id.isValid(likerId)) {
-            throw new AppError("Can't unlike comment by invalid user id.")
+            throw new AppError(AppErrorMessages.InvalidUserId)
         }
 
         if (!Id.isValid(commentId)) {
-            throw new AppError("Can't unlike comment by invalid comment id.")
+            throw new AppError(AppErrorMessages.InvalidCommentId)
         }
 
         if (!(await UsersDB.doesUserExist(likerId))) {
-            throw new AppError("User doesn't exist.")
+            throw new AppError(AppErrorMessages.userDoesNotExist)
         }
 
         if (!(await CommentsDB.doesCommentExist(commentId))) {
-            throw new AppError("Comment doesn't exist.")
+            throw new AppError(AppErrorMessages.commentDoesNotExist)
         }
 
         return await CommentsDB.unlikeComment(commentId, likerId)
