@@ -4,10 +4,10 @@ function buildAcceptFollowRequest({ UsersDB, Id, AppError }) {
         // accepts the follow request which firstUser sent to secondUser
 
         if (!Id.isValid(firstUserId)) {
-            throw new AppError("Can't accept a follow request of user by invalid id.")
+            throw new AppError("Can't accept a follow request of user by invalid id (${firstUserId}).")
         }
         if (!Id.isValid(secondUserId)) {
-            throw new AppError("Can't accept a follow request of user by invalid id.")
+            throw new AppError("Can't accept a follow request of user by invalid id (${secondUserId}).")
         }
 
         if (!(await UsersDB.doesUserExist(firstUserId))) {

@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken')
-const { UsersDB } = require('../Adapters/DB/users_db')
 const { AppError } = require('../app_error')
+const { getUserById, isFollow } = require('../Use_cases/user')
 
 
 class AuthenticationService {
@@ -32,12 +32,12 @@ class AuthenticationService {
             return true
         }
 
-        const user = await UsersDB.findById(secondUserId)
+        const user = await getUserById(secondUserId)
         if (!user.isPrivate) {
             return true
         }
 
-        const isFollow = await UsersDB.isFollow(firstUserId, secondUserId)
+        const isFollow = await isFollow(firstUserId, secondUserId)
         return isFollow
     }
 }

@@ -1,5 +1,5 @@
-function buildLikeStoryById({ UsersDB, StoriesDB, Id, AppError }) {
-    return async function likeStoryById({ storyId, likerId }) {
+function buildLikeStory({ UsersDB, StoriesDB, Id, AppError }) {
+    return async function likeStory({ storyId, likerId }) {
 
         if (!Id.isValid(likerId)) {
             throw new AppError("Can't like story by invalid user id.")
@@ -21,4 +21,4 @@ function buildLikeStoryById({ UsersDB, StoriesDB, Id, AppError }) {
     }
 }
 
-module.exports = { buildLikeStoryById }
+module.exports = { buildLikeStory }

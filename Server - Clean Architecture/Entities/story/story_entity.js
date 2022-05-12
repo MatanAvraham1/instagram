@@ -1,5 +1,5 @@
 function buildMakeStory({ Id, StoryStructure, AppError, UsersDB }) {
-    return function makeStory({ publisherId, structure }) {
+    return async function makeStory({ publisherId, structure }) {
 
 
         if (!Id.isValid(publisherId)) {

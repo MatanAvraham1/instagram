@@ -4,10 +4,10 @@ function buildUnfollowUser({ UsersDB, Id, AppError }) {
         // makes the first user to unfollow the second user
 
         if (!Id.isValid(firstUserId)) {
-            throw new AppError("Can't unfollow user by invalid id.")
+            throw new AppError("Can't unfollow user by invalid id (${firstUserId}).")
         }
         if (!Id.isValid(secondUserId)) {
-            throw new AppError("Can't unfollow user by invalid id.")
+            throw new AppError("Can't unfollow user by invalid id (${secondUserId}).")
         }
 
         if (firstUserId == secondUserId) {

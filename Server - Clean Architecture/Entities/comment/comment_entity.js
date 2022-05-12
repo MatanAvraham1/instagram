@@ -1,5 +1,5 @@
 function buildMakeComment({ Id, TextChecker, AppError, UsersDB, PostsDB, CommentsDB }) {
-    return function makeComment({ publisherId, postId, comment }) {
+    return async function makeComment({ publisherId, postId, comment }) {
 
 
         if (!Id.isValid(publisherId)) {

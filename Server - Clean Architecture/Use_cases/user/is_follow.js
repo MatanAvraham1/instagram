@@ -1,13 +1,13 @@
 function buildDeclineFollowRequest({ UsersDB, Id, AppError }) {
     return async function declineFollowRequest({ firstUserId, secondUserId }) {
 
-        // declines the follow request which firstUser sent to secondUser
+        // checks if first user follow second user
 
         if (!Id.isValid(firstUserId)) {
-            throw new AppError("Can't decline a follow request of user by invalid id (${firstUserId}).")
+            throw new AppError("Can't check by invalid id (${firstUserId}).")
         }
         if (!Id.isValid(secondUserId)) {
-            throw new AppError("Can't decline a follow request of user by invalid id (${secondUserId}).")
+            throw new AppError("Can't check by invalid id (${secondUserId}).")
         }
 
         if (!(await UsersDB.doesUserExist(firstUserId))) {
@@ -19,10 +19,10 @@ function buildDeclineFollowRequest({ UsersDB, Id, AppError }) {
         }
 
         if (firstUserId == secondUserId) {
-            throw new AppError("User can't have follow request of himself.")
+            throw new AppError("User can't follow request of himself.")
         }
 
-        await UsersDB.declineFollowRequest(firstUserId, secondUserId)
+        await UsersDB.isFollow(firstUserId, secondUserId)
     }
 }
 

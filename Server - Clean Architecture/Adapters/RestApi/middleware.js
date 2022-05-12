@@ -1,9 +1,10 @@
 const { AppError } = require('../../app_error')
 const { AuthenticationService } = require('../../CustomHelpers/Authantication')
 const { Id } = require('../../CustomHelpers/Id_helper')
-const { CommentsDB } = require('../DB/comments_db')
-const { PostsDB } = require('../DB/posts_db')
-const { UsersDB } = require('../DB/users_db')
+const { getUserById } = require('../../Use_cases/user')
+const { getPostById } = require('../../Use_cases/post')
+const { getStoryById } = require('../../Use_cases/story')
+const { getCommentById } = require('../../Use_cases/comment')
 
 function authenticateToken(req, res, next) {
     const authHeader = req.headers.authorization
@@ -34,7 +35,7 @@ async function doesOwnUserObject(req, res, next) {
             return res.status(400).json("Can't perfrom request of invalid id.")
         }
 
-        const user = await UsersDB.findById(req.params.userId)
+        const user = await getUserById(req.params.userId)
 
         if (user.id != req.userId) {
             return res.sendStatus(403)
@@ -60,7 +61,7 @@ async function doesOwnStoryObject(req, res, next) {
             return res.status(400).json("Can't perfrom request of invalid id.")
         }
 
-        const story = await StoriesDB.findById(req.params.postId)
+        const story = await getStoryById(req.params.storyId)
 
         if (story.publisherId != req.userId) {
             return res.sendStatus(403)
@@ -87,7 +88,7 @@ async function doesOwnPostObject(req, res, next) {
             return res.status(400).json("Can't perfrom request of invalid id.")
         }
 
-        const post = await PostsDB.findById(req.params.postId)
+        const post = await getPostById(req.params.postId)
 
         if (post.publisherId != req.userId) {
             return res.sendStatus(403)
@@ -113,7 +114,7 @@ async function doesOwnCommentObject(req, res, next) {
             return res.status(400).json("Can't perfrom request of invalid id.")
         }
 
-        const comment = await CommentsDB.findById(req.params.commentId)
+        const comment = await getCommentById(req.params.commentId)
 
         if (comment.publisherId != req.userId) {
             return res.sendStatus(403)

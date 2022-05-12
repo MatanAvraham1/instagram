@@ -65,9 +65,9 @@ class CommentsDB {
         return comments
     }
 
-    static async findByReplyTo(commentId, startFromIndex, quantity) {
+    static async findReplies(commentId, startFromIndex, quantity) {
         /*
-        Returns comments which replied to another comment
+        Returns replies of the comment [commentId]
 
         param 1: the comment id
         param 2: from which comment to start

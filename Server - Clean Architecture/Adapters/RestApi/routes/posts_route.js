@@ -1,5 +1,6 @@
 const express = require('express')
-const { getPostById, addPost, deletePostById } = require('../../../Use_cases/post')
+const { AuthenticationService } = require('../../../CustomHelpers/Authantication')
+const { getPostById, addPost, deletePostById, getPostsByPublisherId } = require('../../../Use_cases/post')
 const { authenticateToken, doesOwnPostObject } = require('../middleware')
 const postsRouter = express.Router()
 
@@ -35,11 +36,16 @@ postsRouter.get('/:postId', authenticateToken, (req, res) => {
         }
 
         const returnedObject = {
-            id: post.id,
-            taggedUsers: post.taggedUsers,
             publisherId: post.publisherId,
+            taggedUsers: post.taggedUsers,
             photos: post.photos,
-            createdAt: post.createdAt
+            location: post.location,
+            publisherComment: post.publisherComment,
+            id: post.id,
+            createdAt: post.createdAt,
+
+            comments: post.comments,
+            likes: post.likes,
         }
 
         res.status(200).json(returnedObject)
@@ -58,7 +64,7 @@ postsRouter.get('/:postId', authenticateToken, (req, res) => {
 postsRouter.delete('/:postId', authenticateToken, doesOwnPostObject, (req, res) => {
     const postId = req.params.postId
 
-    deletePostById(postId).then(async () => {
+    deletePostById(postId).then(() => {
         res.sendStatus(200)
     }).catch((error) => {
         if (error instanceof AppError) {
@@ -70,19 +76,54 @@ postsRouter.delete('/:postId', authenticateToken, doesOwnPostObject, (req, res) 
     })
 })
 
-// Gets posts of publisher
+
+// Gets posts by publisher
 postsRouter.get('/', authenticateToken, (req, res) => {
-
-
     const publisherId = req.query.publisherId
+    const startIndex = parseInt(req.query.startIndex)
 
-    const firstUserId = req.userId
-    const secondUserId = publisherId
-    const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
-    if (!doesHasPermission) {
-        return res.sendStatus(403)
+    if (!Number.isInteger(startIndex)) {
+        return res.status(400).json("Invalid start index.")
     }
 
+    getPostsByPublisherId(publisherId, startIndex).then(async (posts) => {
+
+        const firstUserId = req.userId
+        const secondUserId = publisherId
+        const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
+        if (!doesHasPermission) {
+            return res.sendStatus(403)
+        }
+
+        const returnedList = []
+        for (const post of posts) {
+
+            const objectToReturn = {
+                publisherId: post.publisherId,
+                taggedUsers: post.taggedUsers,
+                photos: post.photos,
+                location: post.location,
+                publisherComment: post.publisherComment,
+                id: post.id,
+                createdAt: post.createdAt,
+
+                comments: post.comments,
+                likes: post.likes,
+            }
+
+            returnedList.push(objectToReturn)
+        }
 
 
+        res.sendStatus(200).json(returnedList)
+    }).catch((error) => {
+        if (error instanceof AppError) {
+            return res.status(400).json(error.message)
+        }
+
+        res.sendStatus(500)
+        console.error(error)
+    })
 })
+
+module.exports = { postsRouter }

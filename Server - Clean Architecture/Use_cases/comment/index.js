@@ -6,9 +6,12 @@ const { Id } = require("../../CustomHelpers/Id_helper")
 const { AppError } = require("../../app_error")
 const { buildGetCommentsByPostId } = require("./get_comments_by_post_id")
 const { PostsDB } = require("../../Adapters/DB/posts_db")
-const { buildLikeCommentById } = require('./like_comment_by_id')
-const { buildUnlikeCommentById } = require('./unlike_comment_by_id')
+const { buildLikeCommentById } = require('./like_comment')
+const { buildUnlikeCommentById } = require('./unlike_comment')
 const { buildGetCommentsByPublisherId } = require("./get_comments_by_publisher_id")
+const { buildGetRepliesComments } = require("./get_replies_comments")
+const { UsersDB } = require("../../Adapters/DB/users_db")
+
 
 const addComment = buildAddComment({ CommentsDB })
 const deleteCommentById = buildDeleteCommentById({ CommentsDB, Id, AppError })
@@ -17,5 +20,6 @@ const getCommentsByPostId = buildGetCommentsByPostId({ PostsDB, CommentsDB, Id, 
 const likeCommentById = buildLikeCommentById({ UsersDB, CommentsDB, Id, AppError })
 const unlikeCommentById = buildUnlikeCommentById({ UsersDB, CommentsDB, Id, AppError })
 const getCommentsByPublisherId = buildGetCommentsByPublisherId({ UsersDB, CommentsDB, Id, AppError })
+const getRepliesComments = buildGetRepliesComments({ CommentsDB, Id, AppError })
 
-module.exports = { addComment, deleteCommentById, getCommentById, getCommentsByPostId, likeCommentById, unlikeCommentById, getCommentsByPublisherId }
+module.exports = { addComment, deleteCommentById, getCommentById, getCommentsByPostId, likeCommentById, unlikeCommentById, getCommentsByPublisherId, getRepliesComments }

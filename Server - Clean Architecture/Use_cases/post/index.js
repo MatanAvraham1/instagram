@@ -6,14 +6,14 @@ const { Id } = require("../../CustomHelpers/Id_helper")
 const { AppError } = require("../../app_error")
 const { buildGetPostsByPublisherId } = require("./get_posts_by_publisher_id")
 const { UsersDB } = require("../../Adapters/DB/users_db")
-const { buildLikePostById } = require("./like_post_by_id")
-const { buildUnlikePostById } = require("./unlike_post_by_id")
+const { buildLikePost } = require("./like_post")
+const { buildUnlikePost } = require("./unlike_post")
 
 const addPost = buildAddPost({ PostsDB })
 const deletePostById = buildDeletePostById({ PostsDB, Id, AppError })
 const getPostById = buildGetPostByid({ PostsDB, Id, AppError })
 const getPostsByPublisherId = buildGetPostsByPublisherId({ UsersDB, PostsDB, Id, AppError })
-const likePostById = buildLikePostById({ UsersDB, PostsDB, Id, AppError })
-const unlikePostById = buildUnlikePostById({ UsersDB, PostsDB, Id, AppError })
+const likePost = buildLikePost({ UsersDB, PostsDB, Id, AppError })
+const unlikePost = buildUnlikePost({ UsersDB, PostsDB, Id, AppError })
 
-module.exports = { addPost, deletePostById, getPostById, getPostsByPublisherId, likePostById, unlikePostById }
+module.exports = { addPost, deletePostById, getPostById, getPostsByPublisherId, likePost, unlikePost }

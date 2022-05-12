@@ -1,5 +1,5 @@
-function buildUnlikeStoryById({ UsersDB, StoriesDB, Id, AppError }) {
-    return async function unlikeStoryById({ storyId, likerId }) {
+function buildUnlikeStory({ UsersDB, StoriesDB, Id, AppError }) {
+    return async function unlikeStory({ storyId, likerId }) {
 
         if (!Id.isValid(likerId)) {
             throw new AppError("Can't unlike story by invalid user id.")
@@ -21,4 +21,4 @@ function buildUnlikeStoryById({ UsersDB, StoriesDB, Id, AppError }) {
     }
 }
 
-module.exports = { buildUnlikeStoryById }
+module.exports = { buildUnlikeStory }

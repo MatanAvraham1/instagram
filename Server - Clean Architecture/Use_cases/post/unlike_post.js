@@ -1,5 +1,5 @@
-function buildUnlikePostById({ UsersDB, PostsDB, Id, AppError }) {
-    return async function unlikePostById({ postId, likerId }) {
+function buildUnlikePost({ UsersDB, PostsDB, Id, AppError }) {
+    return async function unlikePost({ postId, likerId }) {
 
         if (!Id.isValid(likerId)) {
             throw new AppError("Can't unlike post by invalid user id.")
@@ -21,4 +21,4 @@ function buildUnlikePostById({ UsersDB, PostsDB, Id, AppError }) {
     }
 }
 
-module.exports = { buildUnlikePostById }
+module.exports = { buildUnlikePost }

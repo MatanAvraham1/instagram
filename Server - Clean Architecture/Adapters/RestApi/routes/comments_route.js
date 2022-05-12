@@ -1,5 +1,7 @@
 const express = require('express')
-const { getCommentById, addComment, deleteCommentById } = require('../../../Use_cases/comment')
+const { AuthenticationService } = require('../../../CustomHelpers/Authantication')
+const { getCommentById, addComment, deleteCommentById, getCommentsByPublisherId, getRepliesComments, getCommentsByPostId } = require('../../../Use_cases/comment')
+const { getPostById } = require('../../../Use_cases/post')
 const { authenticateToken, doesOwnCommentObject } = require('../middleware')
 const commentsRouter = express.Router()
 
@@ -28,19 +30,22 @@ commentsRouter.get('/:commentId', authenticateToken, (req, res) => {
     getCommentById({ commentId }).then(async (comment) => {
 
         const firstUserId = req.userId
-        const secondUserId = comment.publisherId
+        const secondUserId = (await getPostById(comment.postId)).publisherId
         const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
         if (!doesHasPermission) {
             return res.sendStatus(403)
         }
 
         const returnedObject = {
-            id: comment.id,
             publisherId: comment.publisherId,
             postId: comment.postId,
             comment: comment.comment,
             replyToComment: comment.replyToComment,
-            createdAt: comment.createdAt
+            id: comment.id,
+            createdAt: comment.createdAt,
+
+            likes: comment.likes,
+            replies: comment.replies,
         }
 
         res.status(200).json(returnedObject)
@@ -70,3 +75,151 @@ commentsRouter.delete('/:commentId', authenticateToken, doesOwnCommentObject, (r
         console.error(error)
     })
 })
+
+
+// Gets comments by publisher
+commentsRouter.get('/', authenticateToken, (req, res) => {
+    const publisherId = req.query.publisherId
+    const startIndex = parseInt(req.query.startIndex)
+
+    if (!Number.isInteger(startIndex)) {
+        return res.status(400).json("Invalid start index.")
+    }
+
+    getCommentsByPublisherId(publisherId, startIndex).then(async (comments) => {
+
+
+        const returnedList = []
+        for (const comment of comments) {
+
+            const firstUserId = req.userId
+            const secondUserId = (await getPostById(comment.postId)).publisherId
+            const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
+            if (!doesHasPermission) {
+                continue
+            }
+
+            const objectToReturn = {
+                publisherId: comment.publisherId,
+                postId: comment.postId,
+                comment: comment.comment,
+                replyToComment: comment.replyToComment,
+                id: comment.id,
+                createdAt: comment.createdAt,
+
+                likes: comment.likes,
+                replies: comment.replies,
+            }
+
+            returnedList.push(objectToReturn)
+        }
+
+
+        res.sendStatus(200).json(returnedList)
+    }).catch((error) => {
+        if (error instanceof AppError) {
+            return res.status(400).json(error.message)
+        }
+
+        res.sendStatus(500)
+        console.error(error)
+    })
+})
+
+// Gets replies
+commentsRouter.get('/', authenticateToken, (req, res) => {
+    const replyToComment = req.query.replyToComment
+    const startIndex = parseInt(req.query.startIndex)
+
+    if (!Number.isInteger(startIndex)) {
+        return res.status(400).json("Invalid start index.")
+    }
+
+    getRepliesComments(replyToComment, startIndex).then(async (comments) => {
+
+        const firstUserId = req.userId
+        const secondUserId = (await getPostById((await getCommentById(replyToComment)).postId)).publisherId
+        const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
+        if (!doesHasPermission) {
+            return res.sendStatus(403)
+        }
+
+        const returnedList = []
+        for (const comment of comments) {
+
+            const objectToReturn = {
+                publisherId: comment.publisherId,
+                postId: comment.postId,
+                comment: comment.comment,
+                replyToComment: comment.replyToComment,
+                id: comment.id,
+                createdAt: comment.createdAt,
+
+                likes: comment.likes,
+                replies: comment.replies,
+            }
+
+
+            returnedList.push(objectToReturn)
+        }
+
+
+        res.sendStatus(200).json(returnedList)
+    }).catch((error) => {
+        if (error instanceof AppError) {
+            return res.status(400).json(error.message)
+        }
+
+        res.sendStatus(500)
+        console.error(error)
+    })
+})
+
+
+// Gets comments by post id
+commentsRouter.get('/', authenticateToken, async (req, res) => {
+    const postId = req.query.postId
+    const startIndex = parseInt(req.query.startIndex)
+
+    if (!Number.isInteger(startIndex)) {
+        return res.status(400).json("Invalid start index.")
+    }
+
+    const firstUserId = req.userId
+    const secondUserId = (await getPostById(postId)).publisherId
+    const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
+    if (!doesHasPermission) {
+        return res.sendStatus(403)
+    }
+
+    getCommentsByPostId(postId, startIndex).then((comments) => {
+        const returnedList = []
+        for (const comment of comments) {
+
+            const objectToReturn = {
+                publisherId: comment.publisherId,
+                postId: comment.postId,
+                comment: comment.comment,
+                replyToComment: comment.replyToComment,
+                id: comment.id,
+                createdAt: comment.createdAt,
+
+                likes: comment.likes,
+                replies: comment.replies,
+            }
+
+            returnedList.push(objectToReturn)
+        }
+
+        res.sendStatus(200).json(returnedList)
+    }).catch((error) => {
+        if (error instanceof AppError) {
+            return res.status(400).json(error.message)
+        }
+
+        res.sendStatus(500)
+        console.error(error)
+    })
+})
+
+module.exports = { commentsRouter }

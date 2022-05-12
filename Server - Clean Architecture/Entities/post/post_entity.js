@@ -1,5 +1,5 @@
 function buildMakePost({ Id, Location, PhotosChecker, TextChecker, AppError, UsersDB }) {
-    return function makePost({ publisherId, photos, publisherComment = null, location = null, taggedUsers = [] }) {
+    return async function makePost({ publisherId, photos, publisherComment = null, location = null, taggedUsers = [] }) {
 
 
         if (!Id.isValid(publisherId)) {

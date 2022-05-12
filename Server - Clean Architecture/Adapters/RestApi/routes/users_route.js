@@ -46,7 +46,7 @@ userRouter.get('/:userId', authenticateToken, (req, res) => {
 userRouter.delete('/:userId', authenticateToken, doesOwnUserObject, (req, res) => {
     const userId = req.params.userId
 
-    deleteUserById({ userId }).then((user) => {
+    deleteUserById({ userId }).then(() => {
         res.sendStatus(200)
     }).catch((error) => {
         if (error instanceof AppError) {
@@ -70,7 +70,7 @@ userRouter.put('/', authenticateToken, (req, res) => {
     const newIsPrivate = newFields.isPrivate
 
 
-    updateFields({ userId, newUsername, newFullname, newBio, newIsPrivate }).then((followers) => {
+    updateFields({ userId, newUsername, newFullname, newBio, newIsPrivate }).then(() => {
         res.sendStatus(200)
     }).catch((error) => {
         if (error instanceof AppError) {
@@ -84,7 +84,7 @@ userRouter.put('/', authenticateToken, (req, res) => {
 })
 
 // Gets followers of user
-userRouter.get('/:userId/followers', authenticateToken, (req, res) => {
+userRouter.get('/:userId/followers', authenticateToken, async (req, res) => {
 
     const firstUserId = req.userId
     const secondUserId = req.params.userId

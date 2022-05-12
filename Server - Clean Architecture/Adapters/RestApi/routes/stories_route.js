@@ -1,6 +1,6 @@
 const express = require('express')
 const { AuthenticationService } = require('../../../CustomHelpers/Authantication')
-const { getStoryById, addStory, deleteStoryById, getStoriesByPublisherId } = require('../../../Use_cases/story')
+const { getStoryById, addStory, deleteStoryById, getStoriesByPublisherId, viewStory } = require('../../../Use_cases/story')
 const { authenticateToken, doesOwnStoryObject } = require('../middleware')
 const storiesRouter = express.Router()
 
@@ -26,7 +26,7 @@ storiesRouter.post('/', authenticateToken, (req, res) => {
 storiesRouter.get('/:storyId', authenticateToken, (req, res) => {
     const storyId = req.params.storyId
 
-    getStoryById({ storyId }).then((story) => {
+    getStoryById({ storyId }).then(async (story) => {
 
         const firstUserId = req.userId
         const secondUserId = story.publisherId
@@ -78,7 +78,7 @@ storiesRouter.get('/', authenticateToken, (req, res) => {
         return res.status(400).json("Invalid start index.")
     }
 
-    getStoriesByPublisherId(publisherId, startIndex).then((stories) => {
+    getStoriesByPublisherId(publisherId, startIndex).then(async (stories) => {
 
         const firstUserId = req.userId
         const secondUserId = publisherId
@@ -119,5 +119,34 @@ storiesRouter.get('/', authenticateToken, (req, res) => {
     })
 })
 
+
+// View story
+storiesRouter.post('/:storyId/view', authenticateToken, async (req, res) => {
+
+
+    const storyId = req.params.storyId
+    const viewerId = req.userId
+
+
+    const firstUserId = viewerId
+    const secondUserId = (await getStoryById(storyId)).publisherId
+    const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
+    if (!doesHasPermission) {
+        return res.sendStatus(403)
+    }
+
+    viewStory(storyId, viewerId).then(() => {
+
+        res.sendStatus(200).json(returnedList)
+
+    }).catch((error) => {
+        if (error instanceof AppError) {
+            return res.status(400).json(error.message)
+        }
+
+        res.sendStatus(500)
+        console.error(error)
+    })
+})
 
 module.exports = { storiesRouter }

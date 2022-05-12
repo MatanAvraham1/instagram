@@ -1,5 +1,5 @@
-function buildLikePostById({ UsersDB, PostsDB, Id, AppError }) {
-    return async function likePostById({ postId, likerId }) {
+function buildLikePost({ UsersDB, PostsDB, Id, AppError }) {
+    return async function likePost({ postId, likerId }) {
 
         if (!Id.isValid(likerId)) {
             throw new AppError("Can't like post by invalid user id.")
@@ -21,4 +21,4 @@ function buildLikePostById({ UsersDB, PostsDB, Id, AppError }) {
     }
 }
 
-module.exports = { buildLikePostById }
+module.exports = { buildLikePost }
