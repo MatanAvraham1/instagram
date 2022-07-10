@@ -1,7 +1,7 @@
 const express = require('express')
 const { AppError, AppErrorMessages } = require('../../../app_error')
 const { AuthenticationService } = require('../../../CustomHelpers/Authantication')
-const { getCommentById, addComment, deleteCommentById, getCommentsByPublisherId, getRepliesComments, getCommentsByPostId, likeCommentById } = require('../../../Use_cases/comment')
+const { getCommentById, addComment, deleteCommentById, getCommentsByPublisherId, getRepliesComments, getCommentsByPostId, likeCommentById, isCommentLiked } = require('../../../Use_cases/comment')
 const { getPostById } = require('../../../Use_cases/post')
 const { authenticateToken, doesOwnCommentObject } = require('../middleware')
 const commentsRouter = express.Router()
@@ -53,6 +53,8 @@ commentsRouter.get('/:commentId', authenticateToken, (req, res) => {
             likes: comment.likes,
             replies: comment.replies,
         }
+
+        returnedObject.isLikedByMe = await isCommentLiked(commentId, req.userId)
 
         res.status(200).json(returnedObject)
     }).catch((error) => {
@@ -127,6 +129,8 @@ commentsRouter.get('/', authenticateToken, (req, res) => {
                 replies: comment.replies,
             }
 
+            objectToReturn.isLikedByMe = await isCommentLiked(comment.id, req.userId)
+
             returnedList.push(objectToReturn)
         }
 
@@ -180,6 +184,7 @@ commentsRouter.get('/', authenticateToken, (req, res) => {
                 replies: comment.replies,
             }
 
+            objectToReturn.isLikedByMe = await isCommentLiked(comment.id, req.userId)
 
             returnedList.push(objectToReturn)
         }
@@ -234,6 +239,9 @@ commentsRouter.get('/', authenticateToken, async (req, res) => {
                 likes: comment.likes,
                 replies: comment.replies,
             }
+
+            objectToReturn.isLikedByMe = await isCommentLiked(comment.id, req.userId)
+
 
             returnedList.push(objectToReturn)
         }

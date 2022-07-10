@@ -130,6 +130,42 @@ class CommentsDB {
         const comments = await commentModel.aggregate([{ $match: { publisherId: publisherId } }, { $project: { publisherId: 1, postId: 1, replyToComment: 1, comment: 1, likes: "$likesCount", replies: "$repliesCount", createdAt: 1 } }]).skip(startFromIndex).limit(quantity)
         return comments
     }
+
+    static async isLiked(commentId, whoLikeId) {
+        /*  
+        Checks if comment liked by someone
+
+        param 1: the comment id
+        param 2: the liker id
+        */
+
+        const comment = await commentModel.findOne({ _id: mongoose.Types.ObjectId(commentId), likes: { $in: [whoLikeId] } }, { likes: 0, replies: 0 })
+        return comment != null
+    }
+
+
+    static async likeComment(commentId, whoLikeId) {
+        /*
+        Adds like to the comment [commentId] by [whoLikeId]
+
+        param 1: the comment id
+        param 2: the liker id
+        */
+
+        await commentModel.findByIdAndUpdate(commentId, { $addToSet: { likes: whoLikeId } })
+    }
+
+    static async unlikeComment(commentId, whoLikeId) {
+        /*
+        Unlikes the comment [commentId] by [whoLikeId]
+
+        param 1: the comment id
+        param 2: the liker id
+        */
+
+        await commentModel.findByIdAndUpdate(commentId, { $pull: { likes: whoLikeId } })
+    }
+
 }
 
 

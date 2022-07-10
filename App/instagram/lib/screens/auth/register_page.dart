@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:instagram/exeptions/auth_service_exeptions.dart';
-import 'package:instagram/exeptions/more_exepction.dart';
+import 'package:instagram/exeptions/server_exceptions.dart';
 import 'package:instagram/screens/auth/components/custom_alert_dialog.dart';
 import 'package:instagram/screens/auth/components/custom_button.dart';
 import 'package:instagram/screens/auth/components/custom_form_field.dart';
@@ -126,33 +125,43 @@ class _RegisterPageState extends State<RegisterPage> {
               try {
                 await AuthSerivce.register(username, password);
                 Navigator.of(context).pop();
-              } on InvalidUsernameOrPasswordExeption {
-                showDialog(
-                  context: context,
-                  builder: (context) => const CustomAlertDialog(
-                    title: "Invalid Details!",
-                    description: "The username or the password are invalid!",
-                  ),
-                );
-              } on UsernameAlreadyUsedExeption {
-                showDialog(
-                  context: context,
-                  builder: (context) => const CustomAlertDialog(
-                    title: "Invalid Username!",
-                    description: "This username is already used!",
-                    continueButton: "Ok",
-                  ),
-                );
-              } on ServerErrorExeption {
-                showDialog(
-                  context: context,
-                  builder: (context) => const CustomAlertDialog(
-                    title: 'Server Error!',
-                    description:
-                        "Sorry, there is a problem with our server please try again later..",
-                    continueButton: "Ok",
-                  ),
-                );
+              } on ServerException catch (e) {
+                if (e.cause == ServerExceptionMessages.invalidUsername) {
+                  showDialog(
+                    context: context,
+                    builder: (context) => const CustomAlertDialog(
+                      title: "Invalid Username!",
+                      description: "The username is invalid!",
+                    ),
+                  );
+                } else if (e.cause == ServerExceptionMessages.InvalidPassword) {
+                  showDialog(
+                    context: context,
+                    builder: (context) => const CustomAlertDialog(
+                      title: "Invalid Password!",
+                      description: "The password is invalid!",
+                    ),
+                  );
+                } else if (e.cause == ServerExceptionMessages.usedUsername) {
+                  showDialog(
+                    context: context,
+                    builder: (context) => const CustomAlertDialog(
+                      title: "Invalid Username!",
+                      description: "This username is already used!",
+                      continueButton: "Ok",
+                    ),
+                  );
+                } else if (e.cause == ServerExceptionMessages.serverError) {
+                  showDialog(
+                    context: context,
+                    builder: (context) => const CustomAlertDialog(
+                      title: 'Server Error!',
+                      description:
+                          "Sorry, there is a problem with our server please try again later..",
+                      continueButton: "Ok",
+                    ),
+                  );
+                }
               }
             },
             enableWhen: () {

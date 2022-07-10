@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:instagram/exeptions/server_exceptions.dart';
 import 'package:instagram/screens/auth/components/custom_alert_dialog.dart';
 import 'package:instagram/screens/auth/components/custom_button.dart';
 import 'package:instagram/screens/auth/components/custom_form_field.dart';
@@ -126,25 +127,27 @@ class _LoginPageState extends State<LoginPage> {
           onPressed: () async {
             try {
               await AuthSerivce.login(username, password);
-            } on WrongUsernameOrPasswordExeption {
-              showDialog(
-                context: context,
-                builder: (context) => const CustomAlertDialog(
-                  title: 'Wrong Details!',
-                  description: "Username or password is incorrent!",
-                  continueButton: "Ok",
-                ),
-              );
-            } on ServerErrorExeption {
-              showDialog(
-                context: context,
-                builder: (context) => const CustomAlertDialog(
-                  title: 'Server Error!',
-                  description:
-                      "Sorry, there is a problem with our server please try again later..",
-                  continueButton: "Ok",
-                ),
-              );
+            } on ServerException catch (e) {
+              if (e.cause == ServerExceptionMessages.wrongLoginDetails) {
+                showDialog(
+                  context: context,
+                  builder: (context) => const CustomAlertDialog(
+                    title: 'Wrong Details!',
+                    description: "Username or password is incorrent!",
+                    continueButton: "Ok",
+                  ),
+                );
+              } else if (e.cause == ServerExceptionMessages.serverError) {
+                showDialog(
+                  context: context,
+                  builder: (context) => const CustomAlertDialog(
+                    title: 'Server Error!',
+                    description:
+                        "Sorry, there is a problem with our server please try again later..",
+                    continueButton: "Ok",
+                  ),
+                );
+              }
             }
           },
           enableWhen: () {

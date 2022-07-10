@@ -11,6 +11,7 @@ const { buildUnlikeCommentById } = require('./unlike_comment')
 const { buildGetCommentsByPublisherId } = require("./get_comments_by_publisher_id")
 const { buildGetRepliesComments } = require("./get_replies_comments")
 const { UsersDB } = require("../../Adapters/DB/users_db")
+const { buildIsCommentLiked } = require("./is_comment_liked")
 
 
 const addComment = buildAddComment({ CommentsDB })
@@ -21,5 +22,6 @@ const likeCommentById = buildLikeCommentById({ UsersDB, CommentsDB, Id, AppError
 const unlikeCommentById = buildUnlikeCommentById({ UsersDB, CommentsDB, Id, AppError, AppErrorMessages })
 const getCommentsByPublisherId = buildGetCommentsByPublisherId({ UsersDB, CommentsDB, Id, AppError })
 const getRepliesComments = buildGetRepliesComments({ CommentsDB, Id, AppError })
+const isCommentLiked = buildIsCommentLiked({ UsersDB, CommentsDB, Id, AppError, AppErrorMessages })
 
-module.exports = { addComment, deleteCommentById, getCommentById, getCommentsByPostId, likeCommentById, unlikeCommentById, getCommentsByPublisherId, getRepliesComments }
+module.exports = { addComment, deleteCommentById, getCommentById, getCommentsByPostId, likeCommentById, unlikeCommentById, getCommentsByPublisherId, getRepliesComments, isCommentLiked }

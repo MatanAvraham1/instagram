@@ -112,7 +112,7 @@ class StoriesDB {
         await storyModel.findByIdAndUpdate(storyId, { $addToSet: { likes: whoLikeId } })
     }
 
-    static async unlikePost(storyId, whoLikeId) {
+    static async unlikeStory(storyId, whoLikeId) {
         /*
         Unlikes the story [storyId] by [whoLikeId]
 

@@ -10,6 +10,8 @@ class Comment {
 
   DateTime createdAt;
 
+  bool isLikedByMe;
+
   int likes;
   int replies;
 
@@ -20,6 +22,7 @@ class Comment {
     required this.comment,
     required this.replyToComment,
     required this.createdAt,
+    required this.isLikedByMe,
     required this.likes,
     required this.replies,
   });
@@ -31,6 +34,7 @@ class Comment {
     String? comment,
     String? replyToComment,
     DateTime? createdAt,
+    bool? isLikedByMe,
     int? likes,
     int? replies,
   }) {
@@ -41,6 +45,7 @@ class Comment {
       comment: comment ?? this.comment,
       replyToComment: replyToComment ?? this.replyToComment,
       createdAt: createdAt ?? this.createdAt,
+      isLikedByMe: isLikedByMe ?? this.isLikedByMe,
       likes: likes ?? this.likes,
       replies: replies ?? this.replies,
     );
@@ -54,6 +59,7 @@ class Comment {
       'comment': comment,
       'replyToComment': replyToComment,
       'createdAt': createdAt.millisecondsSinceEpoch,
+      'isLikedByMe': isLikedByMe,
       'likes': likes,
       'replies': replies,
     };
@@ -67,6 +73,7 @@ class Comment {
       comment: map['comment'] ?? '',
       replyToComment: map['replyToComment'] ?? '',
       createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt']),
+      isLikedByMe: map['isLikedByMe'] ?? false,
       likes: map['likes']?.toInt() ?? 0,
       replies: map['replies']?.toInt() ?? 0,
     );
@@ -79,7 +86,7 @@ class Comment {
 
   @override
   String toString() {
-    return 'Comment(id: $id, publisherId: $publisherId, postId: $postId, comment: $comment, replyToComment: $replyToComment, createdAt: $createdAt, likes: $likes, replies: $replies)';
+    return 'Comment(id: $id, publisherId: $publisherId, postId: $postId, comment: $comment, replyToComment: $replyToComment, createdAt: $createdAt, isLikedByMe: $isLikedByMe, likes: $likes, replies: $replies)';
   }
 
   @override
@@ -93,6 +100,7 @@ class Comment {
         other.comment == comment &&
         other.replyToComment == replyToComment &&
         other.createdAt == createdAt &&
+        other.isLikedByMe == isLikedByMe &&
         other.likes == likes &&
         other.replies == replies;
   }
@@ -105,6 +113,7 @@ class Comment {
         comment.hashCode ^
         replyToComment.hashCode ^
         createdAt.hashCode ^
+        isLikedByMe.hashCode ^
         likes.hashCode ^
         replies.hashCode;
   }

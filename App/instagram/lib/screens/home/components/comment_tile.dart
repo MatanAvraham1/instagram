@@ -4,7 +4,7 @@ import 'package:instagram/classes/number_helper.dart';
 import 'package:instagram/models/comment_model.dart';
 import 'package:instagram/screens/home/components/story_tile.dart';
 import 'package:instagram/screens/home/profile/profile_page.dart';
-import 'package:instagram/services/online_db_service.dart';
+import 'package:instagram/services/comments_db_service.dart';
 import 'package:like_button/like_button.dart';
 
 class CommentTile extends StatelessWidget {
@@ -62,8 +62,7 @@ class CommentTile extends StatelessWidget {
                     isLiked: comment.isLikedByMe,
                     onTap: (isLiked) async {
                       if (isLiked) {
-                        await OnlineDBService.unlikeComment(
-                            postPublisherId, comment.postId, comment.id);
+                        await CommentsDBService.unlikeComment(comment.id);
                       } else {
                         await OnlineDBService.likeComment(
                             postPublisherId, comment.postId, comment.id);

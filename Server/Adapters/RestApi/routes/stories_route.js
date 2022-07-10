@@ -198,6 +198,8 @@ storiesRouter.get('/', authenticateToken, (req, res) => {
                 }).catch((error) => {
                     console.error(error)
                 })
+
+                objectToReturn.isLikedByMe = await isStoryLiked(story.id, req.userId)
             }
 
             returnedList.push(objectToReturn)
