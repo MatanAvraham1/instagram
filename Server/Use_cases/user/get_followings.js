@@ -1,5 +1,5 @@
-function buildGetFollowers({ UsersDB, Id, AppError, AppErrorMessages }) {
-    return async function getFollowers({ userId, startIndex }) {
+function buildGetFollowings({ UsersDB, Id, AppError, AppErrorMessages }) {
+    return async function GetFollowings({ userId, startIndex }) {
 
         if (!Id.isValid(userId)) {
             throw new AppError(AppErrorMessages.invalidUserId)
@@ -10,8 +10,8 @@ function buildGetFollowers({ UsersDB, Id, AppError, AppErrorMessages }) {
             throw new AppError(AppErrorMessages.userDoesNotExist)
         }
 
-        return await UsersDB.getFollowers(userId, startIndex, 30)
+        return await UsersDB.getFollowings(userId, startIndex, 30)
     }
 }
 
-module.exports = { buildGetFollowers }
+module.exports = { buildGetFollowings }

@@ -7,9 +7,12 @@ const { AppError, AppErrorMessages } = require("../../app_error")
 const { buildLikeStory } = require("./like_story")
 const { buildUnlikeStory } = require("./unlike_story")
 const { UsersDB } = require("../../Adapters/DB/users_db")
-const { buildGetStoriesByPublisherId } = require("./get_stories_by_publisher_id")
 const { buildViewStory } = require("./view_story")
 const { buildUnviewStory } = require("./unview_story")
+const { buildGetLastDayStoriesCount } = require("./get_last_day_stories_count")
+const { buildisStoryLiked } = require("./is_story_liked")
+const { buildGetLastDayStoriesByPublisherId } = require("./get_last_day_stories")
+const { buildGetStoriesArchiveByPublisherId } = require("./get_stories_archive")
 
 const addStory = buildAddStory({ StoriesDB })
 const deleteStoryById = buildDeleteStoryById({ StoriesDB, Id, AppError, AppErrorMessages })
@@ -18,6 +21,10 @@ const likeStory = buildLikeStory({ UsersDB, StoriesDB, Id, AppError, AppErrorMes
 const unlikeStory = buildUnlikeStory({ UsersDB, StoriesDB, Id, AppError, AppErrorMessages })
 const viewStory = buildViewStory({ UsersDB, StoriesDB, Id, AppError, AppErrorMessages })
 const unviewStory = buildUnviewStory({ UsersDB, StoriesDB, Id, AppError, AppErrorMessages })
-const getStoriesByPublisherId = buildGetStoriesByPublisherId({ UsersDB, StoriesDB, Id, AppError, AppErrorMessages })
+const getLastDayStoriesCount = buildGetLastDayStoriesCount({ UsersDB, StoriesDB, Id, AppError, AppErrorMessages })
+const getLastDayStoriesByPublisherId = buildGetLastDayStoriesByPublisherId({ UsersDB, StoriesDB, Id, AppError, AppErrorMessages })
+const getStoriesArchiveByPublisherId = buildGetStoriesArchiveByPublisherId({ UsersDB, StoriesDB, Id, AppError, AppErrorMessages })
 
-module.exports = { addStory, deleteStoryById, getStoryById, likeStory, unlikeStory, getStoriesByPublisherId, viewStory, unviewStory }
+const isStoryLiked = buildisStoryLiked({ UsersDB, StoriesDB, Id, AppError, AppErrorMessages })
+
+module.exports = { addStory, deleteStoryById, getStoryById, likeStory, unlikeStory, getLastDayStoriesByPublisherId, viewStory, unviewStory, getLastDayStoriesCount, getStoriesArchiveByPublisherId, isStoryLiked }

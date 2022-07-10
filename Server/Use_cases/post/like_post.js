@@ -9,7 +9,7 @@ function buildLikePost({ UsersDB, PostsDB, Id, AppError, AppErrorMessages }) {
             throw new AppError(AppErrorMessages.invalidPostId)
         }
 
-        if (!(await UsersDB.doesUserExist(likerId))) {
+        if (!(await UsersDB.doesUserExist({ userId: likerId }))) {
             throw new AppError(AppErrorMessages.userDoesNotExist)
         }
 

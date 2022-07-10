@@ -1,4 +1,4 @@
-function buildGetUserByid({ UsersDB, Id, AppError, AppErrorMessages }) {
+function buildGetUserById({ UsersDB, Id, AppError, AppErrorMessages }) {
     return async function getUserById({ userId }) {
 
         if (!Id.isValid(userId)) {
@@ -6,7 +6,7 @@ function buildGetUserByid({ UsersDB, Id, AppError, AppErrorMessages }) {
         }
 
         // NOTE: i can check if the user exists in the UsersDB, but here it more right for the clean artitecture... (becuase if i will change db it will be more clean)
-        if (!(await UsersDB.doesUserExist(userId))) {
+        if (!(await UsersDB.doesUserExist({ userId: userId }))) {
             throw new AppError(AppErrorMessages.userDoesNotExist)
         }
 
@@ -14,4 +14,4 @@ function buildGetUserByid({ UsersDB, Id, AppError, AppErrorMessages }) {
     }
 }
 
-module.exports = { buildGetUserByid }
+module.exports = { buildGetUserById }

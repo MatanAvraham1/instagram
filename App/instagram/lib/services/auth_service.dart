@@ -3,15 +3,12 @@ import 'dart:convert';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
-import 'package:instagram/exeptions/auth_service_exeptions.dart';
-import 'package:instagram/exeptions/error_codes.dart';
-import 'package:instagram/exeptions/more_exepction.dart';
-import 'package:instagram/exeptions/online_db_service_exeptions.dart';
+import 'package:instagram/exeptions/server_exceptions.dart';
 import 'package:instagram/models/user_model.dart';
-import 'package:instagram/services/online_db_service.dart';
+import 'package:instagram/services/ServerIP.dart';
+import 'package:instagram/services/users_db_service.dart';
 
 class AuthSerivce {
-  static const _serverApiUrl = "http://127.0.0.1:5000/api/";
   static const _androidOptions = AndroidOptions(
     encryptedSharedPreferences: true,
   );
@@ -71,7 +68,7 @@ class AuthSerivce {
 
   static Future getConnectedUserId() async {
     if (!await isUserLoggedIn()) {
-      throw NoUserLoggedInExeption();
+      throw ServerException(ServerExceptionMessages.userNotConnected);
     }
 
     return await _safeStorage.read(key: "userId");
@@ -83,19 +80,21 @@ class AuthSerivce {
     */
 
     try {
-      var user = await OnlineDBService.getConnectedUser();
+      var user = await UsersDBService.getConnectedUser();
       _streamController.add(user);
       connectedUser = user;
-    } on NoUserLoggedInExeption {
-      _streamController.add(null);
-      connectedUser = null;
-    } on UnauthorizedException {
-      // TODO: refresh token
-      print("Refresh token!");
+    } on ServerException catch (e) {
+      if (e.cause == ServerExceptionMessages.userNotConnected) {
+        _streamController.add(null);
+        connectedUser = null;
+      } else if (e.cause == ServerExceptionMessages.unauthorizedrequest) {
+        // TODO: refresh token
+        print("Refresh token!");
+      }
     }
   }
 
-  static Future signUp(String username, String password) async {
+  static Future register(String username, String password) async {
     /*
     Signs up user and saves the returned token
 
@@ -103,7 +102,7 @@ class AuthSerivce {
     param 2: the password
     */
     var response = await http.post(
-      Uri.parse(_serverApiUrl + "register"),
+      Uri.parse(SERVER_API_URL + "register"),
       headers: {
         'Content-type': 'application/json',
       },
@@ -114,15 +113,11 @@ class AuthSerivce {
     );
 
     if (response.statusCode == 400) {
-      var errorCode = jsonDecode(response.body)["errorCode"];
+      var errorMessage = response.body;
 
-      if (errorCode == ErrorCodes.usernameAlreadyUsed) {
-        throw UsernameAlreadyUsedExeption();
-      } else if (errorCode == ErrorCodes.invalidUsernameOrPassword) {
-        throw InvalidUsernameOrPasswordExeption();
-      }
+      throw ServerException(errorMessage);
     } else if (response.statusCode == 500) {
-      throw ServerErrorExeption();
+      throw ServerException(ServerExceptionMessages.serverError);
     }
 
     var decodedResponse = jsonDecode(response.body);
@@ -131,13 +126,13 @@ class AuthSerivce {
 
     await _saveLoginDetails(jwt, userId);
 
-    var user = await OnlineDBService.getConnectedUser();
+    var user = await UsersDBService.getConnectedUser();
     _streamController.add(user);
     connectedUser = user;
     return user;
   }
 
-  static Future signIn(String username, String password) async {
+  static Future login(String username, String password) async {
     /*
     Signs in user and saves the returned token
 
@@ -145,7 +140,7 @@ class AuthSerivce {
     param 2: the password
     */
     var response = await http.post(
-      Uri.parse(_serverApiUrl + "login"),
+      Uri.parse(SERVER_API_URL + "login"),
       headers: {
         'Content-type': 'application/json',
       },
@@ -155,10 +150,14 @@ class AuthSerivce {
       }),
     );
 
-    if (response.statusCode == 404) {
-      throw WrongUsernameOrPasswordExeption();
+    if (response.statusCode == 400) {
+      var errorMessage = response.body;
+
+      throw ServerException(errorMessage);
+    } else if (response.statusCode == 404) {
+      throw ServerException(ServerExceptionMessages.wrongLoginDetails);
     } else if (response.statusCode == 500) {
-      throw ServerErrorExeption();
+      throw ServerException(ServerExceptionMessages.serverError);
     }
 
     var decodedResponse = jsonDecode(response.body);
@@ -167,7 +166,7 @@ class AuthSerivce {
 
     await _saveLoginDetails(jwt, userId);
 
-    var user = await OnlineDBService.getConnectedUser();
+    var user = await UsersDBService.getConnectedUser();
     _streamController.add(user);
     connectedUser = user;
     return user;

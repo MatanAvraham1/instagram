@@ -1,6 +1,7 @@
 const express = require('express')
+const { AppErrorMessages } = require('../../../app_error')
 const { AuthenticationService } = require('../../../CustomHelpers/Authantication')
-const { getPostById, addPost, deletePostById, getPostsByPublisherId } = require('../../../Use_cases/post')
+const { getPostById, addPost, deletePostById, getPostsByPublisherId, isPostLiked, likePost, unlikePost } = require('../../../Use_cases/post')
 const { authenticateToken, doesOwnPostObject } = require('../middleware')
 const postsRouter = express.Router()
 
@@ -13,6 +14,12 @@ postsRouter.post('/', authenticateToken, (req, res) => {
             res.status(201).json({ postId: postId })
         }).catch((error) => {
             if (error instanceof AppError) {
+
+
+                if (error.message == AppErrorMessages.userDoesNotExist) {
+                    return res.sendStatus(404)
+                }
+
                 return res.status(400).json(error.message)
             }
 
@@ -29,7 +36,7 @@ postsRouter.get('/:postId', authenticateToken, (req, res) => {
     getPostById({ postId }).then(async (post) => {
 
         const firstUserId = req.userId
-        const secondUserId = postId.publisherId
+        const secondUserId = post.publisherId
         const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
         if (!doesHasPermission) {
             return res.sendStatus(403)
@@ -48,9 +55,16 @@ postsRouter.get('/:postId', authenticateToken, (req, res) => {
             likes: post.likes,
         }
 
+        returnedObject.isLikedByMe = await isPostLiked(postId, req.userId)
+
         res.status(200).json(returnedObject)
     }).catch((error) => {
         if (error instanceof AppError) {
+
+            if (error.message == AppErrorMessages.postDoesNotExist) {
+                return res.sendStatus(404)
+            }
+
             return res.status(400).json(error.message)
         }
 
@@ -68,6 +82,11 @@ postsRouter.delete('/:postId', authenticateToken, doesOwnPostObject, (req, res) 
         res.sendStatus(200)
     }).catch((error) => {
         if (error instanceof AppError) {
+
+            if (error.message == AppErrorMessages.postDoesNotExist) {
+                return res.sendStatus(404)
+            }
+
             return res.status(400).json(error.message)
         }
 
@@ -86,15 +105,14 @@ postsRouter.get('/', authenticateToken, (req, res) => {
         return res.status(400).json("Invalid start index.")
     }
 
+    const firstUserId = req.userId
+    const secondUserId = publisherId
+    const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
+    if (!doesHasPermission) {
+        return res.sendStatus(403)
+    }
+
     getPostsByPublisherId(publisherId, startIndex).then(async (posts) => {
-
-        const firstUserId = req.userId
-        const secondUserId = publisherId
-        const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
-        if (!doesHasPermission) {
-            return res.sendStatus(403)
-        }
-
         const returnedList = []
         for (const post of posts) {
 
@@ -111,6 +129,8 @@ postsRouter.get('/', authenticateToken, (req, res) => {
                 likes: post.likes,
             }
 
+            objectToReturn.isLikedByMe = await isPostLiked(post.id, req.userId)
+
             returnedList.push(objectToReturn)
         }
 
@@ -118,6 +138,56 @@ postsRouter.get('/', authenticateToken, (req, res) => {
         res.sendStatus(200).json(returnedList)
     }).catch((error) => {
         if (error instanceof AppError) {
+
+            if (error.message == AppErrorMessages.userDoesNotExist) {
+                return res.sendStatus(404)
+            }
+
+            return res.status(400).json(error.message)
+        }
+
+        res.sendStatus(500)
+        console.error(error)
+    })
+})
+
+// Like post
+postsRouter.post('/:postId/like', authenticateToken, (req, res) => {
+
+    const postId = req.params.postId
+
+    likePost(postId, req.userId).then(async () => {
+        res.sendStatus(200)
+    }).catch((error) => {
+        if (error instanceof AppError) {
+
+            if (error.message == AppErrorMessages.userDoesNotExist || error.message == AppErrorMessages.postDoesNotExist) {
+                return res.sendStatus(404).json(error.message)
+            }
+
+            return res.status(400).json(error.message)
+        }
+
+        res.sendStatus(500)
+        console.error(error)
+    })
+})
+
+
+// Unlike post
+postsRouter.post('/:postId/unlike', authenticateToken, (req, res) => {
+
+    const postId = req.params.postId
+
+    unlikePost(postId, req.userId).then(async () => {
+        res.sendStatus(200)
+    }).catch((error) => {
+        if (error instanceof AppError) {
+
+            if (error.message == AppErrorMessages.userDoesNotExist || error.message == AppErrorMessages.postDoesNotExist) {
+                return res.sendStatus(404).json(error.message)
+            }
+
             return res.status(400).json(error.message)
         }
 

@@ -1,4 +1,6 @@
+const { default: mongoose } = require("mongoose")
 const { AppError, AppErrorMessages } = require("../../app_error")
+const { CommentsDB } = require("./comments_db")
 const { postModel } = require("./schemes/post_scheme")
 
 
@@ -48,6 +50,20 @@ class PostsDB {
         return post == null
     }
 
+    static async deleteByPublisherId(userId) {
+        // Deletes all posts of [userId]
+
+        // TODO: check if the await wait for the function to end (because there is a callback)
+        await postModel.count({ publisherId: mongoose.Types.ObjectId(userId) }, async function (err, count) {
+
+            for (let index = 0; index < count; index++) {
+                let post = await postModel.findOneAndDelete({})
+                await CommentsDB.deleteByPostId(post._id.toString())
+            }
+        })
+    }
+
+
     static async findByPublisher(publisherId, startFromIndex, quantity) {
         /*
         Returns posts by publisher 
@@ -59,6 +75,18 @@ class PostsDB {
 
         const posts = await postModel.aggregate([{ $match: { publisherId: publisherId } }, { $project: { publisherId: 1, publisherComment: 1, location: 1, photos: 1, comments: "$commentsCount", likes: "$likesCount", taggedUsers: 1, createdAt: 1 } }]).skip(startFromIndex).limit(quantity)
         return posts
+    }
+
+    static async isLiked(postId, whoLikeId) {
+        /*  
+        Checks if post liked by someone
+
+        param 1: the post id
+        param 2: the liker id
+        */
+
+        const post = await postModel.findOne({ _id: mongoose.Types.ObjectId(postId), likes: { $in: [whoLikeId] } }, { comments: 0, likes: 0 })
+        return post != null
     }
 
     static async likePost(postId, whoLikeId) {

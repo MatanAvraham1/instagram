@@ -5,7 +5,7 @@ function buildDeleteUserById({ UsersDB, Id, AppError, AppErrorMessages }) {
             throw new AppError(AppErrorMessages.invalidUserId)
         }
 
-        if (!(await UsersDB.doesUserExist(userId))) {
+        if (!(await UsersDB.doesUserExist({ userId: userId }))) {
             throw new AppError(AppErrorMessages.userDoesNotExist)
         }
 

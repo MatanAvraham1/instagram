@@ -1,67 +1,74 @@
 import 'dart:convert';
 
-import 'package:instagram/models/user_model.dart';
-
 class Comment {
-  User publisher;
-  String comment;
   String id;
+
+  String publisherId;
   String postId;
-  DateTime publishedAt;
+  String comment;
+  String replyToComment;
+
+  DateTime createdAt;
+
   int likes;
-  bool isLikedByMe;
+  int replies;
 
   Comment({
-    required this.publisher,
-    required this.comment,
     required this.id,
+    required this.publisherId,
     required this.postId,
-    required this.publishedAt,
+    required this.comment,
+    required this.replyToComment,
+    required this.createdAt,
     required this.likes,
-    required this.isLikedByMe,
+    required this.replies,
   });
 
   Comment copyWith({
-    User? publisher,
-    String? comment,
     String? id,
+    String? publisherId,
     String? postId,
-    DateTime? publishedAt,
+    String? comment,
+    String? replyToComment,
+    DateTime? createdAt,
     int? likes,
-    bool? isLikedByMe,
+    int? replies,
   }) {
     return Comment(
-      publisher: publisher ?? this.publisher,
-      comment: comment ?? this.comment,
       id: id ?? this.id,
+      publisherId: publisherId ?? this.publisherId,
       postId: postId ?? this.postId,
-      publishedAt: publishedAt ?? this.publishedAt,
+      comment: comment ?? this.comment,
+      replyToComment: replyToComment ?? this.replyToComment,
+      createdAt: createdAt ?? this.createdAt,
       likes: likes ?? this.likes,
-      isLikedByMe: isLikedByMe ?? this.isLikedByMe,
+      replies: replies ?? this.replies,
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'publisher': publisher.toMap(),
-      'comment': comment,
       'id': id,
+      'publisherId': publisherId,
       'postId': postId,
-      'publishedAt': publishedAt.millisecondsSinceEpoch,
+      'comment': comment,
+      'replyToComment': replyToComment,
+      'createdAt': createdAt.millisecondsSinceEpoch,
       'likes': likes,
-      'isLikedByMe': isLikedByMe,
+      'replies': replies,
     };
   }
 
   factory Comment.fromMap(Map<String, dynamic> map) {
     return Comment(
-      publisher: User.fromMap(map['comment']['publisher']),
-      comment: map['comment']['comment'] ?? '',
-      id: map['comment']['id'] ?? '',
-      postId: map['comment']['postId'] ?? '',
-      publishedAt: DateTime.parse(map['comment']['publishedAt']),
-      likes: map['comment']['likes']?.toInt() ?? 0,
-      isLikedByMe: map['isLikedByMe'] ?? false,
+      id: map['id'] ?? '',
+      publisherId: map['publisherId'] ?? '',
+      postId: map['postId'] ?? '',
+      comment: map['comment'] ?? '',
+      replyToComment: map['replyToComment'] ?? '',
+      createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt']),
+      likes: map['likes']?.toInt() ?? 0,
+      replies: map['replies']?.toInt() ?? 0,
     );
   }
 
@@ -72,7 +79,7 @@ class Comment {
 
   @override
   String toString() {
-    return 'Comment(publisher: $publisher, comment: $comment, id: $id, postId: $postId, publishedAt: $publishedAt, likes: $likes, isLikedByMe: $isLikedByMe)';
+    return 'Comment(id: $id, publisherId: $publisherId, postId: $postId, comment: $comment, replyToComment: $replyToComment, createdAt: $createdAt, likes: $likes, replies: $replies)';
   }
 
   @override
@@ -80,23 +87,25 @@ class Comment {
     if (identical(this, other)) return true;
 
     return other is Comment &&
-        other.publisher == publisher &&
-        other.comment == comment &&
         other.id == id &&
+        other.publisherId == publisherId &&
         other.postId == postId &&
-        other.publishedAt == publishedAt &&
+        other.comment == comment &&
+        other.replyToComment == replyToComment &&
+        other.createdAt == createdAt &&
         other.likes == likes &&
-        other.isLikedByMe == isLikedByMe;
+        other.replies == replies;
   }
 
   @override
   int get hashCode {
-    return publisher.hashCode ^
-        comment.hashCode ^
-        id.hashCode ^
+    return id.hashCode ^
+        publisherId.hashCode ^
         postId.hashCode ^
-        publishedAt.hashCode ^
+        comment.hashCode ^
+        replyToComment.hashCode ^
+        createdAt.hashCode ^
         likes.hashCode ^
-        isLikedByMe.hashCode;
+        replies.hashCode;
   }
 }

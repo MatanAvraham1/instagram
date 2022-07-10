@@ -1,47 +1,64 @@
 import 'dart:convert';
 
+import 'package:instagram/models/story_structure_model.dart';
+
 class Story {
-  String photoUrl;
+  late StoryStructure structure; // TODO: fix that
+  String publisherId;
   String id;
-  DateTime publishedAt;
-  String ownerUid;
+  DateTime createdAt;
+
+  int? likes;
+  int? viewers;
+
+  bool isLikedByMe;
 
   Story({
-    required this.photoUrl,
+    required this.publisherId,
     required this.id,
-    required this.publishedAt,
-    required this.ownerUid,
+    required this.createdAt,
+    this.likes,
+    this.viewers,
+    required this.isLikedByMe,
   });
 
   Story copyWith({
-    String? photoUrl,
+    String? publisherId,
     String? id,
-    DateTime? publishedAt,
-    String? ownerUid,
+    DateTime? createdAt,
+    int? likes,
+    int? viewers,
+    bool? isLikedByMe,
   }) {
     return Story(
-      photoUrl: photoUrl ?? this.photoUrl,
+      publisherId: publisherId ?? this.publisherId,
       id: id ?? this.id,
-      publishedAt: publishedAt ?? this.publishedAt,
-      ownerUid: ownerUid ?? this.ownerUid,
+      createdAt: createdAt ?? this.createdAt,
+      likes: likes ?? this.likes,
+      viewers: viewers ?? this.viewers,
+      isLikedByMe: isLikedByMe ?? this.isLikedByMe,
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'photoUrl': photoUrl,
+      'publisherId': publisherId,
       'id': id,
-      'publishedAt': publishedAt.millisecondsSinceEpoch,
-      'ownerUid': ownerUid,
+      'createdAt': createdAt.millisecondsSinceEpoch,
+      'likes': likes,
+      'viewers': viewers,
+      'isLikedByMe': isLikedByMe,
     };
   }
 
   factory Story.fromMap(Map<String, dynamic> map) {
     return Story(
-      photoUrl: map['photoUrl'] ?? '',
+      publisherId: map['publisherId'] ?? '',
       id: map['id'] ?? '',
-      publishedAt: DateTime.parse(map['publishedAt']),
-      ownerUid: map['ownerUid'] ?? '',
+      createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt']),
+      likes: map['likes']?.toInt(),
+      viewers: map['viewers']?.toInt(),
+      isLikedByMe: map['isLikedByMe'] ?? false,
     );
   }
 
@@ -51,7 +68,7 @@ class Story {
 
   @override
   String toString() {
-    return 'Story(photoUrl: $photoUrl, id: $id, publishedAt: $publishedAt, ownerUid: $ownerUid)';
+    return 'Story(publisherId: $publisherId, id: $id, createdAt: $createdAt, likes: $likes, viewers: $viewers, isLikedByMe: $isLikedByMe)';
   }
 
   @override
@@ -59,17 +76,21 @@ class Story {
     if (identical(this, other)) return true;
 
     return other is Story &&
-        other.photoUrl == photoUrl &&
+        other.publisherId == publisherId &&
         other.id == id &&
-        other.publishedAt == publishedAt &&
-        other.ownerUid == ownerUid;
+        other.createdAt == createdAt &&
+        other.likes == likes &&
+        other.viewers == viewers &&
+        other.isLikedByMe == isLikedByMe;
   }
 
   @override
   int get hashCode {
-    return photoUrl.hashCode ^
+    return publisherId.hashCode ^
         id.hashCode ^
-        publishedAt.hashCode ^
-        ownerUid.hashCode;
+        createdAt.hashCode ^
+        likes.hashCode ^
+        viewers.hashCode ^
+        isLikedByMe.hashCode;
   }
 }

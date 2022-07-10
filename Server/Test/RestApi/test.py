@@ -19,7 +19,7 @@ def register(username, password):
         "password": password
     })
 
-    return response.json()
+    return response.json()["userId"], response.json()["jwt"]
 
 
 def login(username, password):
@@ -28,7 +28,7 @@ def login(username, password):
         "password": password
     })
 
-    return response.json()["userId"], response.json()["token"]
+    return response.json()["userId"], response.json()["jwt"]
 
 
 def deleteUser(userId, auth):
@@ -109,7 +109,7 @@ def unfollowUser(userToUnfollow, auth):
 
 
 def makeUserPrivate(userId, auth):
-    response = requests.put(
+    response = requests.patch(
         f"{URL}users/", json={"isPrivate": True}, headers=auth)
 
     if response.status_code != 200:

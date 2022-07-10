@@ -14,11 +14,11 @@ function buildFollowUser({ UsersDB, Id, AppError, AppErrorMessages }) {
             throw new AppError(AppErrorMessages.userCanNotFollowHimself)
         }
 
-        if (!(await UsersDB.doesUserExist(firstUserId))) {
+        if (!(await UsersDB.doesUserExist({ userId: firstUserId }))) {
             throw new AppError(AppErrorMessages.userDoesNotExist)
         }
 
-        if (!(await UsersDB.doesUserExist(secondUserId))) {
+        if (!(await UsersDB.doesUserExist({ userId: secondUserId }))) {
             throw new AppError(AppErrorMessages.userDoesNotExist)
         }
 

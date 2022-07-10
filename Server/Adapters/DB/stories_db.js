@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose")
 const { AppErrorMessages, AppError } = require("../../app_error")
 const { storyModel } = require("./schemes/story_scheme")
 
@@ -40,6 +41,12 @@ class StoriesDB {
         await storyModel.findByIdAndDelete(storyId)
     }
 
+    static async deleteByPublisherId(userId) {
+        // Deletes all stories of [userId]
+
+        await storyModel.deleteMany({ publisherId: mongoose.Types.ObjectId(userId) })
+    }
+
     static async doesStoryExist(storyId) {
         // returns if story exists
 
@@ -56,8 +63,42 @@ class StoriesDB {
         param 3: how much to return
         */
 
-        const stories = await storyModel.aggregate([{ $match: { publisherId: publisherId } }, { $project: { publisherId: 1, structure: 1, likes: "$likesCount", viewers: "$viewersCount", createdAt: 1 } }]).skip(startFromIndex).limit(quantity)
+        const stories = []
+
+        const storiesObjects = await storyModel.aggregate([{ $match: { publisherId: publisherId } }, { $project: { likes: 0, viewers: 0 } }]).skip(startFromIndex).limit(quantity)
+        for (const story of storiesObjects) {
+            stories.push(storyObjectFromDbObject(story))
+        }
+
         return stories
+    }
+
+    static async getLastDayStoriesCount(publisherId) {
+        /*
+        Returns how much stories the user has published in the last day
+        */
+
+        const lastDayStoriesCount = await storyModel.aggregate([{ $match: { publisherId: publisherId, "createdAt": { $gt: new Date(Date.now() - 24 * 60 * 60 * 1000) } } }, { $project: { likes: 0, viewers: 0 } }]).count()
+        return lastDayStoriesCount;
+    }
+
+    static async getLastDayStories(publisherId, startFromIndex, quantity) {
+        /*
+        Returns last day stories of publisher
+
+        param 1: publisher id
+        param 2: from which story to start
+        param 3: how much to return
+        */
+
+        const lastDayStories = [];
+        const lastDayStoriesObjects = await storyModel.aggregate([{ $match: { publisherId: publisherId, "createdAt": { $gt: new Date(Date.now() - 24 * 60 * 60 * 1000) } } }, { $project: { likes: 0, viewers: 0 } }]).skip(startFromIndex).limit(quantity)
+
+        for (const story of lastDayStoriesObjects) {
+            lastDayStories.push(storyObjectFromDbObject(story))
+        }
+
+        return lastDayStories
     }
 
     static async likeStory(storyId, whoLikeId) {
@@ -81,6 +122,19 @@ class StoriesDB {
 
         await storyModel.findByIdAndUpdate(storyId, { $pull: { likes: whoLikeId } })
     }
+
+    static async isLiked(storyId, whoLikeId) {
+        /*  
+        Checks if story liked by someone
+
+        param 1: the story id
+        param 2: the liker id
+        */
+
+        const story = await storyModel.findOne({ _id: mongoose.Types.ObjectId(storyId), likes: { $in: [whoLikeId] } }, { likes: 0, viewers: 0 })
+        return story != null
+    }
+
 
     static async viewStory(storyId, viewerId) {
         /*

@@ -8,6 +8,7 @@ const { buildGetPostsByPublisherId } = require("./get_posts_by_publisher_id")
 const { UsersDB } = require("../../Adapters/DB/users_db")
 const { buildLikePost } = require("./like_post")
 const { buildUnlikePost } = require("./unlike_post")
+const { buildIsPostLiked } = require("./is_post_liked")
 
 const addPost = buildAddPost({ PostsDB })
 const deletePostById = buildDeletePostById({ PostsDB, Id, AppError, AppErrorMessages })
@@ -15,5 +16,6 @@ const getPostById = buildGetPostByid({ PostsDB, Id, AppError, AppErrorMessages }
 const getPostsByPublisherId = buildGetPostsByPublisherId({ UsersDB, PostsDB, Id, AppError, AppErrorMessages })
 const likePost = buildLikePost({ UsersDB, PostsDB, Id, AppError, AppErrorMessages })
 const unlikePost = buildUnlikePost({ UsersDB, PostsDB, Id, AppError, AppErrorMessages })
+const isPostLiked = buildIsPostLiked({ UsersDB, PostsDB, Id, AppError, AppErrorMessages })
 
-module.exports = { addPost, deletePostById, getPostById, getPostsByPublisherId, likePost, unlikePost }
+module.exports = { addPost, deletePostById, getPostById, getPostsByPublisherId, likePost, unlikePost, isPostLiked }

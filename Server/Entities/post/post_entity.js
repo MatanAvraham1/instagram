@@ -6,7 +6,7 @@ function buildMakePost({ Id, Location, PhotosChecker, TextChecker, AppError, App
             throw new AppError(AppErrorMessages.invalidPublisherId)
         }
 
-        if (!(await UsersDB.doesUserExist(publisherId))) {
+        if (!(await UsersDB.doesUserExist({ userId: publisherId }))) {
             throw new AppError(AppErrorMessages.publisherDoesNotExist)
         }
 
@@ -19,7 +19,7 @@ function buildMakePost({ Id, Location, PhotosChecker, TextChecker, AppError, App
                 throw new AppError(AppErrorMessages.invalidTaggedUser)
             }
 
-            if (!(await UsersDB.doesUserExist(taggedUser))) {
+            if (!(await UsersDB.doesUserExist({ userId: taggedUser }))) {
                 throw new AppError(AppErrorMessages.unexistTaggedUser)
             }
         }

@@ -9,7 +9,7 @@ function buildLikeStory({ UsersDB, StoriesDB, Id, AppError, AppErrorMessages }) 
             throw new AppError(AppErrorMessages.invalidStoryId)
         }
 
-        if (!(await UsersDB.doesUserExist(likerId))) {
+        if (!(await UsersDB.doesUserExist({ userId: likerId }))) {
             throw new AppError(AppErrorMessages.userDoesNotExist)
         }
 

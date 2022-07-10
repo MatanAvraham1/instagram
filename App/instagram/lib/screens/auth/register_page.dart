@@ -124,7 +124,7 @@ class _RegisterPageState extends State<RegisterPage> {
             text: "Register",
             onPressed: () async {
               try {
-                await AuthSerivce.signUp(username, password);
+                await AuthSerivce.register(username, password);
                 Navigator.of(context).pop();
               } on InvalidUsernameOrPasswordExeption {
                 showDialog(

@@ -12,12 +12,18 @@ class User {
   int followings;
   int posts;
 
-  int stories;
+  int? followRequests;
+  int? followingRequests;
+
+  int? stories; // Archive
+  int? lastDayStories;
 
   bool isFollowedByMe;
   bool isFollowMe;
   bool isRequestedByMe;
   bool isRequestMe;
+
+  DateTime? createdAt;
 
   User({
     required this.id,
@@ -29,11 +35,15 @@ class User {
     required this.followers,
     required this.followings,
     required this.posts,
-    required this.stories,
     required this.isFollowedByMe,
     required this.isFollowMe,
     required this.isRequestedByMe,
     required this.isRequestMe,
+    this.followRequests,
+    this.followingRequests,
+    this.stories,
+    this.lastDayStories,
+    this.createdAt,
   });
 
   User copyWith({
@@ -46,11 +56,15 @@ class User {
     int? followers,
     int? followings,
     int? posts,
+    int? followRequests,
+    int? followingRequests,
     int? stories,
+    int? lastDayStories,
     bool? isFollowedByMe,
     bool? isFollowMe,
     bool? isRequestedByMe,
     bool? isRequestMe,
+    DateTime? createdAt,
   }) {
     return User(
       id: id ?? this.id,
@@ -62,11 +76,15 @@ class User {
       followers: followers ?? this.followers,
       followings: followings ?? this.followings,
       posts: posts ?? this.posts,
+      followRequests: followRequests ?? this.followRequests,
+      followingRequests: followingRequests ?? this.followingRequests,
       stories: stories ?? this.stories,
+      lastDayStories: lastDayStories ?? this.lastDayStories,
       isFollowedByMe: isFollowedByMe ?? this.isFollowedByMe,
       isFollowMe: isFollowMe ?? this.isFollowMe,
       isRequestedByMe: isRequestedByMe ?? this.isRequestedByMe,
       isRequestMe: isRequestMe ?? this.isRequestMe,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 
@@ -81,30 +99,38 @@ class User {
       'followers': followers,
       'followings': followings,
       'posts': posts,
+      'followRequests': followRequests,
+      'followingRequests': followingRequests,
       'stories': stories,
+      'lastDayStories': lastDayStories,
       'isFollowedByMe': isFollowedByMe,
       'isFollowMe': isFollowMe,
       'isRequestedByMe': isRequestedByMe,
       'isRequestMe': isRequestMe,
+      'createdAt': createdAt!.millisecondsSinceEpoch,
     };
   }
 
   factory User.fromMap(Map<String, dynamic> map) {
     return User(
-      id: map['user']['_id'] ?? '',
-      username: map['user']['username'] ?? '',
-      fullname: map['user']['fullname'] ?? '',
-      bio: map['user']['bio'] ?? '',
-      photoUrl: map['user']['photoUrl'] ?? '',
-      isPrivate: map['user']['isPrivate'] ?? false,
-      followers: map['user']['followers']?.toInt() ?? 0,
-      followings: map['user']['followings']?.toInt() ?? 0,
-      posts: map['user']['posts']?.toInt() ?? 0,
-      stories: map['user']['stories']?.toInt() ?? -1,
+      id: map['id'] ?? '',
+      username: map['username'] ?? '',
+      fullname: map['fullname'] ?? '',
+      bio: map['bio'] ?? '',
+      photoUrl: map['photoUrl'] ?? '',
+      isPrivate: map['isPrivate'] ?? false,
+      followers: map['followers']?.toInt() ?? 0,
+      followings: map['followings']?.toInt() ?? 0,
+      posts: map['posts']?.toInt() ?? 0,
+      followRequests: map['followRequests']?.toInt() ?? 0,
+      followingRequests: map['followingRequests']?.toInt() ?? 0,
+      stories: map['stories']?.toInt() ?? 0,
+      lastDayStories: map['lastDayStories']?.toInt() ?? 0,
       isFollowedByMe: map['isFollowedByMe'] ?? false,
       isFollowMe: map['isFollowMe'] ?? false,
       isRequestedByMe: map['isRequestedByMe'] ?? false,
       isRequestMe: map['isRequestMe'] ?? false,
+      createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt']),
     );
   }
 
@@ -114,7 +140,7 @@ class User {
 
   @override
   String toString() {
-    return 'User(id: $id, username: $username, fullname: $fullname, bio: $bio, photoUrl: $photoUrl, isPrivate: $isPrivate, followers: $followers, followings: $followings, posts: $posts, stories: $stories, isFollowedByMe: $isFollowedByMe, isFollowMe: $isFollowMe, isRequestedByMe: $isRequestedByMe, isRequestMe: $isRequestMe)';
+    return 'User(id: $id, username: $username, fullname: $fullname, bio: $bio, photoUrl: $photoUrl, isPrivate: $isPrivate, followers: $followers, followings: $followings, posts: $posts, followRequests: $followRequests, followingRequests: $followingRequests, stories: $stories, lastDayStories: $lastDayStories, isFollowedByMe: $isFollowedByMe, isFollowMe: $isFollowMe, isRequestedByMe: $isRequestedByMe, isRequestMe: $isRequestMe, createdAt: $createdAt)';
   }
 
   @override
@@ -131,11 +157,15 @@ class User {
         other.followers == followers &&
         other.followings == followings &&
         other.posts == posts &&
+        other.followRequests == followRequests &&
+        other.followingRequests == followingRequests &&
         other.stories == stories &&
+        other.lastDayStories == lastDayStories &&
         other.isFollowedByMe == isFollowedByMe &&
         other.isFollowMe == isFollowMe &&
         other.isRequestedByMe == isRequestedByMe &&
-        other.isRequestMe == isRequestMe;
+        other.isRequestMe == isRequestMe &&
+        other.createdAt == createdAt;
   }
 
   @override
@@ -149,10 +179,14 @@ class User {
         followers.hashCode ^
         followings.hashCode ^
         posts.hashCode ^
+        followRequests.hashCode ^
+        followingRequests.hashCode ^
         stories.hashCode ^
+        lastDayStories.hashCode ^
         isFollowedByMe.hashCode ^
         isFollowMe.hashCode ^
         isRequestedByMe.hashCode ^
-        isRequestMe.hashCode;
+        isRequestMe.hashCode ^
+        createdAt.hashCode;
   }
 }

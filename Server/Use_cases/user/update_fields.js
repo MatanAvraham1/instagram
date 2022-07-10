@@ -7,7 +7,7 @@ function buildUpdateFields({ UsersDB, Id, Username, Fullname, Bio, AppError, App
             throw new AppError(AppErrorMessages.invalidUserId)
         }
 
-        if (!(await UsersDB.doesUserExist(userId))) {
+        if (!(await UsersDB.doesUserExist({ userId: userId }))) {
             throw new AppError(AppErrorMessages.userDoesNotExist)
         }
 

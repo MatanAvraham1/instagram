@@ -1,92 +1,88 @@
 import 'dart:convert';
 
-import 'package:collection/collection.dart';
-
-import 'package:instagram/models/user_model.dart';
+import 'package:flutter/foundation.dart';
 
 class Post {
-  User? publisher;
   String id;
 
-  String publisherComment;
-  List<String> photosUrls;
-  List<String> taggedUsers;
+  String publisherId;
   String location;
-  DateTime publishedAt;
+  String publisherComment;
+  List<String> taggedUsers;
+  List<String> photos;
 
   int likes;
   int comments;
 
   bool isLikedByMe;
+  DateTime createdAt;
 
   Post({
-    required this.publisher,
     required this.id,
-    required this.publisherComment,
-    required this.photosUrls,
-    required this.taggedUsers,
+    required this.publisherId,
     required this.location,
-    required this.publishedAt,
+    required this.publisherComment,
+    required this.taggedUsers,
+    required this.photos,
     required this.likes,
     required this.comments,
     required this.isLikedByMe,
+    required this.createdAt,
   });
 
   Post copyWith({
-    User? publisher,
     String? id,
-    String? publisherComment,
-    List<String>? photosUrls,
-    List<String>? taggedUsers,
+    String? publisherId,
     String? location,
-    DateTime? publishedAt,
+    String? publisherComment,
+    List<String>? taggedUsers,
+    List<String>? photos,
     int? likes,
     int? comments,
     bool? isLikedByMe,
+    DateTime? createdAt,
   }) {
     return Post(
-      publisher: publisher ?? this.publisher,
       id: id ?? this.id,
-      publisherComment: publisherComment ?? this.publisherComment,
-      photosUrls: photosUrls ?? this.photosUrls,
-      taggedUsers: taggedUsers ?? this.taggedUsers,
+      publisherId: publisherId ?? this.publisherId,
       location: location ?? this.location,
-      publishedAt: publishedAt ?? this.publishedAt,
+      publisherComment: publisherComment ?? this.publisherComment,
+      taggedUsers: taggedUsers ?? this.taggedUsers,
+      photos: photos ?? this.photos,
       likes: likes ?? this.likes,
       comments: comments ?? this.comments,
       isLikedByMe: isLikedByMe ?? this.isLikedByMe,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'publisher': publisher?.toMap(),
       'id': id,
-      'publisherComment': publisherComment,
-      'photosUrls': photosUrls,
-      'taggedUsers': taggedUsers,
+      'publisherId': publisherId,
       'location': location,
-      'publishedAt': publishedAt.millisecondsSinceEpoch,
+      'publisherComment': publisherComment,
+      'taggedUsers': taggedUsers,
+      'photos': photos,
       'likes': likes,
       'comments': comments,
       'isLikedByMe': isLikedByMe,
+      'createdAt': createdAt.millisecondsSinceEpoch,
     };
   }
 
   factory Post.fromMap(Map<String, dynamic> map) {
     return Post(
-      publisher: map['post']['publisher'] != null
-          ? User.fromMap(map['post']['publisher'])
-          : null,
-      id: map['post']['id'] ?? '',
-      publisherComment: map['post']['publisherComment'] ?? '',
-      photosUrls: List<String>.from(map['post']['photosUrls']),
-      taggedUsers: List<String>.from(map['post']['taggedUsers']),
-      location: map['post']['location'] ?? '',
-      publishedAt: DateTime.parse(map['post']['publishedAt']),
-      likes: map['post']['likes']?.toInt() ?? 0,
-      comments: map['post']['comments']?.toInt() ?? 0,
+      id: map['id'] ?? '',
+      publisherId: map['publisherId'] ?? '',
+      location: map['location'] ?? '',
+      publisherComment: map['publisherComment'] ?? '',
+      taggedUsers: List<String>.from(map['taggedUsers']),
+      photos: List<String>.from(map['photos']),
+      likes: map['likes']?.toInt() ?? 0,
+      comments: map['comments']?.toInt() ?? 0,
       isLikedByMe: map['isLikedByMe'] ?? false,
+      createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt']),
     );
   }
 
@@ -96,38 +92,37 @@ class Post {
 
   @override
   String toString() {
-    return 'Post(publisher: $publisher, id: $id, publisherComment: $publisherComment, photosUrls: $photosUrls, taggedUsers: $taggedUsers, location: $location, publishedAt: $publishedAt, likes: $likes, comments: $comments, isLikedByMe: $isLikedByMe)';
+    return 'Post(id: $id, publisherId: $publisherId, location: $location, publisherComment: $publisherComment, taggedUsers: $taggedUsers, photos: $photos, likes: $likes, comments: $comments, isLikedByMe: $isLikedByMe, createdAt: $createdAt)';
   }
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    final listEquals = const DeepCollectionEquality().equals;
 
     return other is Post &&
-        other.publisher == publisher &&
         other.id == id &&
-        other.publisherComment == publisherComment &&
-        listEquals(other.photosUrls, photosUrls) &&
-        listEquals(other.taggedUsers, taggedUsers) &&
+        other.publisherId == publisherId &&
         other.location == location &&
-        other.publishedAt == publishedAt &&
+        other.publisherComment == publisherComment &&
+        listEquals(other.taggedUsers, taggedUsers) &&
+        listEquals(other.photos, photos) &&
         other.likes == likes &&
         other.comments == comments &&
-        other.isLikedByMe == isLikedByMe;
+        other.isLikedByMe == isLikedByMe &&
+        other.createdAt == createdAt;
   }
 
   @override
   int get hashCode {
-    return publisher.hashCode ^
-        id.hashCode ^
-        publisherComment.hashCode ^
-        photosUrls.hashCode ^
-        taggedUsers.hashCode ^
+    return id.hashCode ^
+        publisherId.hashCode ^
         location.hashCode ^
-        publishedAt.hashCode ^
+        publisherComment.hashCode ^
+        taggedUsers.hashCode ^
+        photos.hashCode ^
         likes.hashCode ^
         comments.hashCode ^
-        isLikedByMe.hashCode;
+        isLikedByMe.hashCode ^
+        createdAt.hashCode;
   }
 }

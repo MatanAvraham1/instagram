@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose")
 const { AppError, AppErrorMessages } = require("../../app_error")
 const { commentModel } = require("./schemes/comment_scheme")
 
@@ -64,6 +65,44 @@ class CommentsDB {
 
         const comments = await commentModel.aggregate([{ $match: { postId: postId } }, { $project: { publisherId: 1, postId: 1, replyToComment: 1, comment: 1, likes: "$likesCount", replies: "$repliesCount", createdAt: 1 } }]).skip(startFromIndex).limit(quantity)
         return comments
+    }
+
+    static async deleteByPostId(postId) {
+        /*
+        Deletes all the comments which published on some post
+
+        param 1: the post id
+        */
+
+        await commentModel.deleteMany({ postId: postId })
+    }
+
+    static async deleteByPublisherId(userId) {
+        /*
+        Deletes all the comments which published by [userId]
+
+        param 1: the publisher id 
+        */
+
+
+        // TODO: check if the await wait for the function to end (because there is a callback)
+        await commentModel.count({ publisherId: mongoose.Types.ObjectId(userId) }, async function (err, count) {
+
+            for (let index = 0; index < count; index++) {
+                let comment = await commentModel.findOneAndDelete({})
+                await CommentsDB.deleteReplies(comment._id.toString())
+            }
+        })
+    }
+
+    static async deleteReplies(commentId) {
+        /*
+        Deletes all the replies comments to the comment[commentId]
+
+        param 1: the comment id
+        */
+
+        await commentModel.deleteMany({ replyToComment: commentId })
     }
 
     static async findReplies(commentId, startFromIndex, quantity) {

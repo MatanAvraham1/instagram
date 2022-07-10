@@ -2,6 +2,9 @@ const { userModel } = require("./schemes/user_scheme")
 const { Password } = require("../../CustomHelpers/Password_helper")
 const { default: mongoose } = require("mongoose")
 const { AppError, AppErrorMessages } = require("../../app_error")
+const { PostsDB } = require("./posts_db")
+const { StoriesDB } = require("./stories_db")
+const { CommentsDB } = require("./comments_db")
 
 class UsersDB {
     static async checkLogin(username, password) {
@@ -57,6 +60,9 @@ class UsersDB {
         // TODO: unfollow everyone, delete posts, delete stories, delete comments
 
         await userModel.findByIdAndDelete(userId)
+        await StoriesDB.deleteByPublisherId(userId)
+        await PostsDB.deleteByPublisherId(userId)
+        await CommentsDB.deleteByPublisherId(userId)
     }
 
 
@@ -76,6 +82,14 @@ class UsersDB {
         // Returns user by username
 
         const user = await userModel.findOne({ username: username }, { followers: 0, followRequests: 0 })
+
+        return userObjectFromDbObject(user)
+    }
+
+    static async findByFullname(fullname) {
+        // Returns user by fullname
+
+        const user = await userModel.findOne({ fullname: fullname }, { followers: 0, followRequests: 0 })
 
         return userObjectFromDbObject(user)
     }
@@ -135,6 +149,14 @@ class UsersDB {
         return user != null
     }
 
+    static async isRequest(firstUserId, secondUserId) {
+        // Returns if the first user requested the second user
+
+        const user = await userModel.findOne({ _id: mongoose.Types.ObjectId(secondUserId), followRequests: { $in: [firstUserId] } }, { followers: 0, followRequests: 0 })
+        return user != null
+    }
+
+
     static async getFollowers(userId, startFromIndex, quantity) {
         /*
         Returns followers of user by id
@@ -167,17 +189,50 @@ class UsersDB {
         for (const id of followersId) {
 
             const user = await this.findById(userId)
-            followers.push(Object.freeze({
-                id: user.id,
-                username: user.username,
-                fullname: user.fullname,
-                bio: user.bio,
-                followers: user.followers,
-                followings: user.followings,
-                posts: user.posts
-            }))
+            followers.push(userObjectFromDbObject(user))
         }
         return followers
+    }
+
+    static async getFollowings(userId, startFromIndex, quantity) {
+        /*
+        Returns followings of user by id
+
+        param 1: user id
+        param 2: from which follower to start
+        param 3: how much to return
+        */
+
+        const followings = [];
+
+        const followingsObjects = await userModel.aggregate([{ $match: { followers: { $in: [userId] } } }, {
+            $project: {
+                id: 1,
+                username: 1,
+                password: 0,
+                bio: 1,
+                fullname: 1,
+                isPrivate: 1,
+
+                followersCount: 1,
+                followingsCount: 1,
+                postsCount: 1,
+
+                storiesCount: 1,
+
+                followRequestsCount: 1,
+                followingRequestsCount: 1,
+
+                createdAt: 1,
+            }
+        }]).skip(startFromIndex).limit(quantity)
+
+        for (const userObject of followingsObjects) {
+
+            followings.push(userObjectFromDbObject(userObject))
+        }
+
+        return followings
     }
 
     static async updateFields(userId, newUsername = undefined, newFullname = undefined, newBio = undefined, newIsPrivate = undefined) {
@@ -202,8 +257,21 @@ class UsersDB {
         await userModel.findByIdAndUpdate(userId, changes)
     }
 
-    static async doesUserExist(userId) {
-        const user = await userModel.findById(userId, { followers: 0, followRequests: 0 })
+    static async doesUserExist({ userId = undefined, username = undefined, fullname = undefined }) {
+
+        let user
+
+        if (userId != undefined) {
+            user = await userModel.findById(userId, { followers: 0, followRequests: 0 })
+        }
+
+        if (username != undefined) {
+            user = await userModel.findOne({ username: username }, { followers: 0, followRequests: 0 })
+        }
+
+        if (fullname != undefined) {
+            user = await userModel.findOne({ fullname: fullname }, { followers: 0, followRequests: 0 })
+        }
 
         return user == null
     }

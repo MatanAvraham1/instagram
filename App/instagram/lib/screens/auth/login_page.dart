@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:instagram/exeptions/auth_service_exeptions.dart';
-import 'package:instagram/exeptions/more_exepction.dart';
 import 'package:instagram/screens/auth/components/custom_alert_dialog.dart';
 import 'package:instagram/screens/auth/components/custom_button.dart';
 import 'package:instagram/screens/auth/components/custom_form_field.dart';
@@ -127,7 +125,7 @@ class _LoginPageState extends State<LoginPage> {
           text: "Log In",
           onPressed: () async {
             try {
-              await AuthSerivce.signIn(username, password);
+              await AuthSerivce.login(username, password);
             } on WrongUsernameOrPasswordExeption {
               showDialog(
                 context: context,

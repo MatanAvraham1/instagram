@@ -9,7 +9,7 @@ function buildUnviewStory({ UsersDB, StoriesDB, Id, AppError, AppErrorMessages }
             throw new AppError(AppErrorMessages.invalidStoryId)
         }
 
-        if (!(await UsersDB.doesUserExist(viewerId))) {
+        if (!(await UsersDB.doesUserExist({ userId: viewerId }))) {
             throw new AppError(AppErrorMessages.userDoesNotExist)
         }
 

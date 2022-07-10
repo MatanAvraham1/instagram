@@ -9,7 +9,7 @@ function buildLikeCommentById({ UsersDB, CommentsDB, Id, AppError, AppErrorMessa
             throw new AppError(AppErrorMessages.invalidCommentId)
         }
 
-        if (!(await UsersDB.doesUserExist(likerId))) {
+        if (!(await UsersDB.doesUserExist({ userId: likerId }))) {
             throw new AppError(AppErrorMessages.userDoesNotExist)
         }
 

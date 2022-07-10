@@ -18,9 +18,9 @@ class AppErrorMessages {
     static usedUsername = 'Username is already used.'
     static invalidUsername = 'Invalid username.'
     static InvalidPassword = 'Invalid password.'
-    static invalidFullname = "Invalid fullname"
-    static invalidBio = "Invalid bio"
-    static invalid_IsPrivate = "Invalid isPrivate : (must be True of False)"
+    static invalidFullname = "Invalid fullname."
+    static invalidBio = "Invalid bio."
+    static invalid_IsPrivate = "Invalid isPrivate : (must be True of False)."
     static userDoesNotExist = "User doesn't exist."
     static invalidUserId = "Invalid id."
 
@@ -41,19 +41,14 @@ class AppErrorMessages {
     // story
     static invalidStoryStructure = 'Invalid story structure.'
     static storyDoesNotExist = "Story doesn't exist."
-    static invalidStoryId = "Invalid story id"
+    static invalidStoryId = "Invalid story id."
 
+    // Publisher
     static invalidPublisherId = "Invalid publisher id."
-    static publisherDoesNotExist = "Publisher does not exist"
+    static publisherDoesNotExist = "Publisher does not exist."
 
-
-    static userCanNotFollowHimself = "User can't follow himself"
-
-
-    // delete user
-    // static canNotDeleteCommentByInvalidId = "Can't delete comment by invalid id."
-    // static canNotGetCommentByInvalidId = "Can't get comment by invalid id."
-
+    // Friendships
+    static userCanNotFollowHimself = "User can't follow himself."
 }
 
 module.exports = { AppError, AppErrorMessages }

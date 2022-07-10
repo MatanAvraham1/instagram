@@ -1,5 +1,7 @@
-function buildUnlikePost({ UsersDB, PostsDB, Id, AppError, AppErrorMessages }) {
-    return async function unlikePost({ postId, likerId }) {
+function buildIsPostLiked({ UsersDB, PostsDB, Id, AppError, AppErrorMessages }) {
+    return async function isPostLiked({ postId, likerId }) {
+
+        // checks if user [likerId] likes the post [postId]
 
         if (!Id.isValid(likerId)) {
             throw new AppError(AppErrorMessages.invalidUserId)
@@ -17,8 +19,8 @@ function buildUnlikePost({ UsersDB, PostsDB, Id, AppError, AppErrorMessages }) {
             throw new AppError(AppErrorMessages.postDoesNotExist)
         }
 
-        return await PostsDB.unlikePost(postId, likerId)
+        await PostsDB.isLiked(postId, likerId)
     }
 }
 
-module.exports = { buildUnlikePost }
+module.exports = { buildIsPostLiked }

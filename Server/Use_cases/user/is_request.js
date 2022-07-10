@@ -1,7 +1,7 @@
-function buildUnfollowUser({ UsersDB, Id, AppError, AppErrorMessages }) {
-    return async function unfollowUser({ firstUserId, secondUserId }) {
+function buildIsRequest({ UsersDB, Id, AppError, AppErrorMessages }) {
+    return async function IsRequest({ firstUserId, secondUserId }) {
 
-        // makes the first user to unfollow the second user
+        // checks if first user requested second user
 
         if (!Id.isValid(firstUserId)) {
             throw new AppError(AppErrorMessages.invalidUserId)
@@ -22,8 +22,8 @@ function buildUnfollowUser({ UsersDB, Id, AppError, AppErrorMessages }) {
             throw new AppError(AppErrorMessages.userDoesNotExist)
         }
 
-        await UsersDB.unfollowUser(firstUserId, secondUserId)
+        await UsersDB.IsRequest(firstUserId, secondUserId)
     }
 }
 
-module.exports = { buildUnfollowUser }
+module.exports = { buildIsRequest }

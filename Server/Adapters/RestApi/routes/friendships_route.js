@@ -1,4 +1,5 @@
 const express = require('express')
+const { AppErrorMessages } = require('../../../app_error')
 const { declineFollowRequest, acceptFollowRequest, followUser, unfollowUser } = require('../../../Use_cases/user')
 const { authenticateToken } = require('../middleware')
 const friendShipsRouter = express.Router()
@@ -12,6 +13,11 @@ friendShipsRouter.post('/follow', authenticateToken, (req, res) => {
         res.sendStatus(200)
     }).catch((error) => {
         if (error instanceof AppError) {
+
+            if (error == AppErrorMessages.userDoesNotExist) {
+                return res.sendStatus(404);
+            }
+
             return res.status(400).json(error.message)
         }
 
@@ -29,6 +35,11 @@ friendShipsRouter.post('/unfollow', authenticateToken, (req, res) => {
         res.sendStatus(200)
     }).catch((error) => {
         if (error instanceof AppError) {
+
+            if (error == AppErrorMessages.userDoesNotExist) {
+                return res.sendStatus(404);
+            }
+
             return res.status(400).json(error.message)
         }
 
@@ -46,6 +57,11 @@ friendShipsRouter.post('/acceptRequest', authenticateToken, (req, res) => {
         res.sendStatus(200)
     }).catch((error) => {
         if (error instanceof AppError) {
+
+            if (error == AppErrorMessages.userDoesNotExist) {
+                return res.sendStatus(404);
+            }
+
             return res.status(400).json(error.message)
         }
 
@@ -64,6 +80,11 @@ friendShipsRouter.post('/declineRequest', authenticateToken, (req, res) => {
         res.sendStatus(200)
     }).catch((error) => {
         if (error instanceof AppError) {
+
+            if (error == AppErrorMessages.userDoesNotExist) {
+                return res.sendStatus(404);
+            }
+
             return res.status(400).json(error.message)
         }
 
@@ -81,8 +102,15 @@ friendShipsRouter.post('/deleteRequest', authenticateToken, (req, res) => {
         res.sendStatus(200)
     }).catch((error) => {
         if (error instanceof AppError) {
+
+            if (error == AppErrorMessages.userDoesNotExist) {
+                return res.sendStatus(404);
+            }
+
             return res.status(400).json(error.message)
         }
+
+
 
         res.sendStatus(500)
         console.error(error)

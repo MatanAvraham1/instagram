@@ -9,7 +9,7 @@ function buildUnlikeCommentById({ UsersDB, CommentsDB, Id, AppError, AppErrorMes
             throw new AppError(AppErrorMessages.InvalidCommentId)
         }
 
-        if (!(await UsersDB.doesUserExist(likerId))) {
+        if (!(await UsersDB.doesUserExist({ userId: likerId }))) {
             throw new AppError(AppErrorMessages.userDoesNotExist)
         }
 

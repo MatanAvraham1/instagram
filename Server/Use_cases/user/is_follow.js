@@ -1,5 +1,5 @@
-function buildDeclineFollowRequest({ UsersDB, Id, AppError, AppErrorMessages }) {
-    return async function declineFollowRequest({ firstUserId, secondUserId }) {
+function buildIsFollow({ UsersDB, Id, AppError, AppErrorMessages }) {
+    return async function isFollow({ firstUserId, secondUserId }) {
 
         // checks if first user follow second user
 
@@ -14,11 +14,11 @@ function buildDeclineFollowRequest({ UsersDB, Id, AppError, AppErrorMessages }) 
             throw new AppError(AppErrorMessages.userCanNotFollowHimself)
         }
 
-        if (!(await UsersDB.doesUserExist(firstUserId))) {
+        if (!(await UsersDB.doesUserExist({ userId: firstUserId }))) {
             throw new AppError(AppErrorMessages.userDoesNotExist)
         }
 
-        if (!(await UsersDB.doesUserExist(secondUserId))) {
+        if (!(await UsersDB.doesUserExist({ userId: secondUserId }))) {
             throw new AppError(AppErrorMessages.userDoesNotExist)
         }
 
@@ -26,4 +26,4 @@ function buildDeclineFollowRequest({ UsersDB, Id, AppError, AppErrorMessages }) 
     }
 }
 
-module.exports = { buildDeclineFollowRequest }
+module.exports = { buildIsFollow }

@@ -5,7 +5,7 @@ function buildGetCommentsByPublisherId({ UsersDB, CommentsDB, Id, AppError }) {
             throw new AppError(AppErrorMessages.invalidPublisherId)
         }
 
-        if (!(await UsersDB.doesUserExist(publisherId))) {
+        if (!(await UsersDB.doesUserExist({ userId: publisherId }))) {
             throw new AppError(AppErrorMessages.publisherDoesNotExist)
         }
 

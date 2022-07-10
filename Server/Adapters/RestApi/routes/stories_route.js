@@ -1,7 +1,8 @@
 const express = require('express')
+const { AppErrorMessages } = require('../../../app_error')
 const { AuthenticationService } = require('../../../CustomHelpers/Authantication')
-const { getStoryById, addStory, deleteStoryById, getStoriesByPublisherId, viewStory } = require('../../../Use_cases/story')
-const { authenticateToken, doesOwnStoryObject } = require('../middleware')
+const { getStoryById, addStory, deleteStoryById, getLastDayStoriesByPublisherId, viewStory, isStoryLiked, getStoriesArchiveByPublisherId, likeStory, unlikeStory } = require('../../../Use_cases/story')
+const { authenticateToken, doesOwnStoryObject, doesOwnUserObject } = require('../middleware')
 const storiesRouter = express.Router()
 
 // Add story
@@ -13,6 +14,11 @@ storiesRouter.post('/', authenticateToken, (req, res) => {
             res.status(201).json({ storyId: storyId })
         }).catch((error) => {
             if (error instanceof AppError) {
+
+                if (error.message == AppErrorMessages.userDoesNotExist) {
+                    return res.sendStatus(404)
+                }
+
                 return res.status(400).json(error.message)
             }
 
@@ -26,24 +32,55 @@ storiesRouter.post('/', authenticateToken, (req, res) => {
 storiesRouter.get('/:storyId', authenticateToken, (req, res) => {
     const storyId = req.params.storyId
 
+
+    const firstUserId = req.userId
+    const secondUserId = story.publisherId
+    const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
+    if (!doesHasPermission) {
+        return res.sendStatus(403)
+    }
+
     getStoryById({ storyId }).then(async (story) => {
-
-        const firstUserId = req.userId
-        const secondUserId = story.publisherId
-        const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
-        if (!doesHasPermission) {
-            return res.sendStatus(403)
-        }
-
         const returnedObject = {
             id: story.id,
             publisherId: story.publisherId,
             structure: story.structure
+        };
+
+
+        // If same person
+        if (firstUserId == secondUserId) {
+            objectToReturn.viewers = stories.viewers
+            objectToReturn.likes = stories.likes
+            objectToReturn.isLikedByMe = false
+        }
+        else {
+            // Checks if 24 hours is past
+            const msBetweenDates = Math.abs(story.getTime() - now.getTime());
+            // 👇️ convert ms to hours                  min  sec   ms
+            const hoursBetweenDates = msBetweenDates / (60 * 60 * 1000);
+
+            if (hoursBetweenDates > 24) {
+                return res.sendStatus(403)
+            }
+
+            viewStory(storyId, firstUserId).then(() => {
+            }).catch((error) => {
+                console.error(error)
+            })
+
+            objectToReturn.isLikedByMe = await isStoryLiked(storyId, req.userId)
         }
 
         res.status(200).json(returnedObject)
+
     }).catch((error) => {
         if (error instanceof AppError) {
+
+            if (error.message == AppErrorMessages.storyDoesNotExist) {
+                return res.sendStatus(404)
+            }
+
             return res.status(400).json(error.message)
         }
 
@@ -61,6 +98,11 @@ storiesRouter.delete('/:storyId', authenticateToken, doesOwnStoryObject, (req, r
         res.sendStatus(200)
     }).catch((error) => {
         if (error instanceof AppError) {
+
+            if (error.message == AppErrorMessages.storyDoesNotExist) {
+                return res.sendStatus(404)
+            }
+
             return res.status(400).json(error.message)
         }
 
@@ -69,7 +111,47 @@ storiesRouter.delete('/:storyId', authenticateToken, doesOwnStoryObject, (req, r
     })
 })
 
-// Gets stories by publisher
+// Gets stories archive
+storiesRouter.get('/archive', authenticateToken, (req, res) => {
+    const startIndex = parseInt(req.query.startIndex)
+
+    if (!Number.isInteger(startIndex)) {
+        return res.status(400).json("Invalid start index.")
+    }
+
+    getStoriesArchiveByPublisherId(req.userId, startIndex).then(async (stories) => {
+
+        const returnedList = []
+        for (const story of stories) {
+
+            const objectToReturn = {
+                id: story.id,
+                publisherId: story.publisherId,
+                structure: story.structure,
+                createdAt: story.createdAt,
+                viewers: stories.viewers,
+                likes: stories.likes
+            }
+
+            objectToReturn.isLikedByMe = false
+
+            returnedList.push(objectToReturn)
+        }
+
+
+        res.sendStatus(200).json(returnedList)
+    }).catch((error) => {
+        if (error instanceof AppError) {
+            return res.status(400).json(error.message)
+        }
+
+        res.sendStatus(500)
+        console.error(error)
+    })
+})
+
+
+// Gets last day stories
 storiesRouter.get('/', authenticateToken, (req, res) => {
     const publisherId = req.query.publisherId
     const startIndex = parseInt(req.query.startIndex)
@@ -78,15 +160,14 @@ storiesRouter.get('/', authenticateToken, (req, res) => {
         return res.status(400).json("Invalid start index.")
     }
 
-    getStoriesByPublisherId(publisherId, startIndex).then(async (stories) => {
+    const firstUserId = req.userId
+    const secondUserId = publisherId
+    const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
+    if (!doesHasPermission) {
+        return res.sendStatus(403)
+    }
 
-        const firstUserId = req.userId
-        const secondUserId = publisherId
-        const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
-        if (!doesHasPermission) {
-            return res.sendStatus(403)
-        }
-
+    getLastDayStoriesByPublisherId(publisherId, startIndex).then(async (stories) => {
         const returnedList = []
         for (const story of stories) {
 
@@ -99,9 +180,24 @@ storiesRouter.get('/', authenticateToken, (req, res) => {
 
 
             // If same person
-            if (firstUserId == publisherId) {
+            if (firstUserId == secondUserId) {
                 objectToReturn.viewers = stories.viewers
                 objectToReturn.likes = stories.likes
+            }
+            else {
+                // Checks if 24 hours is past
+                const msBetweenDates = Math.abs(story.getTime() - now.getTime());
+                // 👇️ convert ms to hours                  min  sec   ms
+                const hoursBetweenDates = msBetweenDates / (60 * 60 * 1000);
+
+                if (hoursBetweenDates > 24) {
+                    continue;
+                }
+
+                viewStory(story.id, firstUserId).then(() => {
+                }).catch((error) => {
+                    console.error(error)
+                })
             }
 
             returnedList.push(objectToReturn)
@@ -120,27 +216,20 @@ storiesRouter.get('/', authenticateToken, (req, res) => {
 })
 
 
-// View story
-storiesRouter.post('/:storyId/view', authenticateToken, async (req, res) => {
-
+// Like story
+storiesRouter.post('/:storyId/like', authenticateToken, (req, res) => {
 
     const storyId = req.params.storyId
-    const viewerId = req.userId
 
-
-    const firstUserId = viewerId
-    const secondUserId = (await getStoryById(storyId)).publisherId
-    const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
-    if (!doesHasPermission) {
-        return res.sendStatus(403)
-    }
-
-    viewStory(storyId, viewerId).then(() => {
-
-        res.sendStatus(200).json(returnedList)
-
+    likeStory(storyId, req.userId).then(async () => {
+        res.sendStatus(200)
     }).catch((error) => {
         if (error instanceof AppError) {
+
+            if (error.message == AppErrorMessages.userDoesNotExist || error.message == AppErrorMessages.storyDoesNotExist) {
+                return res.sendStatus(404).json(error.message)
+            }
+
             return res.status(400).json(error.message)
         }
 
@@ -148,5 +237,30 @@ storiesRouter.post('/:storyId/view', authenticateToken, async (req, res) => {
         console.error(error)
     })
 })
+
+
+// Unlike story
+commentsRouter.post('/:storyId/unlike', authenticateToken, (req, res) => {
+
+    const storyId = req.params.storyId
+
+    unlikeStory(storyId, req.userId).then(async () => {
+        res.sendStatus(200)
+    }).catch((error) => {
+        if (error instanceof AppError) {
+
+            if (error.message == AppErrorMessages.userDoesNotExist || error.message == AppErrorMessages.storyDoesNotExist) {
+                return res.sendStatus(404).json(error.message)
+            }
+
+            return res.status(400).json(error.message)
+        }
+
+        res.sendStatus(500)
+        console.error(error)
+    })
+})
+
+
 
 module.exports = { storiesRouter }

@@ -1,7 +1,9 @@
-function buildViewStory({ UsersDB, StoriesDB, Id, AppError, AppErrorMessages }) {
-    return async function viewStory({ storyId, viewerId }) {
+function buildisStoryLiked({ UsersDB, StoriesDB, Id, AppError, AppErrorMessages }) {
+    return async function isStoryLiked({ storyId, likerId }) {
 
-        if (!Id.isValid(viewerId)) {
+        // checks if user [likerId] likes the story [storyId]
+
+        if (!Id.isValid(likerId)) {
             throw new AppError(AppErrorMessages.invalidUserId)
         }
 
@@ -9,7 +11,7 @@ function buildViewStory({ UsersDB, StoriesDB, Id, AppError, AppErrorMessages }) 
             throw new AppError(AppErrorMessages.invalidStoryId)
         }
 
-        if (!(await UsersDB.doesUserExist({ userId: viewerId }))) {
+        if (!(await UsersDB.doesUserExist({ userId: likerId }))) {
             throw new AppError(AppErrorMessages.userDoesNotExist)
         }
 
@@ -17,8 +19,8 @@ function buildViewStory({ UsersDB, StoriesDB, Id, AppError, AppErrorMessages }) 
             throw new AppError(AppErrorMessages.storyDoesNotExist)
         }
 
-        return await StoriesDB.viewStory(storyId, viewerId)
+        await StoriesDB.isLiked(storyId, likerId)
     }
 }
 
-module.exports = { buildViewStory }
+module.exports = { buildisStoryLiked }
