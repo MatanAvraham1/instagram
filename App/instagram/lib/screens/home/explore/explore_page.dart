@@ -2,7 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:instagram/models/user_model.dart';
 import 'package:instagram/screens/home/profile/profile_page.dart';
-import 'package:instagram/services/online_db_service.dart';
+import 'package:instagram/services/users_db_service.dart';
 import 'package:material_floating_search_bar/material_floating_search_bar.dart';
 import 'package:responsive_builder/responsive_builder.dart';
 
@@ -100,7 +100,7 @@ class _ExplorePageState extends State<ExplorePage>
                       ]
                     : [
                         FutureBuilder<User>(
-                          future: OnlineDBService.getUserByUsername(
+                          future: UsersDBService.getUserByUsername(
                               usernameToSearch),
                           builder: (context, snapshot) {
                             if (snapshot.hasError) {

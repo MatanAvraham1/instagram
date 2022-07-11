@@ -29,7 +29,7 @@ storiesRouter.post('/', authenticateToken, (req, res) => {
 
 
 // Gets story
-storiesRouter.get('/:storyId', authenticateToken, (req, res) => {
+storiesRouter.get('/:storyId', authenticateToken, async (req, res) => {
     const storyId = req.params.storyId
 
 
@@ -64,7 +64,7 @@ storiesRouter.get('/:storyId', authenticateToken, (req, res) => {
                 return res.sendStatus(403)
             }
 
-            viewStory(storyId, firstUserId).then(() => {
+            viewStory({ storyId, viewerId: firstUserId }).then(() => {
             }).catch((error) => {
                 console.error(error)
             })
@@ -94,7 +94,7 @@ storiesRouter.get('/:storyId', authenticateToken, (req, res) => {
 storiesRouter.delete('/:storyId', authenticateToken, doesOwnStoryObject, (req, res) => {
     const storyId = req.params.storyId
 
-    deleteStoryById(storyId).then(() => {
+    deleteStoryById({ storyId: storyId }).then(() => {
         res.sendStatus(200)
     }).catch((error) => {
         if (error instanceof AppError) {
@@ -119,7 +119,7 @@ storiesRouter.get('/archive', authenticateToken, (req, res) => {
         return res.status(400).json("Invalid start index.")
     }
 
-    getStoriesArchiveByPublisherId(req.userId, startIndex).then(async (stories) => {
+    getStoriesArchiveByPublisherId({ publisherId: req.userId, startFromIndex: startIndex }).then(async (stories) => {
 
         const returnedList = []
         for (const story of stories) {
@@ -139,7 +139,7 @@ storiesRouter.get('/archive', authenticateToken, (req, res) => {
         }
 
 
-        res.sendStatus(200).json(returnedList)
+        res.status(200).json(returnedList)
     }).catch((error) => {
         if (error instanceof AppError) {
             return res.status(400).json(error.message)
@@ -152,7 +152,7 @@ storiesRouter.get('/archive', authenticateToken, (req, res) => {
 
 
 // Gets last day stories
-storiesRouter.get('/', authenticateToken, (req, res) => {
+storiesRouter.get('/', authenticateToken, async (req, res) => {
     const publisherId = req.query.publisherId
     const startIndex = parseInt(req.query.startIndex)
 
@@ -167,7 +167,7 @@ storiesRouter.get('/', authenticateToken, (req, res) => {
         return res.sendStatus(403)
     }
 
-    getLastDayStoriesByPublisherId(publisherId, startIndex).then(async (stories) => {
+    getLastDayStoriesByPublisherId({ publisherId: publisherId, startFromIndex: startIndex }).then(async (stories) => {
         const returnedList = []
         for (const story of stories) {
 
@@ -194,7 +194,7 @@ storiesRouter.get('/', authenticateToken, (req, res) => {
                     continue;
                 }
 
-                viewStory(story.id, firstUserId).then(() => {
+                viewStory({ storyId: story.id, viewerId: firstUserId }).then(() => {
                 }).catch((error) => {
                     console.error(error)
                 })
@@ -206,7 +206,7 @@ storiesRouter.get('/', authenticateToken, (req, res) => {
         }
 
 
-        res.sendStatus(200).json(returnedList)
+        res.status(200).json(returnedList)
     }).catch((error) => {
         if (error instanceof AppError) {
             return res.status(400).json(error.message)
@@ -223,7 +223,7 @@ storiesRouter.post('/:storyId/like', authenticateToken, (req, res) => {
 
     const storyId = req.params.storyId
 
-    likeStory(storyId, req.userId).then(async () => {
+    likeStory({ storyId: storyId, likerId: req.userId }).then(async () => {
         res.sendStatus(200)
     }).catch((error) => {
         if (error instanceof AppError) {
@@ -242,11 +242,11 @@ storiesRouter.post('/:storyId/like', authenticateToken, (req, res) => {
 
 
 // Unlike story
-commentsRouter.post('/:storyId/unlike', authenticateToken, (req, res) => {
+storiesRouter.post('/:storyId/unlike', authenticateToken, (req, res) => {
 
     const storyId = req.params.storyId
 
-    unlikeStory(storyId, req.userId).then(async () => {
+    unlikeStory({ storyId: storyId, likerId: req.userId }).then(async () => {
         res.sendStatus(200)
     }).catch((error) => {
         if (error instanceof AppError) {

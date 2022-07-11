@@ -78,7 +78,7 @@ class StoriesDB {
         Returns how much stories the user has published in the last day
         */
 
-        const lastDayStoriesCount = await storyModel.aggregate([{ $match: { publisherId: publisherId, "createdAt": { $gt: new Date(Date.now() - 24 * 60 * 60 * 1000) } } }, { $project: { likes: 0, viewers: 0 } }]).count()
+        const lastDayStoriesCount = await storyModel.count({ publisherId: publisherId, "createdAt": { $gt: new Date(Date.now() - 24 * 60 * 60 * 1000) } })
         return lastDayStoriesCount;
     }
 
@@ -158,6 +158,13 @@ class StoriesDB {
         await storyModel.findByIdAndUpdate(storyId, { $pull: { viewers: viewerId } })
     }
 
+
+    // static async whichOfMyFollowingsHavePublishedStory() {
+    //     /*
+    //     Returns which users published stories
+
+    //     */
+    // }
 
 }
 

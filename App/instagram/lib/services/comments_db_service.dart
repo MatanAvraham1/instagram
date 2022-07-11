@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:instagram/exeptions/server_exceptions.dart';
 import 'package:instagram/models/comment_model.dart';
+import 'package:instagram/models/user_model.dart';
 import 'package:instagram/services/ServerIP.dart';
 import 'package:instagram/services/auth_service.dart';
 
@@ -22,7 +23,8 @@ class CommentsDBService {
     });
 
     if (response.statusCode == 400) {
-      var errorMessage = response.body;
+      var errorMessage = jsonDecode(response.body);
+      ;
 
       throw ServerException(errorMessage);
     }
@@ -42,7 +44,7 @@ class CommentsDBService {
     return Comment.fromJson(response.body);
   }
 
-  static Future<List<Comment>> getCommentsByPostId(
+  static Future<List<Map<User, Comment>>> getCommentsByPostId(
     String postId,
     int startIndex,
   ) async {
@@ -51,18 +53,18 @@ class CommentsDBService {
 
     param 1: the id of the post
     param 2: how much comments have we already loaded
-
     */
 
     var response = await http.get(
-        Uri.parse(
-            SERVER_API_URL + "comments?startIndex=$startIndex&postId=$postId"),
+        Uri.parse(SERVER_API_URL +
+            "comments?startIndex=$startIndex&postId=$postId&includePublisher=true"),
         headers: {
           "authorization": await AuthSerivce.getAuthorizationHeader(),
         });
 
     if (response.statusCode == 400) {
-      var errorMessage = response.body;
+      var errorMessage = jsonDecode(response.body);
+      ;
 
       throw ServerException(errorMessage);
     }
@@ -79,9 +81,11 @@ class CommentsDBService {
       throw ServerException(ServerExceptionMessages.serverError);
     }
 
-    List<Comment> comments = [];
+    List<Map<User, Comment>> comments = [];
     for (var commentObject in jsonDecode(response.body)) {
-      comments.add(Comment.fromMap(commentObject));
+      comments.add({
+        User.fromMap(commentObject.publisher): Comment.fromMap(commentObject)
+      });
     }
 
     return comments;
@@ -107,7 +111,8 @@ class CommentsDBService {
         });
 
     if (response.statusCode == 400) {
-      var errorMessage = response.body;
+      var errorMessage = jsonDecode(response.body);
+      ;
 
       throw ServerException(errorMessage);
     }
@@ -152,7 +157,8 @@ class CommentsDBService {
         });
 
     if (response.statusCode == 400) {
-      var errorMessage = response.body;
+      var errorMessage = jsonDecode(response.body);
+      ;
 
       throw ServerException(errorMessage);
     }
@@ -230,7 +236,8 @@ class CommentsDBService {
     });
 
     if (response.statusCode == 400) {
-      var errorMessage = response.body;
+      var errorMessage = jsonDecode(response.body);
+      ;
 
       throw ServerException(errorMessage);
     }
@@ -264,7 +271,8 @@ class CommentsDBService {
     );
 
     if (response.statusCode == 400) {
-      var errorMessage = response.body;
+      var errorMessage = jsonDecode(response.body);
+      ;
 
       throw ServerException(errorMessage);
     }
@@ -298,7 +306,8 @@ class CommentsDBService {
     );
 
     if (response.statusCode == 400) {
-      var errorMessage = response.body;
+      var errorMessage = jsonDecode(response.body);
+      ;
 
       throw ServerException(errorMessage);
     }

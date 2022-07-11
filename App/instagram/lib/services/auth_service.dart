@@ -39,10 +39,7 @@ class AuthSerivce {
     );
     String? value = await storage.read(key: "jwt");
 
-    if (value == null) {
-      return false;
-    }
-    return true;
+    return value != null;
   }
 
   static Future _saveLoginDetails(String jwt, String userId) async {
@@ -113,7 +110,7 @@ class AuthSerivce {
     );
 
     if (response.statusCode == 400) {
-      var errorMessage = response.body;
+      var errorMessage = jsonDecode(response.body);
 
       throw ServerException(errorMessage);
     } else if (response.statusCode == 500) {
@@ -151,7 +148,8 @@ class AuthSerivce {
     );
 
     if (response.statusCode == 400) {
-      var errorMessage = response.body;
+      var errorMessage = jsonDecode(response.body);
+      ;
 
       throw ServerException(errorMessage);
     } else if (response.statusCode == 404) {
@@ -179,5 +177,17 @@ class AuthSerivce {
     await _deleteLoginDetails();
     _streamController.add(null);
     connectedUser = null;
+  }
+
+  static bool doesHasPermission(User user) {
+    /*
+    does we have permission to looks about private things of [user]
+
+    likes stories count OR followers etc...
+    
+    param 1: the user object
+    */
+
+    return user.isFollowedByMe || !user.isPrivate;
   }
 }

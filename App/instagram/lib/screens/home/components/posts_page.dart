@@ -6,12 +6,12 @@ import 'package:instagram/screens/home/components/post_tile.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 class PostsPage extends StatefulWidget {
-  final User owner;
+  final User publisher;
   final List<Post> posts;
   final int initialPostIndex;
   const PostsPage({
     Key? key,
-    required this.owner,
+    required this.publisher,
     required this.posts,
     required this.initialPostIndex,
   }) : super(key: key);
@@ -45,6 +45,7 @@ class _PostsPageState extends State<PostsPage> {
                 ),
               )
             : PostTile(
+                publisher: widget.publisher,
                 post: widget.posts[index - 1],
               ),
       ),

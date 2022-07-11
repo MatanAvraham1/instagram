@@ -130,7 +130,7 @@ class User {
       isFollowMe: map['isFollowMe'] ?? false,
       isRequestedByMe: map['isRequestedByMe'] ?? false,
       isRequestMe: map['isRequestMe'] ?? false,
-      createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt']),
+      createdAt: DateTime.parse(map['createdAt']),
     );
   }
 

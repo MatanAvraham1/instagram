@@ -6,7 +6,7 @@ class Comment {
   String publisherId;
   String postId;
   String comment;
-  String replyToComment;
+  String? replyToComment;
 
   DateTime createdAt;
 
@@ -20,11 +20,11 @@ class Comment {
     required this.publisherId,
     required this.postId,
     required this.comment,
-    required this.replyToComment,
     required this.createdAt,
     required this.isLikedByMe,
     required this.likes,
     required this.replies,
+    this.replyToComment,
   });
 
   Comment copyWith({
@@ -71,7 +71,7 @@ class Comment {
       publisherId: map['publisherId'] ?? '',
       postId: map['postId'] ?? '',
       comment: map['comment'] ?? '',
-      replyToComment: map['replyToComment'] ?? '',
+      replyToComment: map['replyToComment'],
       createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt']),
       isLikedByMe: map['isLikedByMe'] ?? false,
       likes: map['likes']?.toInt() ?? 0,

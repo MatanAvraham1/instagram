@@ -3,6 +3,9 @@ import 'dart:math';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:instagram/presentation/my_flutter_app_icons.dart';
+import 'package:instagram/services/friendships_service.dart';
+import 'package:instagram/services/posts_db_service.dart';
+import 'package:instagram/services/users_db_service.dart';
 import 'package:instagram/themes/themes.dart';
 import 'package:material_floating_search_bar/material_floating_search_bar.dart';
 
@@ -15,7 +18,6 @@ import 'package:instagram/screens/home/components/loading_indicator.dart';
 import 'package:instagram/screens/home/components/posts_page.dart';
 import 'package:instagram/screens/home/components/story_tile.dart';
 import 'package:instagram/services/auth_service.dart';
-import 'package:instagram/services/online_db_service.dart';
 import 'package:responsive_builder/responsive_builder.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -48,8 +50,8 @@ class _ProfilePageState extends State<ProfilePage>
   void initState() {
     user = widget.user;
 
-    loadPosts();
-    loadMorePosts();
+    loadInitialPosts();
+    listenToPostsListController();
 
     super.initState();
   }
@@ -60,19 +62,24 @@ class _ProfilePageState extends State<ProfilePage>
     super.dispose();
   }
 
-  Future loadPosts() async {
+  Future loadInitialPosts() async {
     if (user.isPrivate && !user.isFollowedByMe) {
       return;
     } else {
-      posts = await OnlineDBService.getPosts(user.id, posts.length,
-          includePublisherInResponse: false);
+      posts = await PostsDBService.getPostsByPublisherId(
+        user.id,
+        posts.length,
+      );
       setState(() {
         _isLoadingPosts = false;
       });
     }
   }
 
-  void loadMorePosts() {
+  void listenToPostsListController() {
+    /*
+    Adds listener to the posts scroll controller to load more posts when we reach the bottom
+    */
     _postsScrollController.addListener(() async {
       if (_isLoadingMorePosts) {
         return;
@@ -82,7 +89,8 @@ class _ProfilePageState extends State<ProfilePage>
         setState(() {
           _isLoadingMorePosts = true;
         });
-        posts.addAll(await OnlineDBService.getPosts(user.id, posts.length));
+        posts.addAll(
+            await PostsDBService.getPostsByPublisherId(user.id, posts.length));
         setState(() {
           _isLoadingMorePosts = false;
         });
@@ -91,21 +99,21 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   Future sendFollowRequest() async {
-    await OnlineDBService.followUser(user.id);
+    await FriendshipsService.followUser(user.id);
     setState(() {
       user.isRequestedByMe = true;
     });
   }
 
   Future deleteFollowingRequest() async {
-    await OnlineDBService.deleteFollowingRequest(user.id);
+    await FriendshipsService.deleteFollowingRequest(user.id);
     setState(() {
       user.isRequestedByMe = false;
     });
   }
 
   Future followUser() async {
-    await OnlineDBService.followUser(user.id);
+    await FriendshipsService.followUser(user.id);
     setState(() {
       user.isFollowedByMe = true;
       AuthSerivce.connectedUser!.followings++;
@@ -113,12 +121,12 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   Future unfollowUser() async {
-    await OnlineDBService.unfollowUser(user.id);
+    await FriendshipsService.unfollowUser(user.id);
 
     setState(() {
       user.isFollowedByMe = false;
       AuthSerivce.connectedUser!.followings--;
-      followings.removeWhere((element) => element.id == user.id);
+      followers.removeWhere((element) => element.id == user.id);
     });
   }
 
@@ -380,13 +388,13 @@ class _ProfilePageState extends State<ProfilePage>
               posts = [];
 
               var lastUser = user;
-              user = await OnlineDBService.getUserById(user.id);
+              user = await UsersDBService.getUserById(user.id);
               if (lastUser == connectedUser) {
                 AuthSerivce.connectedUser = user;
                 connectedUser = user;
               }
 
-              await loadPosts();
+              await loadInitialPosts();
               setState(() {});
             },
             child: SingleChildScrollView(
@@ -479,7 +487,7 @@ class _ProfilePageState extends State<ProfilePage>
                                       builder: (context) => PostsPage(
                                         initialPostIndex: index,
                                         posts: posts,
-                                        owner: user,
+                                        publisher: user,
                                       ),
                                     ));
                                   },
@@ -487,9 +495,8 @@ class _ProfilePageState extends State<ProfilePage>
                                     decoration: BoxDecoration(
                                         image: DecorationImage(
                                             fit: BoxFit.cover,
-                                            image: NetworkImage(posts[index]
-                                                .photosUrls
-                                                .first))),
+                                            image: NetworkImage(
+                                                posts[index].photos.first))),
                                   ),
                                 )),
                     ),
@@ -595,11 +602,12 @@ class _ProfilePageState extends State<ProfilePage>
           return;
         }
 
+        // Makes followers list with controller loading
         showModalBottomSheet(
           context: context,
           builder: (context) {
             return FutureBuilder<List<User>>(
-              future: OnlineDBService.getFollowers(user.id, followers.length),
+              future: UsersDBService.getFollowers(user.id, followers.length),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
                   return Text("Error ${snapshot.error}");
@@ -672,7 +680,7 @@ class _ProfilePageState extends State<ProfilePage>
           context: context,
           builder: (context) {
             return FutureBuilder<List<User>>(
-              future: OnlineDBService.getFollowings(user.id, followings.length),
+              future: UsersDBService.getFollowings(user.id, followings.length),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
                   return Text("Error ${snapshot.error}");

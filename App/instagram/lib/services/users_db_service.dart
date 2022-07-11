@@ -12,8 +12,6 @@ class UsersDBService {
     Returns the connected user
     */
 
-    // UsersDBService.serv
-
     var userId = await AuthSerivce.getConnectedUserId();
     try {
       return await getUserById(userId);
@@ -36,8 +34,7 @@ class UsersDBService {
     });
 
     if (response.statusCode == 400) {
-      var errorMessage = response.body;
-
+      var errorMessage = jsonDecode(response.body);
       throw ServerException(errorMessage);
     }
 
@@ -132,7 +129,8 @@ class UsersDBService {
     );
 
     if (response.statusCode == 400) {
-      var errorMessage = response.body;
+      var errorMessage = jsonDecode(response.body);
+      ;
 
       throw ServerException(errorMessage);
     }

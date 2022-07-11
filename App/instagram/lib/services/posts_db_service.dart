@@ -21,7 +21,8 @@ class PostsDBService {
     });
 
     if (response.statusCode == 400) {
-      var errorMessage = response.body;
+      var errorMessage = jsonDecode(response.body);
+      ;
 
       throw ServerException(errorMessage);
     }
@@ -62,7 +63,8 @@ class PostsDBService {
     );
 
     if (response.statusCode == 400) {
-      var errorMessage = response.body;
+      var errorMessage = jsonDecode(response.body);
+      ;
 
       throw ServerException(errorMessage);
     }
@@ -93,7 +95,8 @@ class PostsDBService {
     });
 
     if (response.statusCode == 400) {
-      var errorMessage = response.body;
+      var errorMessage = jsonDecode(response.body);
+      ;
 
       throw ServerException(errorMessage);
     }
@@ -129,7 +132,8 @@ class PostsDBService {
         });
 
     if (response.statusCode == 400) {
-      var errorMessage = response.body;
+      var errorMessage = jsonDecode(response.body);
+      ;
 
       throw ServerException(errorMessage);
     }
@@ -170,7 +174,8 @@ class PostsDBService {
     );
 
     if (response.statusCode == 400) {
-      var errorMessage = response.body;
+      var errorMessage = jsonDecode(response.body);
+      ;
 
       throw ServerException(errorMessage);
     }
@@ -204,7 +209,8 @@ class PostsDBService {
     );
 
     if (response.statusCode == 400) {
-      var errorMessage = response.body;
+      var errorMessage = jsonDecode(response.body);
+      ;
 
       throw ServerException(errorMessage);
     }

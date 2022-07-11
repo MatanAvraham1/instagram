@@ -209,7 +209,6 @@ class UsersDB {
             $project: {
                 id: 1,
                 username: 1,
-                password: 0,
                 bio: 1,
                 fullname: 1,
                 isPrivate: 1,
@@ -263,6 +262,7 @@ class UsersDB {
 
         if (userId != undefined) {
             user = await userModel.findById(userId, { followers: 0, followRequests: 0 })
+
         }
 
         if (username != undefined) {
@@ -273,7 +273,7 @@ class UsersDB {
             user = await userModel.findOne({ fullname: fullname }, { followers: 0, followRequests: 0 })
         }
 
-        return user == null
+        return user != null
     }
 }
 

@@ -1,5 +1,5 @@
 const express = require('express')
-const { AppErrorMessages } = require('../../../app_error')
+const { AppErrorMessages, AppError } = require('../../../app_error')
 const { AuthenticationService } = require('../../../CustomHelpers/Authantication')
 const { getPostById, addPost, deletePostById, getPostsByPublisherId, isPostLiked, likePost, unlikePost } = require('../../../Use_cases/post')
 const { authenticateToken, doesOwnPostObject } = require('../middleware')
@@ -55,7 +55,7 @@ postsRouter.get('/:postId', authenticateToken, (req, res) => {
             likes: post.likes,
         }
 
-        returnedObject.isLikedByMe = await isPostLiked(postId, req.userId)
+        returnedObject.isLikedByMe = await isPostLiked({ postId, likerId: req.userId })
 
         res.status(200).json(returnedObject)
     }).catch((error) => {
@@ -78,7 +78,7 @@ postsRouter.get('/:postId', authenticateToken, (req, res) => {
 postsRouter.delete('/:postId', authenticateToken, doesOwnPostObject, (req, res) => {
     const postId = req.params.postId
 
-    deletePostById(postId).then(() => {
+    deletePostById({ postId }).then(() => {
         res.sendStatus(200)
     }).catch((error) => {
         if (error instanceof AppError) {
@@ -97,7 +97,7 @@ postsRouter.delete('/:postId', authenticateToken, doesOwnPostObject, (req, res) 
 
 
 // Gets posts by publisher
-postsRouter.get('/', authenticateToken, (req, res) => {
+postsRouter.get('/', authenticateToken, async (req, res) => {
     const publisherId = req.query.publisherId
     const startIndex = parseInt(req.query.startIndex)
 
@@ -112,7 +112,7 @@ postsRouter.get('/', authenticateToken, (req, res) => {
         return res.sendStatus(403)
     }
 
-    getPostsByPublisherId(publisherId, startIndex).then(async (posts) => {
+    getPostsByPublisherId({ publisherId: publisherId, startFromIndex: startIndex }).then(async (posts) => {
         const returnedList = []
         for (const post of posts) {
 
@@ -129,13 +129,13 @@ postsRouter.get('/', authenticateToken, (req, res) => {
                 likes: post.likes,
             }
 
-            objectToReturn.isLikedByMe = await isPostLiked(post.id, req.userId)
+            objectToReturn.isLikedByMe = await isPostLiked({ postId: post.id, likerId: req.userId })
 
             returnedList.push(objectToReturn)
         }
 
 
-        res.sendStatus(200).json(returnedList)
+        res.status(200).json(returnedList)
     }).catch((error) => {
         if (error instanceof AppError) {
 
@@ -156,7 +156,7 @@ postsRouter.post('/:postId/like', authenticateToken, (req, res) => {
 
     const postId = req.params.postId
 
-    likePost(postId, req.userId).then(async () => {
+    likePost({ postId, likerId: req.userId }).then(async () => {
         res.sendStatus(200)
     }).catch((error) => {
         if (error instanceof AppError) {
@@ -179,7 +179,7 @@ postsRouter.post('/:postId/unlike', authenticateToken, (req, res) => {
 
     const postId = req.params.postId
 
-    unlikePost(postId, req.userId).then(async () => {
+    unlikePost({ postId, likerId: req.userId }).then(async () => {
         res.sendStatus(200)
     }).catch((error) => {
         if (error instanceof AppError) {

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'package:instagram/models/user_model.dart';
 import 'package:instagram/screens/home/components/story_page.dart';
+import 'package:instagram/services/auth_service.dart';
 
 class StoryTile extends StatefulWidget {
   final User owner;
@@ -52,10 +53,8 @@ class _StoryTileState extends State<StoryTile> {
     );
 
     return OpenContainer(
-      tappable: (widget.owner.isFollowedByMe &&
-              widget.owner.isPrivate &&
-              widget.owner.stories > 0) ||
-          widget.owner.stories > 0,
+      tappable: AuthSerivce.doesHasPermission(widget.owner) &&
+          widget.owner.lastDayStories! > 0,
       closedElevation: 0,
       openElevation: 0,
       closedColor: Colors.transparent,

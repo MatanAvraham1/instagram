@@ -1,5 +1,5 @@
 function buildGetPostsByPublisherId({ UsersDB, PostsDB, Id, AppError, AppErrorMessages }) {
-    return async function getPostsByPublisherId({ startFromIndex, publisherId }) {
+    return async function getPostsByPublisherId({ publisherId, startFromIndex }) {
 
         if (!Id.isValid(publisherId)) {
             throw new AppError(AppErrorMessages.invalidPublisherId)

@@ -17,10 +17,10 @@ userRouter.get('/:userToSearch', authenticateToken, async (req, res) => {
         if (searchBy == "Id") {
             user = await getUserById({ userId: req.params.userToSearch })
         }
-        if (searchBy == "Fullname") {
+        else if (searchBy == "Fullname") {
             user = await getUserByFullname({ fullname: req.params.userToSearch })
         }
-        if (searchBy == "Username") {
+        else if (searchBy == "Username") {
             user = await getUserByUsername({ username: req.params.userToSearch })
         }
         else {
@@ -43,7 +43,7 @@ userRouter.get('/:userToSearch', authenticateToken, async (req, res) => {
 
         const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
         if (doesHasPermission) {
-            returnedObject.lastDayStories = await getLastDayStoriesCount(secondUserId)
+            returnedObject.lastDayStories = await getLastDayStoriesCount({ publisherId: secondUserId })
         }
 
         if (req.userId == user.id) {
@@ -58,21 +58,21 @@ userRouter.get('/:userToSearch', authenticateToken, async (req, res) => {
             returnedObject.isRequestMe = false;
         }
         else {
-            returnedObject.isFollowedByMe = await isFollow(firstUserId, secondUserId)
-            returnedObject.isFollowMe = await isFollow(secondUserId, firstUserId)
+            returnedObject.isFollowedByMe = await isFollow({ firstUserId: firstUserId, secondUserId: secondUserId })
+            returnedObject.isFollowMe = await isFollow({ firstUserId: secondUserId, secondUserId: firstUserId })
 
             if (returnedObject.isFollowedByMe) {
                 returnedObject.isRequestedByMe = false;
             }
             else {
-                returnedObject.isRequestedByMe = isRequest(firstUserId, secondUserId);
+                returnedObject.isRequestedByMe = isRequest({ firstUserId: firstUserId, secondUserId: secondUserId });
             }
 
             if (returnedObject.isFollowMe) {
                 returnedObject.isRequestMe = false;
             }
             else {
-                returnedObject.isRequestMe = isRequest(secondUserId, firstUserId);
+                returnedObject.isRequestMe = isRequest({ firstUserId: secondUserId, secondUserId: firstUserId });
             }
         }
 
@@ -97,7 +97,7 @@ userRouter.get('/:userToSearch', authenticateToken, async (req, res) => {
 userRouter.delete('/:userId', authenticateToken, doesOwnUserObject, (req, res) => {
     const userId = req.params.userId
 
-    deleteUserById({ userId }).then(() => {
+    deleteUserById({ userId: userId }).then(() => {
         res.sendStatus(200)
     }).catch((error) => {
         if (error instanceof AppError) {
@@ -126,7 +126,7 @@ userRouter.patch('/', authenticateToken, (req, res) => {
     const newIsPrivate = newFields.isPrivate
 
 
-    updateFields({ userId, newUsername, newFullname, newBio, newIsPrivate }).then(() => {
+    updateFields({ userId: userId, newUsername: newUsername, newFullname: newFullname, newBio: newBio, newIsPrivate: newIsPrivate }).then(() => {
         res.sendStatus(200)
     }).catch((error) => {
         if (error instanceof AppError) {
@@ -161,7 +161,7 @@ userRouter.get('/:userId/followers', authenticateToken, async (req, res) => {
         return res.status(400).json("Invalid start index.")
     }
 
-    getFollowers({ userId, startIndex }).then((followers) => {
+    getFollowers({ userId: userId, startIndex: startIndex }).then(async (followers) => {
 
         const response = [];
         for (const user of followers) {
@@ -179,23 +179,23 @@ userRouter.get('/:userId/followers', authenticateToken, async (req, res) => {
 
             const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, user.id)
             if (doesHasPermission) {
-                userObject.lastDayStories = await getLastDayStoriesCount(user.id)
+                userObject.lastDayStories = await getLastDayStoriesCount({ publisherId: user.id })
             }
 
-            userObject.isFollowedByMe = await isFollow(firstUserId, user.id);
+            userObject.isFollowedByMe = await isFollow({ firstUserId: firstUserId, secondUserId: user.id });
             userObject.isFollowMe = true;
             if (userObject.isFollowedByMe) {
                 userObject.isRequestedByMe = false;
             }
             else {
-                userObject.isRequestedByMe = isRequest(firstUserId, user.id);
+                userObject.isRequestedByMe = isRequest({ firstUserId: firstUserId, secondUserId: user.id });
             }
             userObject.isRequestMe = false;
 
             response.push(userObject)
         }
 
-        res.status(200).json(response)
+        return res.status(200).json(response)
     }).catch((error) => {
         if (error instanceof AppError) {
 
@@ -228,7 +228,7 @@ userRouter.get('/:userId/followings', authenticateToken, async (req, res) => {
         return res.status(400).json("Invalid start index.")
     }
 
-    getFollowings({ userId, startIndex }).then((followings) => {
+    getFollowings({ userId: userId, startIndex: startIndex }).then(async (followings) => {
         const response = [];
         for (const user of followings) {
 
@@ -245,18 +245,18 @@ userRouter.get('/:userId/followings', authenticateToken, async (req, res) => {
 
             const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, user.id)
             if (doesHasPermission) {
-                userObject.lastDayStories = await getLastDayStoriesCount(user.id)
+                userObject.lastDayStories = await getLastDayStoriesCount({ publisherId: user.id })
             }
 
 
             userObject.isFollowedByMe = true;
-            userObject.isFollowMe = await isFollow(user.id, firstUserId);
+            userObject.isFollowMe = await isFollow({ firstUserId: user.id, secondUserId: firstUserId });
             userObject.isRequestedByMe = false;
             if (userObject.isFollowMe) {
                 userObject.isRequestMe = false;
             }
             else {
-                userObject.isRequestMe = isRequest(user.id, firstUserId);
+                userObject.isRequestMe = isRequest({ firstUserId: user.id, secondUserId: firstUserId });
             }
 
             response.push(userObject)

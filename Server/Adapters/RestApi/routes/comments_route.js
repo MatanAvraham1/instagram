@@ -1,8 +1,10 @@
 const express = require('express')
 const { AppError, AppErrorMessages } = require('../../../app_error')
 const { AuthenticationService } = require('../../../CustomHelpers/Authantication')
-const { getCommentById, addComment, deleteCommentById, getCommentsByPublisherId, getRepliesComments, getCommentsByPostId, likeCommentById, isCommentLiked } = require('../../../Use_cases/comment')
+const { getCommentById, addComment, deleteCommentById, getCommentsByPublisherId, getRepliesComments, getCommentsByPostId, likeCommentById, isCommentLiked, unlikeCommentById } = require('../../../Use_cases/comment')
 const { getPostById } = require('../../../Use_cases/post')
+const { getLastDayStoriesCount } = require('../../../Use_cases/story')
+const { getUserById } = require('../../../Use_cases/user')
 const { authenticateToken, doesOwnCommentObject } = require('../middleware')
 const commentsRouter = express.Router()
 
@@ -36,7 +38,7 @@ commentsRouter.get('/:commentId', authenticateToken, (req, res) => {
     getCommentById({ commentId }).then(async (comment) => {
 
         const firstUserId = req.userId
-        const secondUserId = (await getPostById(comment.postId)).publisherId
+        const secondUserId = (await getPostById({ postId: comment.postId })).publisherId
         const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
         if (!doesHasPermission) {
             return res.sendStatus(403)
@@ -54,7 +56,7 @@ commentsRouter.get('/:commentId', authenticateToken, (req, res) => {
             replies: comment.replies,
         }
 
-        returnedObject.isLikedByMe = await isCommentLiked(commentId, req.userId)
+        returnedObject.isLikedByMe = await isCommentLiked({ commentId, likerId: req.userId })
 
         res.status(200).json(returnedObject)
     }).catch((error) => {
@@ -77,7 +79,7 @@ commentsRouter.get('/:commentId', authenticateToken, (req, res) => {
 commentsRouter.delete('/:commentId', authenticateToken, doesOwnCommentObject, (req, res) => {
     const commentId = req.params.commentId
 
-    deleteCommentById(commentId).then(() => {
+    deleteCommentById({ commentId }).then(() => {
         res.sendStatus(200)
     }).catch((error) => {
         if (error instanceof AppError) {
@@ -104,14 +106,14 @@ commentsRouter.get('/', authenticateToken, (req, res) => {
         return res.status(400).json("Invalid start index.")
     }
 
-    getCommentsByPublisherId(publisherId, startIndex).then(async (comments) => {
+    getCommentsByPublisherId({ publisherId, startFromIndex: startIndex }).then(async (comments) => {
 
 
         const returnedList = []
         for (const comment of comments) {
 
             const firstUserId = req.userId
-            const secondUserId = (await getPostById(comment.postId)).publisherId
+            const secondUserId = (await getPostById({ postId: comment.postId })).publisherId
             const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
             if (!doesHasPermission) {
                 continue
@@ -129,13 +131,13 @@ commentsRouter.get('/', authenticateToken, (req, res) => {
                 replies: comment.replies,
             }
 
-            objectToReturn.isLikedByMe = await isCommentLiked(comment.id, req.userId)
+            objectToReturn.isLikedByMe = await isCommentLiked({ commentId: comment.id, likerId: req.userId })
 
             returnedList.push(objectToReturn)
         }
 
 
-        res.sendStatus(200).json(returnedList)
+        res.status(200).json(returnedList)
     }).catch((error) => {
         if (error instanceof AppError) {
 
@@ -160,10 +162,10 @@ commentsRouter.get('/', authenticateToken, (req, res) => {
         return res.status(400).json("Invalid start index.")
     }
 
-    getRepliesComments(replyToComment, startIndex).then(async (comments) => {
+    getRepliesComments({ commentId: replyToComment, startFromIndex: startIndex }).then(async (comments) => {
 
         const firstUserId = req.userId
-        const secondUserId = (await getPostById((await getCommentById(replyToComment)).postId)).publisherId
+        const secondUserId = (await getPostById({ postId: (await getCommentById({ commentId: replyToComment })).postId })).publisherId
         const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
         if (!doesHasPermission) {
             return res.sendStatus(403)
@@ -184,13 +186,13 @@ commentsRouter.get('/', authenticateToken, (req, res) => {
                 replies: comment.replies,
             }
 
-            objectToReturn.isLikedByMe = await isCommentLiked(comment.id, req.userId)
+            objectToReturn.isLikedByMe = await isCommentLiked({ commentId: comment.id, likerId: req.userId })
 
             returnedList.push(objectToReturn)
         }
 
 
-        res.sendStatus(200).json(returnedList)
+        res.status(200).json(returnedList)
     }).catch((error) => {
         if (error instanceof AppError) {
 
@@ -212,19 +214,20 @@ commentsRouter.get('/', authenticateToken, (req, res) => {
 commentsRouter.get('/', authenticateToken, async (req, res) => {
     const postId = req.query.postId
     const startIndex = parseInt(req.query.startIndex)
+    const includePublisher = req.query.includePublisher == 'true'
 
     if (!Number.isInteger(startIndex)) {
         return res.status(400).json("Invalid start index.")
     }
 
     const firstUserId = req.userId
-    const secondUserId = (await getPostById(postId)).publisherId
+    const secondUserId = (await getPostById({ postId })).publisherId
     const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
     if (!doesHasPermission) {
         return res.sendStatus(403)
     }
 
-    getCommentsByPostId(postId, startIndex).then((comments) => {
+    getCommentsByPostId({ postId, startFromIndex: startIndex }).then(async (comments) => {
         const returnedList = []
         for (const comment of comments) {
 
@@ -240,13 +243,64 @@ commentsRouter.get('/', authenticateToken, async (req, res) => {
                 replies: comment.replies,
             }
 
-            objectToReturn.isLikedByMe = await isCommentLiked(comment.id, req.userId)
+            objectToReturn.isLikedByMe = await isCommentLiked({ commentId: comment.id, likerId: req.userId })
+            if (includePublisher) {
+                const commentPublisher = await getUserById({ userId: comment.publisherId })
+                const userObject = {
+                    id: commentPublisher.id,
+                    username: commentPublisher.username,
+                    fullname: commentPublisher.fullname,
+                    bio: commentPublisher.bio,
+                    isPrivate: commentPublisher.isPrivate,
+                    followers: commentPublisher.followers,
+                    followings: commentPublisher.followings,
+                    posts: commentPublisher.posts,
+                }
+                const firstUserId = req.userId
+                const secondUserId = commentPublisher.id
 
+                const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
+                if (doesHasPermission) {
+                    userObject.lastDayStories = await getLastDayStoriesCount({ publisherId: secondUserId })
+                }
+
+                if (req.userId == user.id) {
+                    userObject.followRequests = user.followRequests
+                    userObject.followingRequests = user.followingRequests
+                    userObject.stories = user.stories
+                    userObject.createdAt = user.createdAt
+
+                    userObject.isFollowedByMe = false;
+                    userObject.isFollowMe = false;
+                    userObject.isRequestedByMe = false;
+                    userObject.isRequestMe = false;
+                }
+                else {
+                    userObject.isFollowedByMe = await isFollow({ firstUserId, secondUserId })
+                    userObject.isFollowMe = await isFollow({ firstUserId: secondUserId, secondUserId: firstUserId })
+
+                    if (userObject.isFollowedByMe) {
+                        userObject.isRequestedByMe = false;
+                    }
+                    else {
+                        userObject.isRequestedByMe = isRequest({ firstUserId, secondUserId });
+                    }
+
+                    if (userObject.isFollowMe) {
+                        userObject.isRequestMe = false;
+                    }
+                    else {
+                        userObject.isRequestMe = isRequest({ firstUserId: secondUserId, secondUserId: firstUserId });
+                    }
+                }
+
+                objectToReturn.publisher = userObject
+            }
 
             returnedList.push(objectToReturn)
         }
 
-        res.sendStatus(200).json(returnedList)
+        res.status(200).json(returnedList)
     }).catch((error) => {
         if (error instanceof AppError) {
             return res.status(400).json(error.message)
@@ -262,7 +316,7 @@ commentsRouter.post('/:commentId/like', authenticateToken, (req, res) => {
 
     const commentId = req.params.commentId
 
-    likeCommentById(commentId, req.userId).then(async () => {
+    likeCommentById({ commentId, likerId: req.userId }).then(async () => {
         res.sendStatus(200)
     }).catch((error) => {
         if (error instanceof AppError) {
@@ -285,7 +339,7 @@ commentsRouter.post('/:commentId/unlike', authenticateToken, (req, res) => {
 
     const commentId = req.params.commentId
 
-    unlikePost(commentId, req.userId).then(async () => {
+    unlikeCommentById({ commentId, likerId: req.userId }).then(async () => {
         res.sendStatus(200)
     }).catch((error) => {
         if (error instanceof AppError) {

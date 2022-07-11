@@ -9,7 +9,7 @@ function buildGetLastDayStoriesByPublisherId({ UsersDB, StoriesDB, Id, AppError,
             throw new AppError(AppErrorMessages.publisherDoesNotExist)
         }
 
-        return await StoriesDB.getLastDayStories(publisherId, startFromIndex, 10)
+        return await StoriesDB.getLastDayStories(publisherId, startFromIndex, 100) // TODO: make a limit to the stories
     }
 }
 

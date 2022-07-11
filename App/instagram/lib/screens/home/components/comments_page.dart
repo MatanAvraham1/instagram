@@ -2,16 +2,19 @@ import 'package:flutter/material.dart';
 
 import 'package:instagram/models/comment_model.dart';
 import 'package:instagram/models/post_model.dart';
+import 'package:instagram/models/user_model.dart';
 import 'package:instagram/screens/home/components/comment_tile.dart';
 import 'package:instagram/screens/home/components/loading_indicator.dart';
-import 'package:instagram/services/online_db_service.dart';
+import 'package:instagram/services/comments_db_service.dart';
 
 class CommentsPage extends StatefulWidget {
   final Post post;
+  final User postPublisher;
 
   const CommentsPage({
     Key? key,
     required this.post,
+    required this.postPublisher,
   }) : super(key: key);
 
   @override
@@ -21,7 +24,7 @@ class CommentsPage extends StatefulWidget {
 class _CommentsPageState extends State<CommentsPage> {
   final ScrollController _scrollController = ScrollController();
 
-  List<Comment> comments = [];
+  List<Map<User, Comment>> comments = [];
 
   bool _isLoadingMoreComments = false;
   bool _isLoadingComments = false;
@@ -32,8 +35,7 @@ class _CommentsPageState extends State<CommentsPage> {
       _isLoadingComments = true;
     });
 
-    OnlineDBService.getComments(
-            widget.post.publisher!.id, widget.post.id, comments.length)
+    CommentsDBService.getCommentsByPostId(widget.post.id, comments.length)
         .then((value) {
       setState(() {
         comments.addAll(value);
@@ -52,8 +54,7 @@ class _CommentsPageState extends State<CommentsPage> {
       setState(() {
         _isLoadingMoreComments = true;
       });
-      OnlineDBService.getComments(
-              widget.post.publisher!.id, widget.post.id, comments.length)
+      CommentsDBService.getCommentsByPostId(widget.post.id, comments.length)
           .then((value) {
         setState(() {
           comments.addAll(value);
@@ -106,20 +107,21 @@ class _CommentsPageState extends State<CommentsPage> {
                         : Container()
                     : index == 0
                         ? CommentTile(
-                            postPublisherId: widget.post.publisher!.id,
+                            commentPublisher: widget.postPublisher,
                             comment: Comment(
-                                publisher: widget.post.publisher!,
+                                replies: 0,
+                                publisherId: widget.postPublisher.id,
                                 isLikedByMe: false,
                                 comment: widget.post.publisherComment,
                                 id: widget.post.id,
                                 postId: widget.post.id,
-                                publishedAt: widget.post.publishedAt,
+                                createdAt: widget.post.createdAt,
                                 likes: widget.post.likes),
                             isOwnerComment: true,
                           )
                         : CommentTile(
-                            postPublisherId: widget.post.publisher!.id,
-                            comment: comments[index - 1],
+                            commentPublisher: comments[index - 1].keys.first,
+                            comment: comments[index - 1].values.first,
                             isOwnerComment: false,
                           )));
   }

@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:instagram/classes/number_helper.dart';
 import 'package:instagram/models/comment_model.dart';
+import 'package:instagram/models/user_model.dart';
 import 'package:instagram/screens/home/components/story_tile.dart';
 import 'package:instagram/screens/home/profile/profile_page.dart';
 import 'package:instagram/services/comments_db_service.dart';
@@ -11,13 +12,13 @@ class CommentTile extends StatelessWidget {
   const CommentTile({
     Key? key,
     required this.comment,
+    required this.commentPublisher,
     required this.isOwnerComment,
-    required this.postPublisherId,
   }) : super(key: key);
 
+  final User commentPublisher;
   final Comment comment;
   final bool isOwnerComment;
-  final String postPublisherId;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +30,7 @@ class CommentTile extends StatelessWidget {
               width: 45,
               child: FittedBox(
                   child: StoryTile(
-                owner: comment.publisher,
+                owner: commentPublisher,
                 playSingleStory: true,
               ))),
           title: RichText(
@@ -40,10 +41,10 @@ class CommentTile extends StatelessWidget {
                       ..onTap = () {
                         Navigator.of(context).push(MaterialPageRoute(
                           builder: (context) =>
-                              ProfilePage(user: comment.publisher),
+                              ProfilePage(user: commentPublisher),
                         ));
                       },
-                    text: '${comment.publisher.username} ',
+                    text: '${commentPublisher.username} ',
                     style: const TextStyle(fontWeight: FontWeight.bold)),
                 TextSpan(text: comment.comment),
               ],
@@ -52,7 +53,7 @@ class CommentTile extends StatelessWidget {
           subtitle: Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(
-                "${DateTime.now().difference(comment.publishedAt).inDays}d  Reply"),
+                "${DateTime.now().difference(comment.createdAt).inDays}d  Reply"),
           ),
           trailing: isOwnerComment
               ? null
@@ -64,8 +65,7 @@ class CommentTile extends StatelessWidget {
                       if (isLiked) {
                         await CommentsDBService.unlikeComment(comment.id);
                       } else {
-                        await OnlineDBService.likeComment(
-                            postPublisherId, comment.postId, comment.id);
+                        await CommentsDBService.likeComment(comment.id);
                       }
 
                       comment.isLikedByMe = !comment.isLikedByMe;

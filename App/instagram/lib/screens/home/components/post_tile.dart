@@ -7,7 +7,7 @@ import 'package:instagram/models/user_model.dart';
 import 'package:instagram/presentation/my_flutter_app_icons.dart';
 import 'package:instagram/screens/home/components/story_tile.dart';
 import 'package:instagram/screens/home/profile/profile_page.dart';
-import 'package:instagram/services/online_db_service.dart';
+import 'package:instagram/services/posts_db_service.dart';
 import 'package:like_button/like_button.dart';
 
 import 'package:instagram/models/post_model.dart';
@@ -16,11 +16,11 @@ import 'package:material_floating_search_bar/material_floating_search_bar.dart';
 
 class PostTile extends StatefulWidget {
   final Post post;
-  final User? publisher;
+  final User publisher;
   const PostTile({
     Key? key,
     required this.post,
-    this.publisher,
+    required this.publisher,
   }) : super(key: key);
 
   @override
@@ -28,13 +28,6 @@ class PostTile extends StatefulWidget {
 }
 
 class _PostTileState extends State<PostTile> {
-  @override
-  void initState() {
-    widget.post.publisher ??= widget.publisher;
-
-    super.initState();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -65,7 +58,7 @@ class _PostTileState extends State<PostTile> {
     return InkWell(
       onTap: () {
         Navigator.of(context).push(MaterialPageRoute(
-          builder: (context) => ProfilePage(user: widget.post.publisher!),
+          builder: (context) => ProfilePage(user: widget.publisher),
         ));
       },
       child: Container(
@@ -84,7 +77,7 @@ class _PostTileState extends State<PostTile> {
                   width: 38,
                   child: FittedBox(
                     child: StoryTile(
-                      owner: widget.post.publisher!,
+                      owner: widget.publisher,
                       playSingleStory: true,
                     ),
                   ),
@@ -97,7 +90,7 @@ class _PostTileState extends State<PostTile> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      widget.post.publisher!.fullname,
+                      widget.publisher.fullname,
                       style: const TextStyle(fontSize: 14),
                     ),
                     Text(
@@ -127,8 +120,7 @@ class _PostTileState extends State<PostTile> {
       height: 450,
       decoration: BoxDecoration(
         image: DecorationImage(
-            image: NetworkImage(widget.post.photosUrls.first),
-            fit: BoxFit.cover),
+            image: NetworkImage(widget.post.photos.first), fit: BoxFit.cover),
       ),
     );
   }
@@ -144,11 +136,9 @@ class _PostTileState extends State<PostTile> {
             size: 26,
             onTap: (isLiked) async {
               if (isLiked) {
-                await OnlineDBService.unlikePost(
-                    widget.post.publisher!.id, widget.post.id);
+                await PostsDBService.unlikePost(widget.post.id);
               } else {
-                await OnlineDBService.likePost(
-                    widget.post.publisher!.id, widget.post.id);
+                await PostsDBService.likePost(widget.post.id);
               }
               widget.post.isLikedByMe = !widget.post.isLikedByMe;
               return !isLiked;
@@ -158,6 +148,7 @@ class _PostTileState extends State<PostTile> {
             onTap: () {
               Navigator.of(context).push(MaterialPageRoute(
                 builder: (context) => CommentsPage(
+                  postPublisher: widget.publisher,
                   post: widget.post,
                 ),
               ));
@@ -221,8 +212,7 @@ class _PostTileState extends State<PostTile> {
         const SizedBox(
           height: 3,
         ),
-        _buildPreviewComment(
-            widget.post.publisher!, widget.post.publisherComment,
+        _buildPreviewComment(widget.publisher, widget.post.publisherComment,
             isOwnerComment: true)
       ],
     );
@@ -246,6 +236,7 @@ class _PostTileState extends State<PostTile> {
           onTap: () {
             Navigator.of(context).push(MaterialPageRoute(
               builder: (context) => CommentsPage(
+                postPublisher: widget.publisher,
                 post: widget.post,
               ),
             ));
@@ -286,11 +277,10 @@ class _PostTileState extends State<PostTile> {
                 recognizer: TapGestureRecognizer()
                   ..onTap = () {
                     Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) =>
-                          ProfilePage(user: widget.post.publisher!),
+                      builder: (context) => ProfilePage(user: widget.publisher),
                     ));
                   },
-                text: '${widget.post.publisher!.username} ',
+                text: '${widget.publisher.username} ',
                 style: const TextStyle(fontWeight: FontWeight.bold)),
             TextSpan(text: comment),
           ],

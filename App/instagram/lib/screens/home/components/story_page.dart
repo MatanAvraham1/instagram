@@ -1,12 +1,12 @@
 import 'package:dismissible_page/dismissible_page.dart';
 import 'package:flutter/material.dart';
+import 'package:instagram/services/stories_db_service.dart';
 import 'package:story/story.dart';
 
 import 'package:instagram/models/story_model.dart';
 import 'package:instagram/models/user_model.dart';
 import 'package:instagram/screens/home/components/loading_indicator.dart';
 import 'package:instagram/screens/home/profile/profile_page.dart';
-import 'package:instagram/services/online_db_service.dart';
 
 class StoryPage extends StatefulWidget {
   final List<User> usersToPlay;
@@ -38,7 +38,7 @@ class _StoryPageState extends State<StoryPage> {
         initialPage: widget.usersToPlay.indexOf(widget.initialUser),
         pageLength: widget.usersToPlay.length,
         storyLength: (int pageIndex) {
-          return widget.usersToPlay.elementAt(pageIndex).stories;
+          return widget.usersToPlay.elementAt(pageIndex).lastDayStories!;
         },
         onPageLimitReached: () {
           Navigator.pop(context);
@@ -47,7 +47,7 @@ class _StoryPageState extends State<StoryPage> {
           currentUser = widget.usersToPlay[pageIndex];
 
           return FutureBuilder<List<Story>>(
-            future: OnlineDBService.getLast24HoursStories(currentUser.id),
+            future: StoriesDBService.getLastDayStories(currentUser.id, 0),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 return Text("Error! ${snapshot.error}");
@@ -68,7 +68,8 @@ class _StoryPageState extends State<StoryPage> {
                   ),
                   Positioned.fill(
                     child: Image.network(
-                      snapshot.data![storyIndex].photoUrl,
+                      "https://www.wyzowl.com/wp-content/uploads/2022/01/img_61d46dbe26b3a.png",
+                      // snapshot.data![storyIndex]., // TODO: build the story structure
                       fit: BoxFit.cover,
                     ),
                   ),
