@@ -33,7 +33,7 @@ function buildMakePost({ Id, Location, PhotosChecker, TextChecker, AppError, App
 
 
         if (publisherComment != null) {
-            if (!TextChecker.checkValidate(publisherComment)) {
+            if (!TextChecker.isValid(publisherComment)) {
                 throw new AppError(AppErrorMessages.invalidPublisherComment)
             }
         }

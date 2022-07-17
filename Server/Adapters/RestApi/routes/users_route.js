@@ -1,12 +1,44 @@
-
 const express = require('express')
+const multer = require('multer')
+const mime = require('mime');
+const path = require('path')
 const { authenticateToken, doesOwnUserObject } = require('../middleware')
 const { getUserById, deleteUserById, updateFields, getUserByUsername, getUserByFullname, getFollowers, getFollowings, isFollow, isRequest } = require('../../../Use_cases/user/index')
 const { AppError, AppErrorMessages } = require('../../../app_error');
 const { AuthenticationService } = require('../../../CustomHelpers/Authantication');
 const { getLastDayStoriesCount } = require('../../../Use_cases/story');
-
 const userRouter = express.Router()
+
+const profilePhotosFolderPath = path.join(path.join(path.dirname(path.dirname(path.dirname(__dirname))), 'profilePhotos/'))
+
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, profilePhotosFolderPath);
+    },
+    filename: function (req, file, cb) {
+        cb(null, new Date().toISOString().replace(/:/g, '-') + '.' + mime.getExtension(file.mimetype));
+    }
+})
+
+const fileFilter = (req, file, cb) => {
+    // reject a file
+    if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
+        cb(null, true);
+    } else {
+        cb(null, false);
+    }
+}
+
+const upload = multer({
+    storage: storage,
+    limits: {
+        fileSize: 1024 * 1024 * 5
+    },
+    fileFilter: fileFilter,
+})
+
+
 
 // Gets user
 userRouter.get('/:userToSearch', authenticateToken, async (req, res) => {
@@ -27,56 +59,7 @@ userRouter.get('/:userToSearch', authenticateToken, async (req, res) => {
             return res.sendStatus(400)
         }
 
-        const returnedObject = {
-            id: user.id,
-            username: user.username,
-            fullname: user.fullname,
-            bio: user.bio,
-            isPrivate: user.isPrivate,
-            followers: user.followers,
-            followings: user.followings,
-            posts: user.posts,
-        }
-
-        const firstUserId = req.userId
-        const secondUserId = user.id
-
-        const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
-        if (doesHasPermission) {
-            returnedObject.lastDayStories = await getLastDayStoriesCount({ publisherId: secondUserId })
-        }
-
-        if (req.userId == user.id) {
-            returnedObject.followRequests = user.followRequests
-            returnedObject.followingRequests = user.followingRequests
-            returnedObject.stories = user.stories
-            returnedObject.createdAt = user.createdAt
-
-            returnedObject.isFollowedByMe = false;
-            returnedObject.isFollowMe = false;
-            returnedObject.isRequestedByMe = false;
-            returnedObject.isRequestMe = false;
-        }
-        else {
-            returnedObject.isFollowedByMe = await isFollow({ firstUserId: firstUserId, secondUserId: secondUserId })
-            returnedObject.isFollowMe = await isFollow({ firstUserId: secondUserId, secondUserId: firstUserId })
-
-            if (returnedObject.isFollowedByMe) {
-                returnedObject.isRequestedByMe = false;
-            }
-            else {
-                returnedObject.isRequestedByMe = isRequest({ firstUserId: firstUserId, secondUserId: secondUserId });
-            }
-
-            if (returnedObject.isFollowMe) {
-                returnedObject.isRequestMe = false;
-            }
-            else {
-                returnedObject.isRequestMe = isRequest({ firstUserId: secondUserId, secondUserId: firstUserId });
-            }
-        }
-
-        return res.status(200).json(returnedObject)
+        return res.status(200).json(await returnUserResponseObject(req.userId, user))
     }
     catch (error) {
         if (error instanceof AppError) {
@@ -115,7 +98,7 @@ userRouter.delete('/:userId', authenticateToken, doesOwnUserObject, (req, res) =
 })
 
 // Update fields
-userRouter.patch('/', authenticateToken, (req, res) => {
+userRouter.patch('/', authenticateToken, upload.single('profilePhoto'), (req, res) => {
 
     const userId = req.userId
     const newFields = req.body
@@ -124,9 +107,9 @@ userRouter.patch('/', authenticateToken, (req, res) => {
     const newFullname = newFields.fullname
     const newBio = newFields.bio
     const newIsPrivate = newFields.isPrivate
+    const newProfilePhoto = req.file.filename
 
-
-    updateFields({ userId: userId, newUsername: newUsername, newFullname: newFullname, newBio: newBio, newIsPrivate: newIsPrivate }).then(() => {
+    updateFields({ newProfilePhoto: newProfilePhoto, userId: userId, newUsername: newUsername, newFullname: newFullname, newBio: newBio, newIsPrivate: newIsPrivate }).then(() => {
         res.sendStatus(200)
     }).catch((error) => {
         if (error instanceof AppError) {
@@ -154,45 +137,17 @@ userRouter.get('/:userId/followers', authenticateToken, async (req, res) => {
         return res.sendStatus(403)
     }
 
-    const userId = req.params.userId
     const startIndex = parseInt(req.query.startIndex)
 
     if (!Number.isInteger(startIndex)) {
         return res.status(400).json("Invalid start index.")
     }
 
-    getFollowers({ userId: userId, startIndex: startIndex }).then(async (followers) => {
+    getFollowers({ userId: secondUserId, startIndex: startIndex }).then(async (followers) => {
 
         const response = [];
         for (const user of followers) {
-
-            const userObject = {
-                id: user.id,
-                username: user.username,
-                fullname: user.fullname,
-                bio: user.bio,
-                isPrivate: user.isPrivate,
-                followers: user.followers,
-                followings: user.followings,
-                posts: user.posts,
-            }
-
-            const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, user.id)
-            if (doesHasPermission) {
-                userObject.lastDayStories = await getLastDayStoriesCount({ publisherId: user.id })
-            }
-
-            userObject.isFollowedByMe = await isFollow({ firstUserId: firstUserId, secondUserId: user.id });
-            userObject.isFollowMe = true;
-            if (userObject.isFollowedByMe) {
-                userObject.isRequestedByMe = false;
-            }
-            else {
-                userObject.isRequestedByMe = isRequest({ firstUserId: firstUserId, secondUserId: user.id });
-            }
-            userObject.isRequestMe = false;
-
-            response.push(userObject)
+            response.push(await returnUserResponseObject(req.userId, user))
         }
 
         return res.status(200).json(response)
@@ -231,35 +186,7 @@ userRouter.get('/:userId/followings', authenticateToken, async (req, res) => {
     getFollowings({ userId: userId, startIndex: startIndex }).then(async (followings) => {
         const response = [];
         for (const user of followings) {
-
-            const userObject = {
-                id: user.id,
-                username: user.username,
-                fullname: user.fullname,
-                bio: user.bio,
-                isPrivate: user.isPrivate,
-                followers: user.followers,
-                followings: user.followings,
-                posts: user.posts,
-            }
-
-            const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, user.id)
-            if (doesHasPermission) {
-                userObject.lastDayStories = await getLastDayStoriesCount({ publisherId: user.id })
-            }
-
-
-            userObject.isFollowedByMe = true;
-            userObject.isFollowMe = await isFollow({ firstUserId: user.id, secondUserId: firstUserId });
-            userObject.isRequestedByMe = false;
-            if (userObject.isFollowMe) {
-                userObject.isRequestMe = false;
-            }
-            else {
-                userObject.isRequestMe = isRequest({ firstUserId: user.id, secondUserId: firstUserId });
-            }
-
-            response.push(userObject)
+            response.push(await returnUserResponseObject(req.userId, user))
         }
 
         res.status(200).json(response)
@@ -276,6 +203,73 @@ userRouter.get('/:userId/followings', authenticateToken, async (req, res) => {
         res.sendStatus(500)
         console.error(error)
     })
+})
+
+
+async function returnUserResponseObject(requesterUserId, secondUserObject) {
+    /*
+
+    Receives user object and convert him to some object that we can return in the http response
+    
+    param 1: the id of the user which sent the http request
+    param 2: the user object we have to return
+    */
+
+    const returnedObject = {
+        id: secondUserObject.id,
+        username: secondUserObject.username,
+        fullname: secondUserObject.fullname,
+        bio: secondUserObject.bio,
+        isPrivate: secondUserObject.isPrivate,
+        profilePhoto: secondUserObject.profilePhoto,
+        followers: secondUserObject.followers,
+        followings: secondUserObject.followings,
+        posts: secondUserObject.posts,
+    }
+
+    const doesHasPermission = await AuthenticationService.hasPermission(requesterUserId, secondUserObject.id)
+    if (doesHasPermission) {
+        returnedObject.lastDayStories = await getLastDayStoriesCount({ publisherId: secondUserObject.id })
+    }
+
+    if (requesterUserId == secondUserObject.id) {
+        returnedObject.followRequests = secondUserObject.followRequests
+        returnedObject.followingRequests = secondUserObject.followingRequests
+        returnedObject.stories = secondUserObject.stories
+        returnedObject.createdAt = secondUserObject.createdAt
+        returnedObject.isFollowMe = false
+        returnedObject.isFollowedByMe = false
+        returnedObject.isRequestMe = false
+        returnedObject.isRequestedByMe = false
+    }
+    else {
+        returnedObject.isFollowedByMe = await isFollow({ firstUserId: requesterUserId, secondUserId: secondUserObject.id });
+        returnedObject.isFollowMe = await isFollow({ firstUserId: secondUserObject.id, secondUserId: requesterUserId });
+        if (returnedObject.isFollowedByMe) {
+            returnedObject.isRequestedByMe = false;
+        }
+        else {
+            returnedObject.isRequestedByMe = await isRequest({ firstUserId: requesterUserId, secondUserId: secondUserObject.id });
+        }
+
+        if (returnedObject.isFollowMe) {
+            returnedObject.isRequestMe = false;
+        }
+        else {
+            returnedObject.isRequestMe = await isRequest({ firstUserId: secondUserObject.id, secondUserId: requesterUserId });
+        }
+    }
+
+
+    return returnedObject
+}
+
+
+// Gets post photo
+userRouter.get('/:userId/:photoName', authenticateToken, (req, res) => {
+    const photoName = req.params.photoName
+
+    return res.sendFile(path.join(profilePhotosFolderPath, photoName))
 })
 
 

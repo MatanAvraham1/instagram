@@ -12,9 +12,12 @@ class UsersDBService {
     Returns the connected user
     */
 
-    var userId = await AuthSerivce.getConnectedUserId();
+    if (!AuthSerivce.isUserLoggedIn()) {
+      throw ServerException(ServerExceptionMessages.userNotConnected);
+    }
+
     try {
-      return await getUserById(userId);
+      return await getUserById(AuthSerivce.getUserId());
     } on ServerException catch (e) {
       await AuthSerivce.signOut();
       throw ServerException(ServerExceptionMessages.userNotConnected);
@@ -30,7 +33,7 @@ class UsersDBService {
 
     var response = await http
         .get(Uri.parse("${SERVER_API_URL}users/$userId?searchBy=Id"), headers: {
-      "authorization": await AuthSerivce.getAuthorizationHeader(),
+      "authorization": AuthSerivce.getAuthorizationHeader(),
     });
 
     if (response.statusCode == 400) {
@@ -62,9 +65,14 @@ class UsersDBService {
     var response = await http.get(
         Uri.parse("${SERVER_API_URL}users/$username?searchBy=Username"),
         headers: {
-          "authorization": await AuthSerivce.getAuthorizationHeader(),
+          "authorization": AuthSerivce.getAuthorizationHeader(),
         });
 
+    if (response.statusCode == 400) {
+      var errorMessage = jsonDecode(response.body);
+
+      throw ServerException(errorMessage);
+    }
     if (response.statusCode == 401) {
       throw ServerException(ServerExceptionMessages.unauthorizedrequest);
     }
@@ -88,9 +96,14 @@ class UsersDBService {
     var response = await http.get(
         Uri.parse("${SERVER_API_URL}users/$fullname?searchBy=Fullname"),
         headers: {
-          "authorization": await AuthSerivce.getAuthorizationHeader(),
+          "authorization": AuthSerivce.getAuthorizationHeader(),
         });
 
+    if (response.statusCode == 400) {
+      var errorMessage = jsonDecode(response.body);
+
+      throw ServerException(errorMessage);
+    }
     if (response.statusCode == 401) {
       throw ServerException(ServerExceptionMessages.unauthorizedrequest);
     }
@@ -118,7 +131,7 @@ class UsersDBService {
       Uri.parse("$SERVER_API_URL/users/"),
       headers: {
         'Content-type': 'application/json',
-        "authorization": await AuthSerivce.getAuthorizationHeader(),
+        "authorization": AuthSerivce.getAuthorizationHeader(),
       },
       body: jsonEncode({
         'username': user.username,
@@ -130,7 +143,6 @@ class UsersDBService {
 
     if (response.statusCode == 400) {
       var errorMessage = jsonDecode(response.body);
-      ;
 
       throw ServerException(errorMessage);
     }
@@ -160,7 +172,7 @@ class UsersDBService {
         Uri.parse(
             SERVER_API_URL + "users/$userId/followers?startIndex=$startIndex"),
         headers: {
-          "authorization": await AuthSerivce.getAuthorizationHeader(),
+          "authorization": AuthSerivce.getAuthorizationHeader(),
         });
 
     if (response.statusCode == 401) {
@@ -195,7 +207,7 @@ class UsersDBService {
         Uri.parse(
             SERVER_API_URL + "users/$userId/followings?startIndex=$startIndex"),
         headers: {
-          "authorization": await AuthSerivce.getAuthorizationHeader(),
+          "authorization": AuthSerivce.getAuthorizationHeader(),
         });
 
     if (response.statusCode == 401) {

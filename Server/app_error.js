@@ -23,6 +23,7 @@ class AppErrorMessages {
     static invalid_IsPrivate = "Invalid isPrivate : (must be True of False)."
     static userDoesNotExist = "User doesn't exist."
     static invalidUserId = "Invalid id."
+    static invalidProfilePhoto = "Invalid profile photo."
 
     // post
     static invalidLocation = 'Invalid location.'

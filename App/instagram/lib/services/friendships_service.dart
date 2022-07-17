@@ -14,9 +14,9 @@ class FriendshipsService {
     */
 
     var response = await http.post(
-      Uri.parse(SERVER_API_URL + "friendships/follow"),
+      Uri.parse(SERVER_API_URL + "friendships/follow?userToFollow=$userId"),
       headers: {
-        "authorization": await AuthSerivce.getAuthorizationHeader(),
+        "authorization": AuthSerivce.getAuthorizationHeader(),
       },
     );
 
@@ -47,9 +47,9 @@ class FriendshipsService {
     */
 
     var response = await http.post(
-      Uri.parse(SERVER_API_URL + "friendships/unfollow"),
+      Uri.parse(SERVER_API_URL + "friendships/unfollow?userToUnfollow=$userId"),
       headers: {
-        "authorization": await AuthSerivce.getAuthorizationHeader(),
+        "authorization": AuthSerivce.getAuthorizationHeader(),
       },
     );
 
@@ -83,7 +83,7 @@ class FriendshipsService {
       Uri.parse(SERVER_API_URL +
           "friendships/acceptRequest?userToAccept=$userToAccept"),
       headers: {
-        "authorization": await AuthSerivce.getAuthorizationHeader(),
+        "authorization": AuthSerivce.getAuthorizationHeader(),
       },
     );
 
@@ -117,7 +117,7 @@ class FriendshipsService {
       Uri.parse(SERVER_API_URL +
           "friendships/declineRequest?userToDecline=$userToDecline"),
       headers: {
-        "authorization": await AuthSerivce.getAuthorizationHeader(),
+        "authorization": AuthSerivce.getAuthorizationHeader(),
       },
     );
 
@@ -151,7 +151,7 @@ class FriendshipsService {
       Uri.parse(SERVER_API_URL +
           "friendships/deleteRequest?userToDelete=$requestToDelete"),
       headers: {
-        "authorization": await AuthSerivce.getAuthorizationHeader(),
+        "authorization": AuthSerivce.getAuthorizationHeader(),
       },
     );
 
@@ -185,7 +185,7 @@ class FriendshipsService {
       Uri.parse(SERVER_API_URL +
           "friendships/removeFollower?userToRemove=$userToRemove"),
       headers: {
-        "authorization": await AuthSerivce.getAuthorizationHeader(),
+        "authorization": AuthSerivce.getAuthorizationHeader(),
       },
     );
 

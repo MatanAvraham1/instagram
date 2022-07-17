@@ -12,6 +12,9 @@ class AuthSerivce {
   static const _androidOptions = AndroidOptions(
     encryptedSharedPreferences: true,
   );
+
+  static String? _jwt;
+  static String? _userId;
   static const _safeStorage = FlutterSecureStorage(aOptions: _androidOptions);
   static final _streamController = StreamController<User?>();
   static User? connectedUser;
@@ -20,63 +23,43 @@ class AuthSerivce {
     return _streamController.stream;
   }
 
-  static Future getAuthorizationHeader() async {
-    /*
-    Returns the authorization header
-    */
-
-    var jwt = await _safeStorage.read(key: "jwt");
-    return "Bearer $jwt";
-  }
-
-  static Future isUserLoggedIn() async {
-    /*
-    Returns if there is a logged-in user
-    */
-    // = _getAndroidOptions();
-    const storage = FlutterSecureStorage(
-      aOptions: _androidOptions,
-    );
-    String? value = await storage.read(key: "jwt");
-
-    return value != null;
-  }
-
-  static Future _saveLoginDetails(String jwt, String userId) async {
-    /*
-    Saves the login details to safe storage (the jwt, the user id)
-    
-    param 1: the jwt
-    param 2: the user id
-    */
-
-    await _safeStorage.write(key: "jwt", value: jwt);
-    await _safeStorage.write(key: "userId", value: userId);
-  }
-
-  static Future _deleteLoginDetails() async {
-    /*
-    Deletes the login details from the safe storage (the jwt, the user id)
-    */
-
-    await _safeStorage.delete(key: "jwt");
-    await _safeStorage.delete(key: "userId");
-  }
-
-  static Future getConnectedUserId() async {
-    if (!await isUserLoggedIn()) {
-      throw ServerException(ServerExceptionMessages.userNotConnected);
+  static String getAuthorizationHeader() {
+    if (!isUserLoggedIn()) {
+      throw ServerException(ServerExceptionMessages.userDoesNotExist);
     }
+    return "Bearer $_jwt";
+  }
 
-    return await _safeStorage.read(key: "userId");
+  static String getUserId() {
+    if (!isUserLoggedIn()) {
+      throw ServerException(ServerExceptionMessages.userDoesNotExist);
+    }
+    return _userId!;
+  }
+
+  static String getJwt() {
+    if (!isUserLoggedIn()) {
+      throw ServerException(ServerExceptionMessages.userDoesNotExist);
+    }
+    return _jwt!;
+  }
+
+  static Future loadConnectedUserData() async {
+    // Loads the connected user data (have to be called when the app launched)
+
+    _jwt = await _safeStorage.read(key: "jwt");
+    _userId = await _safeStorage.read(key: "userId");
   }
 
   static Future loadConnectedUser() async {
     /*
     Loads the saved user from the safe storage and adds to the userChanges stream
+    have to be called when the app launched
     */
 
     try {
+      await loadConnectedUserData();
+
       var user = await UsersDBService.getConnectedUser();
       _streamController.add(user);
       connectedUser = user;
@@ -89,6 +72,39 @@ class AuthSerivce {
         print("Refresh token!");
       }
     }
+  }
+
+  static bool isUserLoggedIn() {
+    /*
+    Returns if there is a logged-in user
+    */
+
+    return _userId != null;
+  }
+
+  static Future _saveLoginDetails(String jwt, String userId) async {
+    /*
+    Saves the login details to safe storage (the jwt, the user id)
+    
+    param 1: the jwt
+    param 2: the user id
+    */
+
+    await _safeStorage.write(key: "jwt", value: jwt);
+    await _safeStorage.write(key: "userId", value: userId);
+
+    await loadConnectedUserData();
+  }
+
+  static Future _deleteLoginDetails() async {
+    /*
+    Deletes the login details from the safe storage (the jwt, the user id)
+    */
+
+    await _safeStorage.delete(key: "jwt");
+    await _safeStorage.delete(key: "userId");
+
+    await loadConnectedUserData();
   }
 
   static Future register(String username, String password) async {
@@ -149,7 +165,6 @@ class AuthSerivce {
 
     if (response.statusCode == 400) {
       var errorMessage = jsonDecode(response.body);
-      ;
 
       throw ServerException(errorMessage);
     } else if (response.statusCode == 404) {

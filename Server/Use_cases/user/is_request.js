@@ -22,7 +22,7 @@ function buildIsRequest({ UsersDB, Id, AppError, AppErrorMessages }) {
             throw new AppError(AppErrorMessages.userDoesNotExist)
         }
 
-        await UsersDB.IsRequest(firstUserId, secondUserId)
+        return await UsersDB.isRequest(firstUserId, secondUserId)
     }
 }
 

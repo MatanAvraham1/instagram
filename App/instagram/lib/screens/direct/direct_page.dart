@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:instagram/models/user_model.dart';
 import 'package:instagram/screens/home/profile/profile_page.dart';
@@ -131,7 +132,12 @@ class _DirectPageState extends State<DirectPage>
                                             ),
                                             leading: CircleAvatar(
                                               backgroundImage:
-                                                  NetworkImage(e.photoUrl),
+                                                  CachedNetworkImageProvider(
+                                                      e.profilePhoto,
+                                                      headers: {
+                                                    "Authorization": AuthSerivce
+                                                        .getAuthorizationHeader()
+                                                  }),
                                             ),
                                           ))
                                       .toList());

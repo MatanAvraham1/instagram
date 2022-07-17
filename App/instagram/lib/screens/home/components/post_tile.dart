@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:instagram/classes/number_helper.dart';
@@ -7,6 +8,7 @@ import 'package:instagram/models/user_model.dart';
 import 'package:instagram/presentation/my_flutter_app_icons.dart';
 import 'package:instagram/screens/home/components/story_tile.dart';
 import 'package:instagram/screens/home/profile/profile_page.dart';
+import 'package:instagram/services/auth_service.dart';
 import 'package:instagram/services/posts_db_service.dart';
 import 'package:like_button/like_button.dart';
 
@@ -120,7 +122,11 @@ class _PostTileState extends State<PostTile> {
       height: 450,
       decoration: BoxDecoration(
         image: DecorationImage(
-            image: NetworkImage(widget.post.photos.first), fit: BoxFit.cover),
+            image: CachedNetworkImageProvider(widget.post.photos.first,
+                headers: {
+                  "Authorization": AuthSerivce.getAuthorizationHeader()
+                }),
+            fit: BoxFit.cover),
       ),
     );
   }

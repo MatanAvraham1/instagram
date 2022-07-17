@@ -1,20 +1,56 @@
 const express = require('express')
+const multer = require('multer')
+const mime = require('mime');
+const path = require('path')
 const { AppErrorMessages, AppError } = require('../../../app_error')
 const { AuthenticationService } = require('../../../CustomHelpers/Authantication')
 const { getPostById, addPost, deletePostById, getPostsByPublisherId, isPostLiked, likePost, unlikePost } = require('../../../Use_cases/post')
 const { authenticateToken, doesOwnPostObject } = require('../middleware')
 const postsRouter = express.Router()
 
+const postsPhotosFolderPath = path.join(path.join(path.dirname(path.dirname(path.dirname(__dirname))), 'postsPhotos/'))
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, postsPhotosFolderPath);
+    },
+    filename: function (req, file, cb) {
+        cb(null, new Date().toISOString().replace(/:/g, '-') + '.' + mime.getExtension(file.mimetype));
+    }
+})
+
+const fileFilter = (req, file, cb) => {
+    // reject a file
+    if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
+        cb(null, true);
+    } else {
+        cb(null, false);
+    }
+}
+
+const upload = multer({
+    storage: storage,
+    limits: {
+        fileSize: 1024 * 1024 * 5
+    },
+    fileFilter: fileFilter,
+})
+
+
 // Add post
-postsRouter.post('/', authenticateToken, (req, res) => {
+postsRouter.post('/', authenticateToken, upload.array('photos'), (req, res) => {
     const userId = req.userId
 
-    addPost({ publisherId: userId, photos: req.body.photos, location: req.body.location, publisherComment: req.body.publisherComment, taggedUsers: req.body.taggedUsers })
+    const photos = []
+    for (const file of req.files) {
+        photos.push(file.filename)
+    }
+
+    addPost({ publisherId: userId, photos: photos, location: req.body.location, publisherComment: req.body.publisherComment, taggedUsers: req.body.taggedUsers == 0 ? req.body.taggedUsers : [] })
         .then(async (postId) => {
             res.status(201).json({ postId: postId })
         }).catch((error) => {
             if (error instanceof AppError) {
-
 
                 if (error.message == AppErrorMessages.userDoesNotExist) {
                     return res.sendStatus(404)
@@ -195,5 +231,38 @@ postsRouter.post('/:postId/unlike', authenticateToken, (req, res) => {
         console.error(error)
     })
 })
+
+
+// Gets post photo
+postsRouter.get('/:postId/:photoName', authenticateToken, (req, res) => {
+    const postId = req.params.postId
+    const photoName = req.params.photoName
+
+    getPostById({ postId }).then(async (post) => {
+
+        const firstUserId = req.userId
+        const secondUserId = post.publisherId
+        const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
+        if (!doesHasPermission) {
+            return res.sendStatus(403)
+        }
+
+        return res.sendFile(path.join(postsPhotosFolderPath, photoName))
+
+    }).catch((error) => {
+        if (error instanceof AppError) {
+
+            if (error.message == AppErrorMessages.postDoesNotExist) {
+                return res.sendStatus(404)
+            }
+
+            return res.status(400).json(error.message)
+        }
+
+        res.sendStatus(500)
+        console.error(error)
+    })
+})
+
 
 module.exports = { postsRouter }

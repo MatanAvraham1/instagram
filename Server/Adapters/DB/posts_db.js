@@ -14,6 +14,7 @@ class PostsDB {
             taggedUsers: post.taggedUsers,
             photos: post.photos,
             publisherComment: post.publisherComment,
+            location: post.location,
 
             likes: [],
 
@@ -47,7 +48,7 @@ class PostsDB {
         // returns if post exists
 
         const post = await postModel.findById(postId, { likes: 0 })
-        return post == null
+        return post != null
     }
 
     static async deleteByPublisherId(userId) {
@@ -73,8 +74,13 @@ class PostsDB {
         param 3: how much to return
         */
 
-        const posts = await postModel.aggregate([{ $match: { publisherId: publisherId } }, { $project: { publisherId: 1, publisherComment: 1, location: 1, photos: 1, comments: "$commentsCount", likes: "$likesCount", taggedUsers: 1, createdAt: 1 } }]).skip(startFromIndex).limit(quantity)
-        return posts
+        const response = [];
+        const posts = await postModel.aggregate([{ $match: { publisherId: publisherId } }, { $project: { likes: 0, } }]).skip(startFromIndex).limit(quantity)
+        for (const post of posts) {
+            response.push(postObjectFromDbObject(post))
+        }
+
+        return response
     }
 
     static async isLiked(postId, whoLikeId) {
@@ -124,6 +130,7 @@ function postObjectFromDbObject(dbObject) {
         taggedUsers: dbObject.taggedUsers,
         photos: dbObject.photos,
         publisherComment: dbObject.publisherComment,
+        location: dbObject.location,
 
         comments: dbObject.commentsCount,
         likes: dbObject.likesCount,

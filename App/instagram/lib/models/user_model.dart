@@ -1,11 +1,13 @@
 import 'dart:convert';
 
+import 'package:instagram/services/ServerIP.dart';
+
 class User {
   String id;
   String username;
   String fullname;
   String bio;
-  String photoUrl;
+  String profilePhoto;
   bool isPrivate;
 
   int followers;
@@ -30,19 +32,19 @@ class User {
     required this.username,
     required this.fullname,
     required this.bio,
-    required this.photoUrl,
+    required this.profilePhoto,
     required this.isPrivate,
     required this.followers,
     required this.followings,
     required this.posts,
-    required this.isFollowedByMe,
-    required this.isFollowMe,
-    required this.isRequestedByMe,
-    required this.isRequestMe,
     this.followRequests,
     this.followingRequests,
     this.stories,
     this.lastDayStories,
+    required this.isFollowedByMe,
+    required this.isFollowMe,
+    required this.isRequestedByMe,
+    required this.isRequestMe,
     this.createdAt,
   });
 
@@ -51,7 +53,7 @@ class User {
     String? username,
     String? fullname,
     String? bio,
-    String? photoUrl,
+    String? profilePhoto,
     bool? isPrivate,
     int? followers,
     int? followings,
@@ -71,7 +73,7 @@ class User {
       username: username ?? this.username,
       fullname: fullname ?? this.fullname,
       bio: bio ?? this.bio,
-      photoUrl: photoUrl ?? this.photoUrl,
+      profilePhoto: profilePhoto ?? this.profilePhoto,
       isPrivate: isPrivate ?? this.isPrivate,
       followers: followers ?? this.followers,
       followings: followings ?? this.followings,
@@ -94,7 +96,7 @@ class User {
       'username': username,
       'fullname': fullname,
       'bio': bio,
-      'photoUrl': photoUrl,
+      'profilePhoto': profilePhoto,
       'isPrivate': isPrivate,
       'followers': followers,
       'followings': followings,
@@ -107,7 +109,7 @@ class User {
       'isFollowMe': isFollowMe,
       'isRequestedByMe': isRequestedByMe,
       'isRequestMe': isRequestMe,
-      'createdAt': createdAt!.millisecondsSinceEpoch,
+      'createdAt': createdAt?.millisecondsSinceEpoch,
     };
   }
 
@@ -117,20 +119,23 @@ class User {
       username: map['username'] ?? '',
       fullname: map['fullname'] ?? '',
       bio: map['bio'] ?? '',
-      photoUrl: map['photoUrl'] ?? '',
+      profilePhoto: map['profilePhoto'] != null
+          ? "${SERVER_API_URL}users/${map['id']}/${map['profilePhoto']}"
+          : 'https://www.business2community.com/wp-content/uploads/2017/08/blank-profile-picture-973460_640.png',
       isPrivate: map['isPrivate'] ?? false,
       followers: map['followers']?.toInt() ?? 0,
       followings: map['followings']?.toInt() ?? 0,
       posts: map['posts']?.toInt() ?? 0,
-      followRequests: map['followRequests']?.toInt() ?? 0,
-      followingRequests: map['followingRequests']?.toInt() ?? 0,
-      stories: map['stories']?.toInt() ?? 0,
-      lastDayStories: map['lastDayStories']?.toInt() ?? 0,
+      followRequests: map['followRequests']?.toInt(),
+      followingRequests: map['followingRequests']?.toInt(),
+      stories: map['stories']?.toInt(),
+      lastDayStories: map['lastDayStories']?.toInt(),
       isFollowedByMe: map['isFollowedByMe'] ?? false,
       isFollowMe: map['isFollowMe'] ?? false,
       isRequestedByMe: map['isRequestedByMe'] ?? false,
       isRequestMe: map['isRequestMe'] ?? false,
-      createdAt: DateTime.parse(map['createdAt']),
+      createdAt:
+          map['createdAt'] != null ? DateTime.parse(map['createdAt']) : null,
     );
   }
 
@@ -140,7 +145,7 @@ class User {
 
   @override
   String toString() {
-    return 'User(id: $id, username: $username, fullname: $fullname, bio: $bio, photoUrl: $photoUrl, isPrivate: $isPrivate, followers: $followers, followings: $followings, posts: $posts, followRequests: $followRequests, followingRequests: $followingRequests, stories: $stories, lastDayStories: $lastDayStories, isFollowedByMe: $isFollowedByMe, isFollowMe: $isFollowMe, isRequestedByMe: $isRequestedByMe, isRequestMe: $isRequestMe, createdAt: $createdAt)';
+    return 'User(id: $id, username: $username, fullname: $fullname, bio: $bio, profilePhoto: $profilePhoto, isPrivate: $isPrivate, followers: $followers, followings: $followings, posts: $posts, followRequests: $followRequests, followingRequests: $followingRequests, stories: $stories, lastDayStories: $lastDayStories, isFollowedByMe: $isFollowedByMe, isFollowMe: $isFollowMe, isRequestedByMe: $isRequestedByMe, isRequestMe: $isRequestMe, createdAt: $createdAt)';
   }
 
   @override
@@ -152,7 +157,7 @@ class User {
         other.username == username &&
         other.fullname == fullname &&
         other.bio == bio &&
-        other.photoUrl == photoUrl &&
+        other.profilePhoto == profilePhoto &&
         other.isPrivate == isPrivate &&
         other.followers == followers &&
         other.followings == followings &&
@@ -174,7 +179,7 @@ class User {
         username.hashCode ^
         fullname.hashCode ^
         bio.hashCode ^
-        photoUrl.hashCode ^
+        profilePhoto.hashCode ^
         isPrivate.hashCode ^
         followers.hashCode ^
         followings.hashCode ^

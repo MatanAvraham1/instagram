@@ -27,6 +27,10 @@ const userModel = mongoose.model("User", mongoose.Schema({
         type: Boolean,
         default: false
     },
+    profilePhoto: {
+        type: String,
+        defualt: null,
+    },
 
     followers: {
         type: Array,

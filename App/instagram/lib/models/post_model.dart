@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:instagram/services/ServerIP.dart';
 
 class Post {
   String id;
@@ -72,17 +73,23 @@ class Post {
   }
 
   factory Post.fromMap(Map<String, dynamic> map) {
+    List<String> photosUrls = [];
+    var photosNames = List<String>.from(map['photos']);
+    for (var photoName in photosNames) {
+      photosUrls.add(SERVER_API_URL + "posts/${map['id']}/$photoName");
+    }
+
     return Post(
       id: map['id'] ?? '',
       publisherId: map['publisherId'] ?? '',
       location: map['location'] ?? '',
       publisherComment: map['publisherComment'] ?? '',
       taggedUsers: List<String>.from(map['taggedUsers']),
-      photos: List<String>.from(map['photos']),
+      photos: photosUrls,
       likes: map['likes']?.toInt() ?? 0,
       comments: map['comments']?.toInt() ?? 0,
       isLikedByMe: map['isLikedByMe'] ?? false,
-      createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt']),
+      createdAt: DateTime.parse(map['createdAt']),
     );
   }
 

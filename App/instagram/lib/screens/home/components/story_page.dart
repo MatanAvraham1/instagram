@@ -1,5 +1,7 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dismissible_page/dismissible_page.dart';
 import 'package:flutter/material.dart';
+import 'package:instagram/services/auth_service.dart';
 import 'package:instagram/services/stories_db_service.dart';
 import 'package:story/story.dart';
 
@@ -82,7 +84,12 @@ class _StoryPageState extends State<StoryPage> {
                           width: 32,
                           decoration: BoxDecoration(
                             image: DecorationImage(
-                              image: NetworkImage(currentUser.photoUrl),
+                              image: CachedNetworkImageProvider(
+                                  currentUser.profilePhoto,
+                                  headers: {
+                                    "Authorization":
+                                        AuthSerivce.getAuthorizationHeader()
+                                  }),
                               fit: BoxFit.cover,
                             ),
                             shape: BoxShape.circle,

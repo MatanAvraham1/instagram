@@ -1,7 +1,9 @@
 import 'dart:math';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:instagram/models/user_model.dart';
 import 'package:instagram/screens/home/profile/profile_page.dart';
+import 'package:instagram/services/auth_service.dart';
 import 'package:instagram/services/users_db_service.dart';
 import 'package:material_floating_search_bar/material_floating_search_bar.dart';
 import 'package:responsive_builder/responsive_builder.dart';
@@ -135,10 +137,13 @@ class _ExplorePageState extends State<ExplorePage>
                                                 color: Colors.black),
                                           ),
                                           leading: CircleAvatar(
-                                            backgroundImage: NetworkImage(e
-                                                    .photoUrl.isNotEmpty
-                                                ? e.photoUrl
-                                                : "https://thumbs.dreamstime.com/b/user-icon-trendy-flat-style-isolated-grey-background-user-symbol-user-icon-trendy-flat-style-isolated-grey-background-123663211.jpg"),
+                                            backgroundImage:
+                                                CachedNetworkImageProvider(
+                                                    e.profilePhoto,
+                                                    headers: {
+                                                  "Authorization": AuthSerivce
+                                                      .getAuthorizationHeader()
+                                                }),
                                           ),
                                         ))
                                     .toList());

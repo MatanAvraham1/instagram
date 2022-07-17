@@ -32,12 +32,12 @@ class AuthenticationService {
             return true
         }
 
-        const user = await getUserById(secondUserId)
+        const user = await getUserById({ userId: secondUserId })
         if (!user.isPrivate) {
             return true
         }
 
-        const isFollow = await isFollow(firstUserId, secondUserId)
+        const isFollow = await isFollow({ firstUserId, secondUserId })
         return isFollow
     }
 }

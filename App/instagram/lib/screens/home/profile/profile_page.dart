@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:instagram/presentation/my_flutter_app_icons.dart';
 import 'package:instagram/services/friendships_service.dart';
@@ -116,6 +117,7 @@ class _ProfilePageState extends State<ProfilePage>
     await FriendshipsService.followUser(user.id);
     setState(() {
       user.isFollowedByMe = true;
+      user.followers++;
       AuthSerivce.connectedUser!.followings++;
     });
   }
@@ -125,6 +127,7 @@ class _ProfilePageState extends State<ProfilePage>
 
     setState(() {
       user.isFollowedByMe = false;
+      user.followers--;
       AuthSerivce.connectedUser!.followings--;
       followers.removeWhere((element) => element.id == user.id);
     });
@@ -139,9 +142,10 @@ class _ProfilePageState extends State<ProfilePage>
           children: [
             CircleAvatar(
               radius: 40,
-              backgroundImage: NetworkImage(user.photoUrl.isNotEmpty
-                  ? user.photoUrl
-                  : "https://thumbs.dreamstime.com/b/user-icon-trendy-flat-style-isolated-grey-background-user-symbol-user-icon-trendy-flat-style-isolated-grey-background-123663211.jpg"),
+              backgroundImage: CachedNetworkImageProvider(user.profilePhoto,
+                  headers: {
+                    "Authorization": AuthSerivce.getAuthorizationHeader()
+                  }),
             ),
             const SizedBox(
               height: 5,
@@ -469,7 +473,7 @@ class _ProfilePageState extends State<ProfilePage>
                   child: TabBarView(children: [
                     GridView.count(
                       controller: _postsScrollController,
-                      crossAxisCount: 3,
+                      crossAxisCount: sizingInformation.isMobile ? 3 : 4,
                       children: List.generate(
                           posts.length + 1,
                           (index) => index == posts.length
@@ -495,8 +499,12 @@ class _ProfilePageState extends State<ProfilePage>
                                     decoration: BoxDecoration(
                                         image: DecorationImage(
                                             fit: BoxFit.cover,
-                                            image: NetworkImage(
-                                                posts[index].photos.first))),
+                                            image: CachedNetworkImageProvider(
+                                                posts[index].photos.first,
+                                                headers: {
+                                                  "Authorization": AuthSerivce
+                                                      .getAuthorizationHeader()
+                                                }))),
                                   ),
                                 )),
                     ),

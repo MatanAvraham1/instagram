@@ -17,7 +17,7 @@ class PostsDBService {
 
     var response =
         await http.get(Uri.parse("${SERVER_API_URL}posts/$postId"), headers: {
-      "authorization": await AuthSerivce.getAuthorizationHeader(),
+      "authorization": AuthSerivce.getAuthorizationHeader(),
     });
 
     if (response.statusCode == 400) {
@@ -50,21 +50,27 @@ class PostsDBService {
     param 1: the post
     */
 
-    var response = await http.post(
-      Uri.parse("$SERVER_API_URL/posts/"),
-      headers: {
-        'Content-type': 'application/json',
-        "authorization": await AuthSerivce.getAuthorizationHeader(),
-      },
-      body: jsonEncode({
-        'photos': post.photos,
-        'taggedUsers': post.taggedUsers,
-      }),
-    );
+    List<http.MultipartFile> files = [];
+    for (var photo in post.photos) {
+      files.add(await http.MultipartFile.fromPath('photos', photo));
+    }
+
+    var request =
+        http.MultipartRequest("POST", Uri.parse("$SERVER_API_URL/posts/"));
+
+    request.headers["authorization"] = AuthSerivce.getAuthorizationHeader();
+
+    request.fields['taggedUsers'] = post.taggedUsers.toString();
+    request.fields['publisherComment'] = post.publisherComment;
+    request.fields['location'] = post.location;
+    request.files.addAll(files);
+
+    final streamdResponse = await request.send();
+
+    var response = await http.Response.fromStream(streamdResponse);
 
     if (response.statusCode == 400) {
       var errorMessage = jsonDecode(response.body);
-      ;
 
       throw ServerException(errorMessage);
     }
@@ -91,7 +97,7 @@ class PostsDBService {
 
     var response = await http
         .delete(Uri.parse(SERVER_API_URL + "posts/$postId"), headers: {
-      "authorization": await AuthSerivce.getAuthorizationHeader(),
+      "authorization": AuthSerivce.getAuthorizationHeader(),
     });
 
     if (response.statusCode == 400) {
@@ -128,12 +134,11 @@ class PostsDBService {
         Uri.parse(SERVER_API_URL +
             "posts?startIndex=$startIndex&publisherId=$publisherId"),
         headers: {
-          "authorization": await AuthSerivce.getAuthorizationHeader(),
+          "authorization": AuthSerivce.getAuthorizationHeader(),
         });
 
     if (response.statusCode == 400) {
       var errorMessage = jsonDecode(response.body);
-      ;
 
       throw ServerException(errorMessage);
     }
@@ -169,7 +174,7 @@ class PostsDBService {
       Uri.parse(SERVER_API_URL + "posts/$postId/like"),
       headers: {
         'Content-type': 'application/json',
-        "authorization": await AuthSerivce.getAuthorizationHeader(),
+        "authorization": AuthSerivce.getAuthorizationHeader(),
       },
     );
 
@@ -204,7 +209,7 @@ class PostsDBService {
       Uri.parse(SERVER_API_URL + "posts/$postId/unlike"),
       headers: {
         'Content-type': 'application/json',
-        "authorization": await AuthSerivce.getAuthorizationHeader(),
+        "authorization": AuthSerivce.getAuthorizationHeader(),
       },
     );
 

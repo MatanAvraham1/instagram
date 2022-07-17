@@ -1,5 +1,5 @@
 const express = require('express')
-const { AppErrorMessages } = require('../../../app_error')
+const { AppErrorMessages, AppError } = require('../../../app_error')
 const { declineFollowRequest, acceptFollowRequest, followUser, unfollowUser } = require('../../../Use_cases/user')
 const { authenticateToken } = require('../middleware')
 const friendShipsRouter = express.Router()
@@ -9,7 +9,7 @@ friendShipsRouter.post('/follow', authenticateToken, (req, res) => {
     const firstUserId = req.userId
     const secondUserId = req.query.userToFollow
 
-    followUser({ firstUserId, secondUserId }).then((user) => {
+    followUser({ firstUserId, secondUserId }).then(() => {
         res.sendStatus(200)
     }).catch((error) => {
         if (error instanceof AppError) {
@@ -31,7 +31,7 @@ friendShipsRouter.post('/unfollow', authenticateToken, (req, res) => {
     const firstUserId = req.userId
     const secondUserId = req.query.userToUnfollow
 
-    unfollowUser({ firstUserId, secondUserId }).then((user) => {
+    unfollowUser({ firstUserId, secondUserId }).then(() => {
         res.sendStatus(200)
     }).catch((error) => {
         if (error instanceof AppError) {
@@ -53,7 +53,7 @@ friendShipsRouter.post('/acceptRequest', authenticateToken, (req, res) => {
     const firstUserId = req.query.userToAccept
     const secondUserId = req.userId
 
-    acceptFollowRequest({ firstUserId, secondUserId }).then((user) => {
+    acceptFollowRequest({ firstUserId, secondUserId }).then(() => {
         res.sendStatus(200)
     }).catch((error) => {
         if (error instanceof AppError) {
@@ -98,7 +98,7 @@ friendShipsRouter.post('/deleteRequest', authenticateToken, (req, res) => {
     const firstUserId = req.userId
     const secondUserId = req.query.requestToDelete
 
-    declineFollowRequest({ firstUserId, secondUserId }).then((user) => {
+    declineFollowRequest({ firstUserId, secondUserId }).then(() => {
         res.sendStatus(200)
     }).catch((error) => {
         if (error instanceof AppError) {
@@ -122,7 +122,7 @@ friendShipsRouter.post('/removeFollower', authenticateToken, (req, res) => {
     const firstUserId = req.query.userToRemove
     const secondUserId = req.userId
 
-    unfollowUser({ firstUserId, secondUserId }).then((user) => {
+    unfollowUser({ firstUserId, secondUserId }).then(() => {
         res.sendStatus(200)
     }).catch((error) => {
         if (error instanceof AppError) {

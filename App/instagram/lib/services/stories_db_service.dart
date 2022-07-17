@@ -18,7 +18,7 @@ class StoriesDBService {
       Uri.parse(SERVER_API_URL + "stories"),
       headers: {
         'Content-type': 'application/json',
-        "authorization": await AuthSerivce.getAuthorizationHeader(),
+        "authorization": AuthSerivce.getAuthorizationHeader(),
       },
       body: jsonEncode({
         'structure': story.structure,
@@ -53,7 +53,7 @@ class StoriesDBService {
 
     var response = await http
         .get(Uri.parse(SERVER_API_URL + "stories/$storyId"), headers: {
-      "authorization": await AuthSerivce.getAuthorizationHeader(),
+      "authorization": AuthSerivce.getAuthorizationHeader(),
     });
 
     if (response.statusCode == 400) {
@@ -87,7 +87,7 @@ class StoriesDBService {
 
     var response = await http
         .delete(Uri.parse(SERVER_API_URL + "stories/$storyId"), headers: {
-      "authorization": await AuthSerivce.getAuthorizationHeader(),
+      "authorization": AuthSerivce.getAuthorizationHeader(),
     });
 
     if (response.statusCode == 400) {
@@ -122,7 +122,7 @@ class StoriesDBService {
         Uri.parse(SERVER_API_URL +
             "stories?startIndex=$startIndex&publisherId=$publisherId"),
         headers: {
-          "authorization": await AuthSerivce.getAuthorizationHeader(),
+          "authorization": AuthSerivce.getAuthorizationHeader(),
         });
 
     if (response.statusCode == 400) {
@@ -159,7 +159,7 @@ class StoriesDBService {
     var response = await http.get(
         Uri.parse(SERVER_API_URL + "stories/archive?startIndex=$startIndex"),
         headers: {
-          "authorization": await AuthSerivce.getAuthorizationHeader(),
+          "authorization": AuthSerivce.getAuthorizationHeader(),
         });
 
     if (response.statusCode == 400) {
@@ -199,7 +199,7 @@ class StoriesDBService {
       Uri.parse(SERVER_API_URL + "stories/$storyId/like"),
       headers: {
         'Content-type': 'application/json',
-        "authorization": await AuthSerivce.getAuthorizationHeader(),
+        "authorization": AuthSerivce.getAuthorizationHeader(),
       },
     );
 
@@ -234,7 +234,7 @@ class StoriesDBService {
       Uri.parse(SERVER_API_URL + "stories/$storyId/unlike"),
       headers: {
         'Content-type': 'application/json',
-        "authorization": await AuthSerivce.getAuthorizationHeader(),
+        "authorization": AuthSerivce.getAuthorizationHeader(),
       },
     );
 

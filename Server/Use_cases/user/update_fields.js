@@ -1,5 +1,7 @@
+const { PhotosChecker } = require("../../CustomHelpers/Photos_checker")
+
 function buildUpdateFields({ UsersDB, Id, Username, Fullname, Bio, AppError, AppErrorMessages }) {
-    return async function updateFields({ userId, newUsername = undefined, newFullname = undefined, newBio = undefined, newIsPrivate = undefined }) {
+    return async function updateFields({ userId, newUsername = undefined, newFullname = undefined, newBio = undefined, newIsPrivate = undefined, newProfilePhoto = undefined }) {
 
         // makes the first user to unfollow the second user
 
@@ -35,7 +37,13 @@ function buildUpdateFields({ UsersDB, Id, Username, Fullname, Bio, AppError, App
             }
         }
 
-        await UsersDB.updateFields(userId, newUsername, newFullname, newBio, newIsPrivate)
+        if (newProfilePhoto != undefined) {
+            if (!PhotosChecker.isValid(newProfilePhoto)) {
+                throw new AppError(AppErrorMessages.invalidProfilePhoto)
+            }
+        }
+
+        await UsersDB.updateFields(userId, newProfilePhoto, newUsername, newFullname, newBio, newIsPrivate)
     }
 }
 

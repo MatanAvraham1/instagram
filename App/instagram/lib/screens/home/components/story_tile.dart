@@ -1,4 +1,5 @@
 import 'package:animations/animations.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import 'package:instagram/models/user_model.dart';
@@ -42,7 +43,10 @@ class _StoryTileState extends State<StoryTile> {
       child: Container(
         decoration: BoxDecoration(
           image: DecorationImage(
-            image: NetworkImage(widget.owner.photoUrl),
+            image: CachedNetworkImageProvider(widget.owner.profilePhoto,
+                headers: {
+                  "Authorization": AuthSerivce.getAuthorizationHeader()
+                }),
             fit: BoxFit.cover,
           ),
           shape: BoxShape.circle,

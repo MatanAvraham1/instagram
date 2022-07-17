@@ -33,6 +33,7 @@ class UsersDB {
 
             fullname: user.fullname,
             bio: user.bio,
+            profilePhoto: user.profilePhoto,
 
             isPrivate: user.isPrivate,
 
@@ -174,6 +175,7 @@ class UsersDB {
             password: 0,
             fullname: 0,
             bio: 0,
+            profilePhoto: 0,
             isPrivate: 0,
             followRequests: 0,
             followersCount: 0,
@@ -188,8 +190,8 @@ class UsersDB {
 
         for (const id of followersId) {
 
-            const user = await this.findById(userId)
-            followers.push(userObjectFromDbObject(user))
+            const user = await this.findById(id)
+            followers.push(user)
         }
         return followers
     }
@@ -211,6 +213,7 @@ class UsersDB {
                 username: 1,
                 bio: 1,
                 fullname: 1,
+                profilePhoto: 1,
                 isPrivate: 1,
 
                 followersCount: 1,
@@ -234,7 +237,7 @@ class UsersDB {
         return followings
     }
 
-    static async updateFields(userId, newUsername = undefined, newFullname = undefined, newBio = undefined, newIsPrivate = undefined) {
+    static async updateFields(userId, newProfilePhoto = undefined, newUsername = undefined, newFullname = undefined, newBio = undefined, newIsPrivate = undefined) {
 
         const changes = {}
 
@@ -252,6 +255,10 @@ class UsersDB {
         if (newIsPrivate != user.isPrivate && newIsPrivate != undefined) {
             changes.isPrivate = newIsPrivate
         }
+        if (newProfilePhoto != user.profilePhoto && newProfilePhoto != undefined) {
+            changes.profilePhoto = newProfilePhoto
+        }
+
 
         await userModel.findByIdAndUpdate(userId, changes)
     }
@@ -284,11 +291,12 @@ function userObjectFromDbObject(dbObject) {
         id: dbObject._id.toString(),
 
         username: dbObject.username,
-        password: dbObject.password,
+        // password: dbObject.password,
 
         bio: dbObject.bio,
         fullname: dbObject.fullname,
         isPrivate: dbObject.isPrivate,
+        profilePhoto: dbObject.profilePhoto,
 
         followers: dbObject.followersCount,
         followings: dbObject.followingsCount,

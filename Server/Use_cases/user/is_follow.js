@@ -22,7 +22,7 @@ function buildIsFollow({ UsersDB, Id, AppError, AppErrorMessages }) {
             throw new AppError(AppErrorMessages.userDoesNotExist)
         }
 
-        await UsersDB.isFollow(firstUserId, secondUserId)
+        return await UsersDB.isFollow(firstUserId, secondUserId)
     }
 }
 

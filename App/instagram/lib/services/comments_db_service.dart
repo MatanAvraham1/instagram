@@ -19,7 +19,7 @@ class CommentsDBService {
 
     var response = await http
         .get(Uri.parse(SERVER_API_URL + "comments/$commentId"), headers: {
-      "authorization": await AuthSerivce.getAuthorizationHeader(),
+      "authorization": AuthSerivce.getAuthorizationHeader(),
     });
 
     if (response.statusCode == 400) {
@@ -59,7 +59,7 @@ class CommentsDBService {
         Uri.parse(SERVER_API_URL +
             "comments?startIndex=$startIndex&postId=$postId&includePublisher=true"),
         headers: {
-          "authorization": await AuthSerivce.getAuthorizationHeader(),
+          "authorization": AuthSerivce.getAuthorizationHeader(),
         });
 
     if (response.statusCode == 400) {
@@ -107,7 +107,7 @@ class CommentsDBService {
         Uri.parse(SERVER_API_URL +
             "comments?startIndex=$startIndex&publisherId=$publisherId"),
         headers: {
-          "authorization": await AuthSerivce.getAuthorizationHeader(),
+          "authorization": AuthSerivce.getAuthorizationHeader(),
         });
 
     if (response.statusCode == 400) {
@@ -153,7 +153,7 @@ class CommentsDBService {
         Uri.parse(SERVER_API_URL +
             "comments?startIndex=$startIndex&replyToComment=$commentId"),
         headers: {
-          "authorization": await AuthSerivce.getAuthorizationHeader(),
+          "authorization": AuthSerivce.getAuthorizationHeader(),
         });
 
     if (response.statusCode == 400) {
@@ -197,7 +197,7 @@ class CommentsDBService {
       Uri.parse(SERVER_API_URL + "comments/"),
       headers: {
         'Content-type': 'application/json',
-        "authorization": await AuthSerivce.getAuthorizationHeader(),
+        "authorization": AuthSerivce.getAuthorizationHeader(),
       },
       body: jsonEncode({
         'comment': comment.comment,
@@ -232,7 +232,7 @@ class CommentsDBService {
 
     var response =
         await http.delete(Uri.parse(SERVER_API_URL + "comments/"), headers: {
-      "authorization": await AuthSerivce.getAuthorizationHeader(),
+      "authorization": AuthSerivce.getAuthorizationHeader(),
     });
 
     if (response.statusCode == 400) {
@@ -266,7 +266,7 @@ class CommentsDBService {
       Uri.parse(SERVER_API_URL + "comments/$commentId/like"),
       headers: {
         'Content-type': 'application/json',
-        "authorization": await AuthSerivce.getAuthorizationHeader(),
+        "authorization": AuthSerivce.getAuthorizationHeader(),
       },
     );
 
@@ -301,7 +301,7 @@ class CommentsDBService {
       Uri.parse(SERVER_API_URL + "comments/$commentId/unlike"),
       headers: {
         'Content-type': 'application/json',
-        "authorization": await AuthSerivce.getAuthorizationHeader(),
+        "authorization": AuthSerivce.getAuthorizationHeader(),
       },
     );
 

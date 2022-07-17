@@ -12,7 +12,7 @@ const postModel = mongoose.model("Post", mongoose.Schema({
     },
     taggedUsers: {
         type: Array,
-        default: 0
+        default: []
     },
     photos: {
         type: Array,
@@ -20,7 +20,11 @@ const postModel = mongoose.model("Post", mongoose.Schema({
     },
     publisherComment: {
         type: String,
-        default: 0,
+        default: null,
+    },
+    location: {
+        type: String,
+        default: null,
     },
 
     likes: {
