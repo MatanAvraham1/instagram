@@ -63,9 +63,9 @@ class CommentTile extends StatelessWidget {
                     isLiked: comment.isLikedByMe,
                     onTap: (isLiked) async {
                       if (isLiked) {
-                        await CommentsDBService.unlikeComment(comment.id);
+                        await CommentsDBService().unlikeComment(comment.id);
                       } else {
-                        await CommentsDBService.likeComment(comment.id);
+                        await CommentsDBService().likeComment(comment.id);
                       }
 
                       comment.isLikedByMe = !comment.isLikedByMe;

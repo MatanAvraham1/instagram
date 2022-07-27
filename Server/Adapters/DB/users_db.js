@@ -5,6 +5,10 @@ const { AppError, AppErrorMessages } = require("../../app_error")
 const { PostsDB } = require("./posts_db")
 const { StoriesDB } = require("./stories_db")
 const { CommentsDB } = require("./comments_db")
+const fs = require('fs');
+const path = require("path")
+const { PROFILE_PHOTOS_FOLDER } = require("../../Constants")
+const e = require("express")
 
 class UsersDB {
     static async checkLogin(username, password) {
@@ -55,15 +59,39 @@ class UsersDB {
     }
 
 
+    static async _deleteProfilePhoto(fileName) {
+        return await Promise.resolve(new Promise((res, rej) => {
+            const filePath = path.join(PROFILE_PHOTOS_FOLDER, fileName)
+            fs.unlink(filePath, err => {
+                if (err) {
+                    rej(`${filePath} profile photo can't be deleted!`);
+                }
+                else {
+                    res();
+                }
+
+            });
+        }))
+    }
+
     static async deleteById(userId) {
         // Deletes user by id
 
-        // TODO: unfollow everyone, delete posts, delete stories, delete comments
+        // Deletes user profile photo file
+        const user = await this.findById(userId)
 
-        await userModel.findByIdAndDelete(userId)
+        if (user.profilePhoto != null) {
+            await this._deleteProfilePhoto(user.profilePhoto)
+        }
+
+        // TODO: unfollow everyone, delete posts, delete stories, delete comments
+        await userModel.updateMany({ followers: { $in: [userId] } }, { $inc: { followersCount: -1 }, $pull: { followers: userId } })
+        await userModel.updateMany({ followRequests: { $in: [userId] } }, { $inc: { followRequestsCount: -1 }, $pull: { followRequests: userId } })
+
         await StoriesDB.deleteByPublisherId(userId)
-        await PostsDB.deleteByPublisherId(userId)
         await CommentsDB.deleteByPublisherId(userId)
+        await PostsDB.deleteByPublisherId(userId)
+        await userModel.findByIdAndDelete(userId)
     }
 
 
@@ -161,7 +189,7 @@ class UsersDB {
     static async getFollowers(userId, startFromIndex, quantity) {
         /*
         Returns followers of user by id
-
+     
         param 1: user id
         param 2: from which follower to start
         param 3: how much to return
@@ -199,7 +227,7 @@ class UsersDB {
     static async getFollowings(userId, startFromIndex, quantity) {
         /*
         Returns followings of user by id
-
+     
         param 1: user id
         param 2: from which follower to start
         param 3: how much to return
@@ -241,8 +269,8 @@ class UsersDB {
 
         const changes = {}
 
-
         const user = await this.findById(userId)
+
         if (newUsername != user.username && newUsername != undefined) {
             changes.username = newUsername
         }
@@ -257,8 +285,20 @@ class UsersDB {
         }
         if (newProfilePhoto != user.profilePhoto && newProfilePhoto != undefined) {
             changes.profilePhoto = newProfilePhoto
-        }
 
+            if (user.profilePhoto != null) {
+                try {
+                    await this._deleteProfilePhoto(user.profilePhoto)
+                }
+                catch (error) {
+                    // Becuase this function has been failed the new profilePhoto value has not been updated in the
+                    // db, but the new profile photo file has been saved to the profilePhotosFolder becuase the multer package
+                    // do that automatically. so we have to delete the new profilePhoto file because it just takes place in disk memory
+                    await this._deleteProfilePhoto(newProfilePhoto)
+                    throw error
+                }
+            }
+        }
 
         await userModel.findByIdAndUpdate(userId, changes)
     }

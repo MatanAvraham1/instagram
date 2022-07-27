@@ -3,6 +3,10 @@ class ServerException implements Exception {
   ServerException(this.cause);
 }
 
+class NoInternetException implements Exception {}
+
+class ServerDownException implements Exception {}
+
 class ServerExceptionMessages {
   // Auth
   static String invalidJwt = "Invalid jwt.";

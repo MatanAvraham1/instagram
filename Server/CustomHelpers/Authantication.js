@@ -37,8 +37,8 @@ class AuthenticationService {
             return true
         }
 
-        const isFollow = await isFollow({ firstUserId, secondUserId })
-        return isFollow
+        const _isFollow = await isFollow({ firstUserId, secondUserId })
+        return _isFollow
     }
 }
 

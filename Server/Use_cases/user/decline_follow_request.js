@@ -22,6 +22,9 @@ function buildDeclineFollowRequest({ UsersDB, Id, AppError, AppErrorMessages }) 
             throw new AppError(AppErrorMessages.userDoesNotExist)
         }
 
+        if (!(await UsersDB.isRequest(firstUserId, secondUserId))) {
+            throw new AppError(AppErrorMessages.followRequestDoesNotExist)
+        }
 
         await UsersDB.declineFollowRequest(firstUserId, secondUserId)
     }

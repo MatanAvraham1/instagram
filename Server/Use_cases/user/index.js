@@ -21,13 +21,14 @@ const { buildGetUserByUsername } = require("./get_user_by_username")
 const { buildGetUserByFullname } = require("./get_user_by_fullname")
 const { buildIsFollow } = require('./is_follow')
 const { buildIsRequest } = require("./is_request")
+const { buildDoesUserExist } = require("./does_user_exist")
 
 const addUser = buildAddUser({ UsersDB })
 const deleteUserById = buildDeleteUserById({ UsersDB, Id, AppError, AppErrorMessages })
 const getUserById = buildGetUserById({ UsersDB, Id, AppError, AppErrorMessages })
 const getUserByUsername = buildGetUserByUsername({ UsersDB, Username, AppError, AppErrorMessages })
 const getUserByFullname = buildGetUserByFullname({ UsersDB, Fullname, AppError, AppErrorMessages })
-
+const doesUserExist = buildDoesUserExist({ UsersDB, Id, AppError, AppErrorMessages })
 
 const followUser = buildFollowUser({ UsersDB, Id, AppError, AppErrorMessages })
 const unfollowUser = buildUnfollowUser({ UsersDB, Id, AppError, AppErrorMessages })
@@ -42,4 +43,4 @@ const updateFields = buildUpdateFields({ UsersDB, Id, Username, Fullname, Bio, A
 const isFollow = buildIsFollow({ UsersDB, Id, AppError, AppErrorMessages })
 const isRequest = buildIsRequest({ UsersDB, Id, AppError, AppErrorMessages })
 
-module.exports = { addUser, deleteUserById, getUserById, followUser, unfollowUser, acceptFollowRequest, declineFollowRequest, getFollowers, getFollowings, updateFields, getUserByUsername, getUserByFullname, isFollow, isRequest }
+module.exports = { addUser, deleteUserById, getUserById, followUser, unfollowUser, acceptFollowRequest, declineFollowRequest, getFollowers, getFollowings, updateFields, getUserByUsername, getUserByFullname, isFollow, isRequest, doesUserExist }

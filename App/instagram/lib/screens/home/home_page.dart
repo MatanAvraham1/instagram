@@ -70,7 +70,7 @@ class _HomePageState extends State<HomePage>
           MaterialPage(
               child: ProfilePage(
             inPageView: true,
-            user: AuthSerivce.connectedUser!,
+            user: AuthService().connectedUser!,
           ))
         ],
       ),

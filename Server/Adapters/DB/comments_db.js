@@ -85,14 +85,21 @@ class CommentsDB {
         */
 
 
-        // TODO: check if the await wait for the function to end (because there is a callback)
-        await commentModel.count({ publisherId: mongoose.Types.ObjectId(userId) }, async function (err, count) {
+        return await Promise.resolve(new Promise((res, rej) => {
+            commentModel.count({ publisherId: mongoose.Types.ObjectId(userId) }, async function (err, count) {
 
-            for (let index = 0; index < count; index++) {
-                let comment = await commentModel.findOneAndDelete({})
-                await CommentsDB.deleteReplies(comment._id.toString())
-            }
-        })
+                if (err) {
+                    rej("Cannot count the comments!");
+                }
+
+                for (let index = 0; index < count; index++) {
+                    let comment = await commentModel.findOneAndDelete({})
+                    await CommentsDB.deleteReplies(comment._id.toString())
+                }
+
+                res()
+            })
+        }))
     }
 
     static async deleteReplies(commentId) {

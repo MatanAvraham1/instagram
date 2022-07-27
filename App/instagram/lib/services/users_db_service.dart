@@ -5,59 +5,52 @@ import 'package:instagram/models/user_model.dart';
 import 'package:instagram/services/ServerIP.dart';
 import 'package:instagram/services/auth_service.dart';
 import 'package:http/http.dart' as http;
+import 'package:instagram/services/online_db_service.dart';
 
-class UsersDBService {
-  static Future<User> getConnectedUser() async {
+class UsersDBService extends OnlineDBService {
+  static final UsersDBService _usersDBService = UsersDBService._internal();
+
+  factory UsersDBService() {
+    return _usersDBService;
+  }
+
+  UsersDBService._internal();
+
+  Future<User> getConnectedUser() async {
     /*
     Returns the connected user
     */
 
-    if (!AuthSerivce.isUserLoggedIn()) {
+    if (!AuthService().isUserLoggedIn()) {
       throw ServerException(ServerExceptionMessages.userNotConnected);
     }
 
     try {
-      return await getUserById(AuthSerivce.getUserId());
+      return await getUserById(AuthService().getUserId());
     } on ServerException catch (e) {
-      await AuthSerivce.signOut();
+      await AuthService().signOut();
       throw ServerException(ServerExceptionMessages.userNotConnected);
     }
   }
 
   // TODO: add user deleting
 
-  static Future<User> getUserById(String userId) async {
+  Future<User> getUserById(String userId) async {
     /*
     Returns user by id [userId]
     */
 
     var response = await http
         .get(Uri.parse("${SERVER_API_URL}users/$userId?searchBy=Id"), headers: {
-      "authorization": AuthSerivce.getAuthorizationHeader(),
-    });
+      "authorization": AuthService().getAuthorizationHeader(),
+    }).timeout(timeout);
 
-    if (response.statusCode == 400) {
-      var errorMessage = jsonDecode(response.body);
-      throw ServerException(errorMessage);
-    }
-
-    if (response.statusCode == 401) {
-      throw ServerException(ServerExceptionMessages.unauthorizedrequest);
-    }
-    if (response.statusCode == 403) {
-      throw ServerException(ServerExceptionMessages.forbiddenRequest);
-    }
-    if (response.statusCode == 404) {
-      throw ServerException(ServerExceptionMessages.userDoesNotExist);
-    }
-    if (response.statusCode == 500) {
-      throw ServerException(ServerExceptionMessages.serverError);
-    }
+    checkErrors(response, ServerExceptionMessages.userDoesNotExist);
 
     return User.fromJson(response.body);
   }
 
-  static Future<User> getUserByUsername(String username) async {
+  Future<User> getUserByUsername(String username) async {
     /*
     Returns user by his username
     */
@@ -65,62 +58,30 @@ class UsersDBService {
     var response = await http.get(
         Uri.parse("${SERVER_API_URL}users/$username?searchBy=Username"),
         headers: {
-          "authorization": AuthSerivce.getAuthorizationHeader(),
+          "authorization": AuthService().getAuthorizationHeader(),
         });
 
-    if (response.statusCode == 400) {
-      var errorMessage = jsonDecode(response.body);
-
-      throw ServerException(errorMessage);
-    }
-    if (response.statusCode == 401) {
-      throw ServerException(ServerExceptionMessages.unauthorizedrequest);
-    }
-    if (response.statusCode == 403) {
-      throw ServerException(ServerExceptionMessages.forbiddenRequest);
-    }
-    if (response.statusCode == 404) {
-      throw ServerException(ServerExceptionMessages.userDoesNotExist);
-    }
-    if (response.statusCode == 500) {
-      throw ServerException(ServerExceptionMessages.serverError);
-    }
+    checkErrors(response, ServerExceptionMessages.userDoesNotExist);
 
     return User.fromJson(response.body);
   }
 
-  static Future<User> getUserByFullname(String fullname) async {
+  Future<User> getUserByFullname(String fullname) async {
     /*
     Returns user by his fullname
     */
     var response = await http.get(
         Uri.parse("${SERVER_API_URL}users/$fullname?searchBy=Fullname"),
         headers: {
-          "authorization": AuthSerivce.getAuthorizationHeader(),
+          "authorization": AuthService().getAuthorizationHeader(),
         });
 
-    if (response.statusCode == 400) {
-      var errorMessage = jsonDecode(response.body);
-
-      throw ServerException(errorMessage);
-    }
-    if (response.statusCode == 401) {
-      throw ServerException(ServerExceptionMessages.unauthorizedrequest);
-    }
-    if (response.statusCode == 403) {
-      throw ServerException(ServerExceptionMessages.forbiddenRequest);
-    }
-    if (response.statusCode == 404) {
-      throw ServerException(ServerExceptionMessages.userDoesNotExist);
-    }
-    if (response.statusCode == 500) {
-      throw ServerException(ServerExceptionMessages.serverError);
-    }
+    checkErrors(response, ServerExceptionMessages.userDoesNotExist);
 
     return User.fromJson(response.body);
   }
 
-  static Future updateUser(User user) async {
+  Future updateUser(User user) async {
     /*
     Updates user details
 
@@ -131,7 +92,7 @@ class UsersDBService {
       Uri.parse("$SERVER_API_URL/users/"),
       headers: {
         'Content-type': 'application/json',
-        "authorization": AuthSerivce.getAuthorizationHeader(),
+        "authorization": AuthService().getAuthorizationHeader(),
       },
       body: jsonEncode({
         'username': user.username,
@@ -140,27 +101,10 @@ class UsersDBService {
         'isPrivate': user.isPrivate
       }),
     );
-
-    if (response.statusCode == 400) {
-      var errorMessage = jsonDecode(response.body);
-
-      throw ServerException(errorMessage);
-    }
-    if (response.statusCode == 401) {
-      throw ServerException(ServerExceptionMessages.unauthorizedrequest);
-    }
-    if (response.statusCode == 403) {
-      throw ServerException(ServerExceptionMessages.forbiddenRequest);
-    }
-    if (response.statusCode == 404) {
-      throw ServerException(ServerExceptionMessages.userDoesNotExist);
-    }
-    if (response.statusCode == 500) {
-      throw ServerException(ServerExceptionMessages.serverError);
-    }
+    checkErrors(response, ServerExceptionMessages.userDoesNotExist);
   }
 
-  static Future<List<User>> getFollowers(String userId, int startIndex) async {
+  Future<List<User>> getFollowers(String userId, int startIndex) async {
     /*
     Returns the followers of user
 
@@ -172,21 +116,10 @@ class UsersDBService {
         Uri.parse(
             SERVER_API_URL + "users/$userId/followers?startIndex=$startIndex"),
         headers: {
-          "authorization": AuthSerivce.getAuthorizationHeader(),
+          "authorization": AuthService().getAuthorizationHeader(),
         });
 
-    if (response.statusCode == 401) {
-      throw ServerException(ServerExceptionMessages.unauthorizedrequest);
-    }
-    if (response.statusCode == 403) {
-      throw ServerException(ServerExceptionMessages.forbiddenRequest);
-    }
-    if (response.statusCode == 404) {
-      throw ServerException(ServerExceptionMessages.userDoesNotExist);
-    }
-    if (response.statusCode == 500) {
-      throw ServerException(ServerExceptionMessages.serverError);
-    }
+    checkErrors(response, ServerExceptionMessages.userDoesNotExist);
 
     List<User> users = [];
     for (var userObject in jsonDecode(response.body)) {
@@ -195,7 +128,7 @@ class UsersDBService {
     return users;
   }
 
-  static Future<List<User>> getFollowings(String userId, int startIndex) async {
+  Future<List<User>> getFollowings(String userId, int startIndex) async {
     /*
     Returns the following of user
 
@@ -207,21 +140,11 @@ class UsersDBService {
         Uri.parse(
             SERVER_API_URL + "users/$userId/followings?startIndex=$startIndex"),
         headers: {
-          "authorization": AuthSerivce.getAuthorizationHeader(),
+          "authorization": AuthService().getAuthorizationHeader(),
         });
 
-    if (response.statusCode == 401) {
-      throw ServerException(ServerExceptionMessages.unauthorizedrequest);
-    }
-    if (response.statusCode == 403) {
-      throw ServerException(ServerExceptionMessages.forbiddenRequest);
-    }
-    if (response.statusCode == 404) {
-      throw ServerException(ServerExceptionMessages.userDoesNotExist);
-    }
-    if (response.statusCode == 500) {
-      throw ServerException(ServerExceptionMessages.serverError);
-    }
+    checkErrors(response, ServerExceptionMessages.userDoesNotExist);
+
     List<User> users = [];
     for (var userObject in jsonDecode(response.body)) {
       users.add(User.fromMap(userObject));

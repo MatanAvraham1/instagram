@@ -22,6 +22,14 @@ function buildFollowUser({ UsersDB, Id, AppError, AppErrorMessages }) {
             throw new AppError(AppErrorMessages.userDoesNotExist)
         }
 
+        if (await UsersDB.isFollow(firstUserId, secondUserId)) {
+            throw new AppError(AppErrorMessages.alreadyFollow)
+        }
+
+        if (await UsersDB.isRequest(firstUserId, secondUserId)) {
+            throw new AppError(AppErrorMessages.alreadyRequested)
+        }
+
         await UsersDB.followUser(firstUserId, secondUserId)
     }
 }

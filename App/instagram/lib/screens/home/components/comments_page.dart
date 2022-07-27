@@ -35,7 +35,8 @@ class _CommentsPageState extends State<CommentsPage> {
       _isLoadingComments = true;
     });
 
-    CommentsDBService.getCommentsByPostId(widget.post.id, comments.length)
+    CommentsDBService()
+        .getCommentsByPostId(widget.post.id, comments.length)
         .then((value) {
       setState(() {
         comments.addAll(value);
@@ -54,7 +55,8 @@ class _CommentsPageState extends State<CommentsPage> {
       setState(() {
         _isLoadingMoreComments = true;
       });
-      CommentsDBService.getCommentsByPostId(widget.post.id, comments.length)
+      CommentsDBService()
+          .getCommentsByPostId(widget.post.id, comments.length)
           .then((value) {
         setState(() {
           comments.addAll(value);

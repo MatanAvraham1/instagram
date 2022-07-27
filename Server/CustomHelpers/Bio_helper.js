@@ -1,9 +1,7 @@
 
 const Bio = Object.freeze({
     isValid: (plainText) => {
-        // Checks if valid...
-
-        return true
+        return plainText != null
     }
 })
 

@@ -13,7 +13,7 @@ const Password = Object.freeze({
         return await bcrypt.compare(plainText, hashedPassword)
     },
     isValid: (plainText) => {
-        return true
+        return plainText != null
     }
 })
 

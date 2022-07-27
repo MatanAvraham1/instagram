@@ -38,7 +38,10 @@ class _CustomAlertDialogState extends State<CustomAlertDialog> {
               ),
             ),
             const SizedBox(height: 15),
-            Text(widget.description),
+            Text(
+              widget.description,
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 20),
             if (widget.continueButton != null)
               Column(

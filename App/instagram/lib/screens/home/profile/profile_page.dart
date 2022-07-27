@@ -14,7 +14,7 @@ import 'package:instagram/classes/number_helper.dart';
 import 'package:instagram/models/post_model.dart';
 import 'package:instagram/models/user_model.dart';
 import 'package:instagram/screens/auth/components/custom_alert_dialog.dart';
-import 'package:instagram/screens/auth/components/custom_button.dart';
+import 'package:instagram/screens/auth/components/online_button.dart';
 import 'package:instagram/screens/home/components/loading_indicator.dart';
 import 'package:instagram/screens/home/components/posts_page.dart';
 import 'package:instagram/screens/home/components/story_tile.dart';
@@ -36,7 +36,7 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage>
     with AutomaticKeepAliveClientMixin {
-  User connectedUser = AuthSerivce.connectedUser!;
+  User connectedUser = AuthService().connectedUser!;
   List<User> followers = [];
   List<User> followings = [];
   List<Post> posts = [];
@@ -67,7 +67,7 @@ class _ProfilePageState extends State<ProfilePage>
     if (user.isPrivate && !user.isFollowedByMe) {
       return;
     } else {
-      posts = await PostsDBService.getPostsByPublisherId(
+      posts = await PostsDBService().getPostsByPublisherId(
         user.id,
         posts.length,
       );
@@ -90,8 +90,8 @@ class _ProfilePageState extends State<ProfilePage>
         setState(() {
           _isLoadingMorePosts = true;
         });
-        posts.addAll(
-            await PostsDBService.getPostsByPublisherId(user.id, posts.length));
+        posts.addAll(await PostsDBService()
+            .getPostsByPublisherId(user.id, posts.length));
         setState(() {
           _isLoadingMorePosts = false;
         });
@@ -100,35 +100,35 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   Future sendFollowRequest() async {
-    await FriendshipsService.followUser(user.id);
+    await FriendshipsService().followUser(user.id);
     setState(() {
       user.isRequestedByMe = true;
     });
   }
 
   Future deleteFollowingRequest() async {
-    await FriendshipsService.deleteFollowingRequest(user.id);
+    await FriendshipsService().deleteFollowingRequest(user.id);
     setState(() {
       user.isRequestedByMe = false;
     });
   }
 
   Future followUser() async {
-    await FriendshipsService.followUser(user.id);
+    await FriendshipsService().followUser(user.id);
     setState(() {
       user.isFollowedByMe = true;
       user.followers++;
-      AuthSerivce.connectedUser!.followings++;
+      AuthService().connectedUser!.followings++;
     });
   }
 
   Future unfollowUser() async {
-    await FriendshipsService.unfollowUser(user.id);
+    await FriendshipsService().unfollowUser(user.id);
 
     setState(() {
       user.isFollowedByMe = false;
       user.followers--;
-      AuthSerivce.connectedUser!.followings--;
+      AuthService().connectedUser!.followings--;
       followers.removeWhere((element) => element.id == user.id);
     });
   }
@@ -138,17 +138,19 @@ class _ProfilePageState extends State<ProfilePage>
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
         // SizedBox(height: 95, width: 20, child: StoryTile(owner: user)),
+
+        // Avatar with full name
         Column(
           children: [
             CircleAvatar(
               radius: 40,
               backgroundImage: CachedNetworkImageProvider(user.profilePhoto,
                   headers: {
-                    "Authorization": AuthSerivce.getAuthorizationHeader()
+                    "Authorization": AuthService().getAuthorizationHeader()
                   }),
             ),
             const SizedBox(
-              height: 5,
+              height: 13,
             ),
             Text(
               user.fullname,
@@ -156,6 +158,8 @@ class _ProfilePageState extends State<ProfilePage>
             ),
           ],
         ),
+
+        // Posts followers and followings info
         Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -215,7 +219,7 @@ class _ProfilePageState extends State<ProfilePage>
           ),
           child: SizedBox(
             width: MediaQuery.of(context).size.width * 0.8,
-            child: CustomButton(
+            child: OnlineButton(
               expanded: true,
               isOutlined: true,
               enableWhen: () => true,
@@ -252,7 +256,7 @@ class _ProfilePageState extends State<ProfilePage>
           ),
           child: SizedBox(
             width: MediaQuery.of(context).size.width * 0.4,
-            child: CustomButton(
+            child: OnlineButton(
               strokeHeight: 20,
               borderRadius: 6,
               expanded: true,
@@ -277,8 +281,8 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
-  CustomButton _buildFollowButon() {
-    return CustomButton(
+  OnlineButton _buildFollowButon() {
+    return OnlineButton(
         textColor: !user.isFollowedByMe ? Colors.white : null,
         strokeHeight: 20,
         borderRadius: 6,
@@ -291,6 +295,9 @@ class _ProfilePageState extends State<ProfilePage>
                 ? "Unfollow"
                 : "Follow",
         onPressed: () async {
+          await Future.delayed(
+              const Duration(milliseconds: 250)); // For the animation...
+
           if (user.isPrivate && !user.isRequestedByMe) {
             await sendFollowRequest();
             return;
@@ -317,66 +324,86 @@ class _ProfilePageState extends State<ProfilePage>
     super.build(context);
 
     return Scaffold(
+      endDrawer: Drawer(
+        child: ListView(
+          children: [
+            ListTile(
+              leading: Icon(Icons.logout),
+              title: Text("Log Out"),
+              onTap: () async {
+                await AuthService().signOut();
+              },
+            )
+          ],
+        ),
+      ),
       appBar: PreferredSize(
         preferredSize: const Size(double.infinity, kToolbarHeight),
-        child: Container(
-          height: kToolbarHeight,
-          color: Theme.of(context).primaryColor,
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 700),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      user == connectedUser && widget.inPageView
-                          ? const Icon(
-                              Icons.lock_outline,
-                              color: Colors.white,
-                            )
-                          : const BackButton(
-                              color: Colors.white,
-                            ),
-                      Text(
-                        user.username,
-                        style:
-                            const TextStyle(color: Colors.white, fontSize: 16),
-                      ),
-                    ],
-                  ),
-                  user == connectedUser && widget.inPageView
-                      ? Row(
-                          children: [
+        child: SafeArea(
+          child: Container(
+            height: kToolbarHeight,
+            color: Theme.of(context).primaryColor,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 700),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        user == connectedUser && widget.inPageView
+                            ? const Icon(
+                                Icons.lock_outline,
+                                color: Colors.white,
+                              )
+                            : const BackButton(
+                                color: Colors.white,
+                              ),
+                        Text(
+                          user.username,
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 16),
+                        ),
+                      ],
+                    ),
+                    user == connectedUser && widget.inPageView
+                        ? Row(
+                            children: [
+                              CircularButton(
+                                  onPressed: () {},
+                                  icon: const Icon(
+                                    MyFlutterApp.add_outlined,
+                                    color: Colors.white,
+                                    size: 9,
+                                  )),
+                              Builder(builder: (context) {
+                                return CircularButton(
+                                    onPressed: () {
+                                      // AdaptiveTheme.of(context)
+                                      //     .toggleThemeMode();
+
+                                      Scaffold.of(context).openEndDrawer();
+                                    },
+                                    icon: const Icon(Icons.menu,
+                                        color: Colors.white));
+                              })
+                            ],
+                          )
+                        : Row(children: [
                             CircularButton(
-                                onPressed: () {},
-                                icon: const Icon(
-                                  MyFlutterApp.add_outlined,
-                                  color: Colors.white,
-                                  size: 9,
-                                )),
+                              onPressed: () {},
+                              icon: const Icon(Icons.notifications_outlined,
+                                  color: Colors.white),
+                            ),
                             CircularButton(
                                 onPressed: () {
                                   AdaptiveTheme.of(context).toggleThemeMode();
                                 },
-                                icon:
-                                    const Icon(Icons.menu, color: Colors.white))
-                          ],
-                        )
-                      : Row(children: [
-                          CircularButton(
-                            onPressed: () {},
-                            icon: const Icon(Icons.notifications_outlined,
-                                color: Colors.white),
-                          ),
-                          CircularButton(
-                              onPressed: () {
-                                AdaptiveTheme.of(context).toggleThemeMode();
-                              },
-                              icon: const Icon(Icons.more_vert,
-                                  color: Colors.white))
-                        ]),
-                ],
+                                icon: const Icon(Icons.more_vert,
+                                    color: Colors.white))
+                          ]),
+                  ],
+                ),
               ),
             ),
           ),
@@ -386,15 +413,16 @@ class _ProfilePageState extends State<ProfilePage>
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 700),
           child: RefreshIndicator(
+            color: Colors.green,
             onRefresh: () async {
               followers = [];
               followings = [];
               posts = [];
 
               var lastUser = user;
-              user = await UsersDBService.getUserById(user.id);
+              user = await UsersDBService().getUserById(user.id);
               if (lastUser == connectedUser) {
-                AuthSerivce.connectedUser = user;
+                AuthService().connectedUser = user;
                 connectedUser = user;
               }
 
@@ -502,7 +530,7 @@ class _ProfilePageState extends State<ProfilePage>
                                             image: CachedNetworkImageProvider(
                                                 posts[index].photos.first,
                                                 headers: {
-                                                  "Authorization": AuthSerivce
+                                                  "Authorization": AuthService()
                                                       .getAuthorizationHeader()
                                                 }))),
                                   ),
@@ -611,43 +639,51 @@ class _ProfilePageState extends State<ProfilePage>
         }
 
         // Makes followers list with controller loading
-        showModalBottomSheet(
+
+        showDialog(
           context: context,
           builder: (context) {
-            return FutureBuilder<List<User>>(
-              future: UsersDBService.getFollowers(user.id, followers.length),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return Text("Error ${snapshot.error}");
-                }
+            return Dialog(
+              child: ConstrainedBox(
+                constraints:
+                    const BoxConstraints(maxWidth: 400, maxHeight: 600),
+                child: FutureBuilder<List<User>>(
+                  future:
+                      UsersDBService().getFollowers(user.id, followers.length),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      return Text("Error ${snapshot.error}");
+                    }
 
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const LoadingIndicator(
-                    title: "Loading followers",
-                    radius: 20,
-                    strokeWidth: 2,
-                  );
-                }
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const LoadingIndicator(
+                        title: "Loading followers",
+                        radius: 20,
+                        strokeWidth: 2,
+                      );
+                    }
 
-                followers.addAll(snapshot.data!);
-                return ListView.builder(
-                  itemCount: followers.length,
-                  itemBuilder: (context, index) => ListTile(
-                    onTap: () {
-                      Navigator.of(context).push(MaterialPageRoute(
-                        builder: (context) =>
-                            ProfilePage(user: followers[index]),
-                      ));
-                    },
-                    leading: SizedBox(
-                        height: 60,
-                        width: 60,
-                        child: StoryTile(owner: followers[index])),
-                    title: Text(followers[index].username),
-                    subtitle: Text(followers[index].fullname),
-                  ),
-                );
-              },
+                    followers.addAll(snapshot.data!);
+                    return ListView.builder(
+                      itemCount: followers.length,
+                      itemBuilder: (context, index) => ListTile(
+                        onTap: () {
+                          Navigator.of(context).push(MaterialPageRoute(
+                            builder: (context) =>
+                                ProfilePage(user: followers[index]),
+                          ));
+                        },
+                        leading: SizedBox(
+                            height: 60,
+                            width: 60,
+                            child: StoryTile(owner: followers[index])),
+                        title: Text(followers[index].username),
+                        subtitle: Text(followers[index].fullname),
+                      ),
+                    );
+                  },
+                ),
+              ),
             );
           },
         );
@@ -672,7 +708,7 @@ class _ProfilePageState extends State<ProfilePage>
   InkWell _buildFollowings() {
     return InkWell(
       onTap: () {
-        if (user.isPrivate && !user.isFollowedByMe) {
+        if (!AuthService().doesHasPermission(user)) {
           showDialog(
             context: context,
             builder: (context) => const CustomAlertDialog(
@@ -684,43 +720,50 @@ class _ProfilePageState extends State<ProfilePage>
           return;
         }
 
-        showModalBottomSheet(
+        showDialog(
           context: context,
           builder: (context) {
-            return FutureBuilder<List<User>>(
-              future: UsersDBService.getFollowings(user.id, followings.length),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return Text("Error ${snapshot.error}");
-                }
+            return Dialog(
+              child: ConstrainedBox(
+                constraints:
+                    const BoxConstraints(maxWidth: 400, maxHeight: 600),
+                child: FutureBuilder<List<User>>(
+                  future: UsersDBService()
+                      .getFollowings(user.id, followings.length),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      return Text("Error ${snapshot.error}");
+                    }
 
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const LoadingIndicator(
-                    title: "Loading followings",
-                    radius: 20,
-                    strokeWidth: 2,
-                  );
-                }
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const LoadingIndicator(
+                        title: "Loading followings",
+                        radius: 20,
+                        strokeWidth: 2,
+                      );
+                    }
 
-                followings.addAll(snapshot.data!);
-                return ListView.builder(
-                  itemCount: followings.length,
-                  itemBuilder: (context, index) => ListTile(
-                    onTap: () {
-                      Navigator.of(context).push(MaterialPageRoute(
-                        builder: (context) =>
-                            ProfilePage(user: followings[index]),
-                      ));
-                    },
-                    leading: SizedBox(
-                        height: 60,
-                        width: 60,
-                        child: StoryTile(owner: followings[index])),
-                    title: Text(followings[index].username),
-                    subtitle: Text(followings[index].fullname),
-                  ),
-                );
-              },
+                    followings.addAll(snapshot.data!);
+                    return ListView.builder(
+                      itemCount: followings.length,
+                      itemBuilder: (context, index) => ListTile(
+                        onTap: () {
+                          Navigator.of(context).push(MaterialPageRoute(
+                            builder: (context) =>
+                                ProfilePage(user: followings[index]),
+                          ));
+                        },
+                        leading: SizedBox(
+                            height: 60,
+                            width: 60,
+                            child: StoryTile(owner: followings[index])),
+                        title: Text(followings[index].username),
+                        subtitle: Text(followings[index].fullname),
+                      ),
+                    );
+                  },
+                ),
+              ),
             );
           },
         );

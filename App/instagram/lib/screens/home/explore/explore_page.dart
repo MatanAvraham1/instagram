@@ -102,8 +102,8 @@ class _ExplorePageState extends State<ExplorePage>
                       ]
                     : [
                         FutureBuilder<User>(
-                          future: UsersDBService.getUserByUsername(
-                              usernameToSearch),
+                          future: UsersDBService()
+                              .getUserByUsername(usernameToSearch),
                           builder: (context, snapshot) {
                             if (snapshot.hasError) {
                               return const ListTile(
@@ -141,7 +141,7 @@ class _ExplorePageState extends State<ExplorePage>
                                                 CachedNetworkImageProvider(
                                                     e.profilePhoto,
                                                     headers: {
-                                                  "Authorization": AuthSerivce
+                                                  "Authorization": AuthService()
                                                       .getAuthorizationHeader()
                                                 }),
                                           ),

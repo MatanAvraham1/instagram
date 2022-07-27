@@ -1,16 +1,14 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:instagram/classes/navigator_keys.dart';
-import 'package:instagram/models/user_model.dart';
-import 'package:instagram/screens/auth/login_page.dart';
-import 'package:instagram/screens/main_page.dart';
-import 'package:instagram/services/auth_service.dart';
+import 'package:instagram/screens/initial_loading_screen.dart';
 import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await AuthSerivce.loadConnectedUser();
+
   runApp(
     Provider<NavigatorKeys>(
       create: (context) => NavigatorKeys(),
@@ -19,8 +17,18 @@ void main() async {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,20 +81,7 @@ class MyApp extends StatelessWidget {
           return MaterialApp(
             title: "Instagram",
             theme: theme,
-            home: StreamBuilder<User?>(
-              stream: AuthSerivce.userChanges,
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return const Text("Error!");
-                }
-
-                if (snapshot.data == null) {
-                  return const LoginPage();
-                }
-
-                return const MainPage();
-              },
-            ),
+            home: const InitialLoadingScreen(),
           );
         });
   }

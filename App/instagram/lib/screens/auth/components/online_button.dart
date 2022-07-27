@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
-class CustomButton extends StatefulWidget {
+class OnlineButton extends StatefulWidget {
   final Color? textColor;
+  final Color? backgroundColor;
+  final Color? disabledBackgroundColor;
   final double strokeHeight;
   final double borderRadius;
   final bool isOutlined;
@@ -10,7 +12,7 @@ class CustomButton extends StatefulWidget {
   final Function enableWhen;
   final bool expanded;
 
-  const CustomButton(
+  const OnlineButton(
       {Key? key,
       required this.onPressed,
       required this.enableWhen,
@@ -19,14 +21,17 @@ class CustomButton extends StatefulWidget {
       this.borderRadius = 4,
       this.isOutlined = false,
       this.strokeHeight = 25,
+      this.backgroundColor = Colors.blue,
+      this.disabledBackgroundColor =
+          const Color(0xFF0D47A1), // Colors.blue[900]
       this.textColor})
       : super(key: key);
 
   @override
-  _CustomButtonState createState() => _CustomButtonState();
+  _OnlineButtonState createState() => _OnlineButtonState();
 }
 
-class _CustomButtonState extends State<CustomButton> {
+class _OnlineButtonState extends State<OnlineButton> {
   bool isLoading = false;
 
   @override
@@ -37,7 +42,7 @@ class _CustomButtonState extends State<CustomButton> {
         height: widget.expanded ? null : 50,
         width: widget.expanded ? null : 330,
         child: MaterialButton(
-          color: widget.isOutlined ? null : Colors.blue,
+          color: widget.isOutlined ? null : widget.backgroundColor,
           shape: widget.isOutlined
               ? Border.all(
                   color: Theme.of(context).iconTheme.color!, width: 0.3)
@@ -67,7 +72,7 @@ class _CustomButtonState extends State<CustomButton> {
                   widget.text,
                   style: TextStyle(color: widget.textColor),
                 ),
-          disabledColor: Colors.blue[900],
+          disabledColor: widget.disabledBackgroundColor,
         ),
       ),
     );

@@ -1,7 +1,8 @@
 class AppError extends Error {
-    constructor(message) {
+    constructor(message, additionalData) {
         super(message)
         this.name = "AppError"
+        this.additionalData = additionalData
     }
 }
 
@@ -43,6 +44,7 @@ class AppErrorMessages {
     static invalidStoryStructure = 'Invalid story structure.'
     static storyDoesNotExist = "Story doesn't exist."
     static invalidStoryId = "Invalid story id."
+    static invalidWidget = "invalid widget."
 
     // Publisher
     static invalidPublisherId = "Invalid publisher id."
@@ -50,6 +52,18 @@ class AppErrorMessages {
 
     // Friendships
     static userCanNotFollowHimself = "User can't follow himself."
+    static alreadyFollow = "The user is already follow"
+    static alreadyUnfollow = "The user is already unfollow"
+    static followRequestDoesNotExist = "The follow request doesn't exist!"
+    static alreadyRequested = "Follow request has been already sent"
+
+    static invalidStartIndex = "Invalid start index."
+
+
+    // Story Widget
+    static invalidWidgetName = "Invalid widget name"
+    static invalidWidgetDescription = "Invalid widget description"
+    static widgetDoesNotExist = "The widget does not exist"
 }
 
 module.exports = { AppError, AppErrorMessages }

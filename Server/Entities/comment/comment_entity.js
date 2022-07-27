@@ -1,5 +1,5 @@
 function buildMakeComment({ Id, TextChecker, AppError, AppErrorMessages, UsersDB, PostsDB, CommentsDB }) {
-    return async function makeComment({ publisherId, postId, comment }) {
+    return async function makeComment({ publisherId, postId, comment, replyToComment }) {
 
 
         if (!Id.isValid(publisherId)) {
@@ -29,7 +29,7 @@ function buildMakeComment({ Id, TextChecker, AppError, AppErrorMessages, UsersDB
         }
 
 
-        if (!TextChecker.checkValidate(comment)) {
+        if (!TextChecker.isValid(comment)) {
             throw new AppError(AppErrorMessages.invalidComment)
         }
 

@@ -18,7 +18,7 @@ commentsRouter.post('/', authenticateToken, (req, res) => {
         }).catch((error) => {
             if (error instanceof AppError) {
 
-                if (error.message == AppErrorMessages.userDoesNotExist || error.message == AppErrorMessages.postDoesNotExist) {
+                if (error.message == AppErrorMessages.postDoesNotExist) {
                     return res.sendStatus(404).json(error.message)
                 }
 
@@ -39,6 +39,9 @@ commentsRouter.get('/:commentId', authenticateToken, (req, res) => {
 
         const firstUserId = req.userId
         const secondUserId = (await getPostById({ postId: comment.postId })).publisherId
+        // We dont checks for error because  the requester and the publisher user must exist 
+        // the requester exists because we check that on the authenticateToken method
+        // the publisher exist because if he has been deleted the comment also has been deleted 
         const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
         if (!doesHasPermission) {
             return res.sendStatus(403)
@@ -83,11 +86,6 @@ commentsRouter.delete('/:commentId', authenticateToken, doesOwnCommentObject, (r
         res.sendStatus(200)
     }).catch((error) => {
         if (error instanceof AppError) {
-
-            if (error.message == AppErrorMessages.commentDoesNotExist) {
-                return res.sendStatus(404)
-            }
-
             return res.status(400).json(error.message)
         }
 
@@ -102,8 +100,12 @@ commentsRouter.get('/', authenticateToken, (req, res) => {
     const publisherId = req.query.publisherId
     const startIndex = parseInt(req.query.startIndex)
 
+    if (publisherId == null) {
+        return res.sendStatus(400)
+    }
+
     if (!Number.isInteger(startIndex)) {
-        return res.status(400).json("Invalid start index.")
+        return res.status(400).json(AppErrorMessages.invalidStartIndex)
     }
 
     getCommentsByPublisherId({ publisherId, startFromIndex: startIndex }).then(async (comments) => {
@@ -114,6 +116,9 @@ commentsRouter.get('/', authenticateToken, (req, res) => {
 
             const firstUserId = req.userId
             const secondUserId = (await getPostById({ postId: comment.postId })).publisherId
+            // We dont checks for error because  the requester and the publisher user must exist 
+            // the requester exists because we check that on the authenticateToken method
+            // the publisher exist because if he has been deleted the comment also has been deleted 
             const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
             if (!doesHasPermission) {
                 continue
@@ -158,14 +163,23 @@ commentsRouter.get('/', authenticateToken, (req, res) => {
     const replyToComment = req.query.replyToComment
     const startIndex = parseInt(req.query.startIndex)
 
+
+    if (replyToComment == null) {
+        return res.sendStatus(400)
+    }
+
+
     if (!Number.isInteger(startIndex)) {
-        return res.status(400).json("Invalid start index.")
+        return res.status(400).json(AppErrorMessages.invalidStartIndex)
     }
 
     getRepliesComments({ commentId: replyToComment, startFromIndex: startIndex }).then(async (comments) => {
 
         const firstUserId = req.userId
         const secondUserId = (await getPostById({ postId: (await getCommentById({ commentId: replyToComment })).postId })).publisherId
+        // We dont checks for error because  the requester and the publisher user must exist 
+        // the requester exists because we check that on the authenticateToken method
+        // the publisher exist because if he has been deleted the comment also has been deleted 
         const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
         if (!doesHasPermission) {
             return res.sendStatus(403)
@@ -216,99 +230,122 @@ commentsRouter.get('/', authenticateToken, async (req, res) => {
     const startIndex = parseInt(req.query.startIndex)
     const includePublisher = req.query.includePublisher == 'true'
 
+    if (postId == null) {
+        return res.sendStatus(400)
+    }
+
     if (!Number.isInteger(startIndex)) {
         return res.status(400).json("Invalid start index.")
     }
 
     const firstUserId = req.userId
-    const secondUserId = (await getPostById({ postId })).publisherId
-    const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
-    if (!doesHasPermission) {
-        return res.sendStatus(403)
-    }
+    getPostById({ postId }).then(async (post) => {
 
-    getCommentsByPostId({ postId, startFromIndex: startIndex }).then(async (comments) => {
-        const returnedList = []
-        for (const comment of comments) {
+        const secondUserId = post.publisherId
+        // We dont checks for error because  the requester and the publisher user must exist 
+        // the requester exists because we check that on the authenticateToken method
+        // the publisher exist because if he has been deleted the post also has been deleted 
+        const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
+        if (!doesHasPermission) {
+            return res.sendStatus(403)
+        }
 
-            const objectToReturn = {
-                publisherId: comment.publisherId,
-                postId: comment.postId,
-                comment: comment.comment,
-                replyToComment: comment.replyToComment,
-                id: comment.id,
-                createdAt: comment.createdAt,
+        getCommentsByPostId({ postId, startFromIndex: startIndex }).then(async (comments) => {
+            const returnedList = []
+            for (const comment of comments) {
 
-                likes: comment.likes,
-                replies: comment.replies,
-            }
+                const objectToReturn = {
+                    publisherId: comment.publisherId,
+                    postId: comment.postId,
+                    comment: comment.comment,
+                    replyToComment: comment.replyToComment,
+                    id: comment.id,
+                    createdAt: comment.createdAt,
 
-            objectToReturn.isLikedByMe = await isCommentLiked({ commentId: comment.id, likerId: req.userId })
-            if (includePublisher) {
-                const commentPublisher = await getUserById({ userId: comment.publisherId })
-                const userObject = {
-                    id: commentPublisher.id,
-                    username: commentPublisher.username,
-                    fullname: commentPublisher.fullname,
-                    bio: commentPublisher.bio,
-                    isPrivate: commentPublisher.isPrivate,
-                    followers: commentPublisher.followers,
-                    followings: commentPublisher.followings,
-                    posts: commentPublisher.posts,
-                }
-                const firstUserId = req.userId
-                const secondUserId = commentPublisher.id
-
-                const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
-                if (doesHasPermission) {
-                    userObject.lastDayStories = await getLastDayStoriesCount({ publisherId: secondUserId })
+                    likes: comment.likes,
+                    replies: comment.replies,
                 }
 
-                if (req.userId == user.id) {
-                    userObject.followRequests = user.followRequests
-                    userObject.followingRequests = user.followingRequests
-                    userObject.stories = user.stories
-                    userObject.createdAt = user.createdAt
+                objectToReturn.isLikedByMe = await isCommentLiked({ commentId: comment.id, likerId: req.userId })
+                if (includePublisher) {
+                    const commentPublisher = await getUserById({ userId: comment.publisherId })
+                    const userObject = {
+                        id: commentPublisher.id,
+                        username: commentPublisher.username,
+                        fullname: commentPublisher.fullname,
+                        bio: commentPublisher.bio,
+                        isPrivate: commentPublisher.isPrivate,
+                        followers: commentPublisher.followers,
+                        followings: commentPublisher.followings,
+                        posts: commentPublisher.posts,
+                    }
+                    const firstUserId = req.userId
+                    const secondUserId = commentPublisher.id
 
-                    userObject.isFollowedByMe = false;
-                    userObject.isFollowMe = false;
-                    userObject.isRequestedByMe = false;
-                    userObject.isRequestMe = false;
-                }
-                else {
-                    userObject.isFollowedByMe = await isFollow({ firstUserId, secondUserId })
-                    userObject.isFollowMe = await isFollow({ firstUserId: secondUserId, secondUserId: firstUserId })
+                    const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
+                    if (doesHasPermission) {
+                        userObject.lastDayStories = await getLastDayStoriesCount({ publisherId: secondUserId })
+                    }
 
-                    if (userObject.isFollowedByMe) {
+                    if (req.userId == user.id) {
+                        userObject.followRequests = user.followRequests
+                        userObject.followingRequests = user.followingRequests
+                        userObject.stories = user.stories
+                        userObject.createdAt = user.createdAt
+
+                        userObject.isFollowedByMe = false;
+                        userObject.isFollowMe = false;
                         userObject.isRequestedByMe = false;
-                    }
-                    else {
-                        userObject.isRequestedByMe = isRequest({ firstUserId, secondUserId });
-                    }
-
-                    if (userObject.isFollowMe) {
                         userObject.isRequestMe = false;
                     }
                     else {
-                        userObject.isRequestMe = isRequest({ firstUserId: secondUserId, secondUserId: firstUserId });
+                        userObject.isFollowedByMe = await isFollow({ firstUserId, secondUserId })
+                        userObject.isFollowMe = await isFollow({ firstUserId: secondUserId, secondUserId: firstUserId })
+
+                        if (userObject.isFollowedByMe) {
+                            userObject.isRequestedByMe = false;
+                        }
+                        else {
+                            userObject.isRequestedByMe = isRequest({ firstUserId, secondUserId });
+                        }
+
+                        if (userObject.isFollowMe) {
+                            userObject.isRequestMe = false;
+                        }
+                        else {
+                            userObject.isRequestMe = isRequest({ firstUserId: secondUserId, secondUserId: firstUserId });
+                        }
                     }
+
+                    objectToReturn.publisher = userObject
                 }
 
-                objectToReturn.publisher = userObject
+                returnedList.push(objectToReturn)
             }
 
-            returnedList.push(objectToReturn)
-        }
+            res.status(200).json(returnedList)
+        }).catch((error) => {
+            if (error instanceof AppError) {
+                return res.status(400).json(error.message)
+            }
 
-        res.status(200).json(returnedList)
+            res.sendStatus(500)
+            console.error(error)
+        })
     }).catch((error) => {
         if (error instanceof AppError) {
+
+            if (error.message == AppErrorMessages.postDoesNotExist) {
+                return res.sendStatus(404)
+            }
+
             return res.status(400).json(error.message)
         }
 
         res.sendStatus(500)
         console.error(error)
     })
+
 })
 
 // Like comment
@@ -321,7 +358,7 @@ commentsRouter.post('/:commentId/like', authenticateToken, (req, res) => {
     }).catch((error) => {
         if (error instanceof AppError) {
 
-            if (error.message == AppErrorMessages.userDoesNotExist || error.message == AppErrorMessages.commentDoesNotExist) {
+            if (error.message == AppErrorMessages.commentDoesNotExist) {
                 return res.sendStatus(404).json(error.message)
             }
 
@@ -344,7 +381,7 @@ commentsRouter.post('/:commentId/unlike', authenticateToken, (req, res) => {
     }).catch((error) => {
         if (error instanceof AppError) {
 
-            if (error.message == AppErrorMessages.userDoesNotExist || error.message == AppErrorMessages.commentDoesNotExist) {
+            if (error.message == AppErrorMessages.commentDoesNotExist) {
                 return res.sendStatus(404).json(error.message)
             }
 

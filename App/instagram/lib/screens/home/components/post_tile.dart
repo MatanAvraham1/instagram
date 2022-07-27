@@ -124,7 +124,7 @@ class _PostTileState extends State<PostTile> {
         image: DecorationImage(
             image: CachedNetworkImageProvider(widget.post.photos.first,
                 headers: {
-                  "Authorization": AuthSerivce.getAuthorizationHeader()
+                  "Authorization": AuthService().getAuthorizationHeader()
                 }),
             fit: BoxFit.cover),
       ),
@@ -142,9 +142,9 @@ class _PostTileState extends State<PostTile> {
             size: 26,
             onTap: (isLiked) async {
               if (isLiked) {
-                await PostsDBService.unlikePost(widget.post.id);
+                await PostsDBService().unlikePost(widget.post.id);
               } else {
-                await PostsDBService.likePost(widget.post.id);
+                await PostsDBService().likePost(widget.post.id);
               }
               widget.post.isLikedByMe = !widget.post.isLikedByMe;
               return !isLiked;

@@ -49,7 +49,7 @@ class _StoryPageState extends State<StoryPage> {
           currentUser = widget.usersToPlay[pageIndex];
 
           return FutureBuilder<List<Story>>(
-            future: StoriesDBService.getLastDayStories(currentUser.id, 0),
+            future: StoriesDBService().getLastDayStories(currentUser.id, 0),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 return Text("Error! ${snapshot.error}");
@@ -88,7 +88,7 @@ class _StoryPageState extends State<StoryPage> {
                                   currentUser.profilePhoto,
                                   headers: {
                                     "Authorization":
-                                        AuthSerivce.getAuthorizationHeader()
+                                        AuthService().getAuthorizationHeader()
                                   }),
                               fit: BoxFit.cover,
                             ),

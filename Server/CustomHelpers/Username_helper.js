@@ -4,7 +4,7 @@ const Username = Object.freeze({
     isValid: (username) => {
         // Checks if username valid
 
-        return true
+        return username != null
     },
     isUsed: async (username) => {
         return (await UsersDB.isUsernameUsed(username))

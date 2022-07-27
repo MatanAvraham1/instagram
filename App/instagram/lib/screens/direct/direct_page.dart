@@ -34,7 +34,7 @@ class _DirectPageState extends State<DirectPage>
     super.build(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(AuthSerivce.connectedUser!.username),
+        title: Text(AuthService().connectedUser!.username),
         leading: const BackButton(),
         actions: [
           CircularButton(icon: const Icon(Icons.add), onPressed: () {})
@@ -98,8 +98,8 @@ class _DirectPageState extends State<DirectPage>
                         ]
                       : [
                           FutureBuilder<User>(
-                            future: UsersDBService.getUserByUsername(
-                                usernameToSearch),
+                            future: UsersDBService()
+                                .getUserByUsername(usernameToSearch),
                             builder: (context, snapshot) {
                               if (snapshot.hasError) {
                                 return const ListTile(
@@ -135,7 +135,7 @@ class _DirectPageState extends State<DirectPage>
                                                   CachedNetworkImageProvider(
                                                       e.profilePhoto,
                                                       headers: {
-                                                    "Authorization": AuthSerivce
+                                                    "Authorization": AuthService()
                                                         .getAuthorizationHeader()
                                                   }),
                                             ),

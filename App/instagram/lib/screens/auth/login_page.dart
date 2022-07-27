@@ -1,11 +1,15 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:instagram/exeptions/server_exceptions.dart';
 import 'package:instagram/screens/auth/components/custom_alert_dialog.dart';
-import 'package:instagram/screens/auth/components/custom_button.dart';
+import 'package:instagram/screens/auth/components/online_button.dart';
 import 'package:instagram/screens/auth/components/custom_form_field.dart';
 import 'package:instagram/screens/auth/register_page.dart';
 import 'package:instagram/services/auth_service.dart';
+import 'package:instagram/services/online_db_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -122,11 +126,23 @@ class _LoginPageState extends State<LoginPage> {
               });
             }),
         const SizedBox(height: 10),
-        CustomButton(
+        OnlineButton(
           text: "Log In",
           onPressed: () async {
             try {
-              await AuthSerivce.login(username, password);
+              if (!(await OnlineDBService().isThereInternetConnection())) {
+                showDialog(
+                  context: context,
+                  builder: (context) => const CustomAlertDialog(
+                    title: 'No Connection!',
+                    description:
+                        "No Internet Connection, please reconnect and try again..",
+                    continueButton: "Ok",
+                  ),
+                );
+              } else {
+                await AuthService().login(username, password);
+              }
             } on ServerException catch (e) {
               if (e.cause == ServerExceptionMessages.wrongLoginDetails) {
                 showDialog(
@@ -148,6 +164,16 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 );
               }
+            } on TimeoutException {
+              showDialog(
+                context: context,
+                builder: (context) => const CustomAlertDialog(
+                  title: 'Server Error!',
+                  description:
+                      "Sorry, our server is down please try again later..",
+                  continueButton: "Ok",
+                ),
+              );
             }
           },
           enableWhen: () {

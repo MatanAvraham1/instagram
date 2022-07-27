@@ -10,7 +10,8 @@ class StoriesDB {
             _id: story.id,
 
             publisherId: story.publisherId,
-            structure: story.structure,
+            widgets: story.widgets,
+            photo: story.photo,
 
             likes: [],
             viewers: [],
@@ -176,7 +177,8 @@ function storyObjectFromDbObject(dbObject) {
         id: dbObject._id.toString(),
 
         publisherId: dbObject.publisherId,
-        structure: dbObject.structure,
+        widgets: dbObject.widgets,
+        photo: dbObject.photo,
 
         likes: dbObject.likesCount,
         viewers: dbObject.viewers,

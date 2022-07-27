@@ -3,7 +3,7 @@ const TextChecker = Object.freeze({
         // Checks if text is ok and without unwanted things.
 
 
-        return true
+        return plainText != null
     }
 })
 

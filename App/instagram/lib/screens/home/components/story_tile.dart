@@ -31,8 +31,8 @@ class _StoryTileState extends State<StoryTile> {
       width: 70,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: (!widget.owner.isFollowedByMe && widget.owner.isPrivate) ||
-                widget.owner.stories == 0
+        gradient: !(AuthService().doesHasPermission(widget.owner)) ||
+                widget.owner.lastDayStories == 0
             ? null
             : const LinearGradient(
                 colors: [Colors.red, Colors.yellow],
@@ -45,7 +45,7 @@ class _StoryTileState extends State<StoryTile> {
           image: DecorationImage(
             image: CachedNetworkImageProvider(widget.owner.profilePhoto,
                 headers: {
-                  "Authorization": AuthSerivce.getAuthorizationHeader()
+                  "Authorization": AuthService().getAuthorizationHeader()
                 }),
             fit: BoxFit.cover,
           ),
@@ -57,7 +57,7 @@ class _StoryTileState extends State<StoryTile> {
     );
 
     return OpenContainer(
-      tappable: AuthSerivce.doesHasPermission(widget.owner) &&
+      tappable: AuthService().doesHasPermission(widget.owner) &&
           widget.owner.lastDayStories! > 0,
       closedElevation: 0,
       openElevation: 0,

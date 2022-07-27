@@ -1,12 +1,20 @@
-import 'dart:convert';
-
 import 'package:http/http.dart' as http;
 import 'package:instagram/exeptions/server_exceptions.dart';
 import 'package:instagram/services/ServerIP.dart';
 import 'package:instagram/services/auth_service.dart';
+import 'package:instagram/services/online_db_service.dart';
 
-class FriendshipsService {
-  static Future followUser(String userId) async {
+class FriendshipsService extends OnlineDBService {
+  static final FriendshipsService _friendshipsService =
+      FriendshipsService._internal();
+
+  factory FriendshipsService() {
+    return _friendshipsService;
+  }
+
+  FriendshipsService._internal();
+
+  Future followUser(String userId) async {
     /*
     Follows user
 
@@ -16,30 +24,14 @@ class FriendshipsService {
     var response = await http.post(
       Uri.parse(SERVER_API_URL + "friendships/follow?userToFollow=$userId"),
       headers: {
-        "authorization": AuthSerivce.getAuthorizationHeader(),
+        "authorization": AuthService().getAuthorizationHeader(),
       },
     );
 
-    if (response.statusCode == 400) {
-      var errorMessage = jsonDecode(response.body);
-
-      throw ServerException(errorMessage);
-    }
-    if (response.statusCode == 401) {
-      throw ServerException(ServerExceptionMessages.unauthorizedrequest);
-    }
-    if (response.statusCode == 403) {
-      throw ServerException(ServerExceptionMessages.forbiddenRequest);
-    }
-    if (response.statusCode == 404) {
-      throw ServerException(ServerExceptionMessages.userDoesNotExist);
-    }
-    if (response.statusCode == 500) {
-      throw ServerException(ServerExceptionMessages.serverError);
-    }
+    checkErrors(response, ServerExceptionMessages.userDoesNotExist);
   }
 
-  static Future unfollowUser(String userId) async {
+  Future unfollowUser(String userId) async {
     /*
     Unfollows user
 
@@ -49,30 +41,14 @@ class FriendshipsService {
     var response = await http.post(
       Uri.parse(SERVER_API_URL + "friendships/unfollow?userToUnfollow=$userId"),
       headers: {
-        "authorization": AuthSerivce.getAuthorizationHeader(),
+        "authorization": AuthService().getAuthorizationHeader(),
       },
     );
 
-    if (response.statusCode == 400) {
-      var errorMessage = jsonDecode(response.body);
-
-      throw ServerException(errorMessage);
-    }
-    if (response.statusCode == 401) {
-      throw ServerException(ServerExceptionMessages.unauthorizedrequest);
-    }
-    if (response.statusCode == 403) {
-      throw ServerException(ServerExceptionMessages.forbiddenRequest);
-    }
-    if (response.statusCode == 404) {
-      throw ServerException(ServerExceptionMessages.userDoesNotExist);
-    }
-    if (response.statusCode == 500) {
-      throw ServerException(ServerExceptionMessages.serverError);
-    }
+    checkErrors(response, ServerExceptionMessages.userDoesNotExist);
   }
 
-  static Future acceptFollowRequest(String userToAccept) async {
+  Future acceptFollowRequest(String userToAccept) async {
     /*
     Accepts follow request
 
@@ -83,30 +59,14 @@ class FriendshipsService {
       Uri.parse(SERVER_API_URL +
           "friendships/acceptRequest?userToAccept=$userToAccept"),
       headers: {
-        "authorization": AuthSerivce.getAuthorizationHeader(),
+        "authorization": AuthService().getAuthorizationHeader(),
       },
     );
 
-    if (response.statusCode == 400) {
-      var errorMessage = jsonDecode(response.body);
-
-      throw ServerException(errorMessage);
-    }
-    if (response.statusCode == 401) {
-      throw ServerException(ServerExceptionMessages.unauthorizedrequest);
-    }
-    if (response.statusCode == 403) {
-      throw ServerException(ServerExceptionMessages.forbiddenRequest);
-    }
-    if (response.statusCode == 404) {
-      throw ServerException(ServerExceptionMessages.userDoesNotExist);
-    }
-    if (response.statusCode == 500) {
-      throw ServerException(ServerExceptionMessages.serverError);
-    }
+    checkErrors(response, ServerExceptionMessages.userDoesNotExist);
   }
 
-  static Future declineFollowRequest(String userToDecline) async {
+  Future declineFollowRequest(String userToDecline) async {
     /*
     Declines follow request
 
@@ -117,30 +77,14 @@ class FriendshipsService {
       Uri.parse(SERVER_API_URL +
           "friendships/declineRequest?userToDecline=$userToDecline"),
       headers: {
-        "authorization": AuthSerivce.getAuthorizationHeader(),
+        "authorization": AuthService().getAuthorizationHeader(),
       },
     );
 
-    if (response.statusCode == 400) {
-      var errorMessage = jsonDecode(response.body);
-
-      throw ServerException(errorMessage);
-    }
-    if (response.statusCode == 401) {
-      throw ServerException(ServerExceptionMessages.unauthorizedrequest);
-    }
-    if (response.statusCode == 403) {
-      throw ServerException(ServerExceptionMessages.forbiddenRequest);
-    }
-    if (response.statusCode == 404) {
-      throw ServerException(ServerExceptionMessages.userDoesNotExist);
-    }
-    if (response.statusCode == 500) {
-      throw ServerException(ServerExceptionMessages.serverError);
-    }
+    checkErrors(response, ServerExceptionMessages.userDoesNotExist);
   }
 
-  static Future deleteFollowingRequest(String requestToDelete) async {
+  Future deleteFollowingRequest(String requestToDelete) async {
     /*
     Deletes following request
 
@@ -151,30 +95,14 @@ class FriendshipsService {
       Uri.parse(SERVER_API_URL +
           "friendships/deleteRequest?userToDelete=$requestToDelete"),
       headers: {
-        "authorization": AuthSerivce.getAuthorizationHeader(),
+        "authorization": AuthService().getAuthorizationHeader(),
       },
     );
 
-    if (response.statusCode == 400) {
-      var errorMessage = jsonDecode(response.body);
-
-      throw ServerException(errorMessage);
-    }
-    if (response.statusCode == 401) {
-      throw ServerException(ServerExceptionMessages.unauthorizedrequest);
-    }
-    if (response.statusCode == 403) {
-      throw ServerException(ServerExceptionMessages.forbiddenRequest);
-    }
-    if (response.statusCode == 404) {
-      throw ServerException(ServerExceptionMessages.userDoesNotExist);
-    }
-    if (response.statusCode == 500) {
-      throw ServerException(ServerExceptionMessages.serverError);
-    }
+    checkErrors(response, ServerExceptionMessages.userDoesNotExist);
   }
 
-  static Future removeUserFromFollowers(String userToRemove) async {
+  Future removeUserFromFollowers(String userToRemove) async {
     /*
     Removes user from my followers
 
@@ -185,26 +113,10 @@ class FriendshipsService {
       Uri.parse(SERVER_API_URL +
           "friendships/removeFollower?userToRemove=$userToRemove"),
       headers: {
-        "authorization": AuthSerivce.getAuthorizationHeader(),
+        "authorization": AuthService().getAuthorizationHeader(),
       },
     );
 
-    if (response.statusCode == 400) {
-      var errorMessage = jsonDecode(response.body);
-
-      throw ServerException(errorMessage);
-    }
-    if (response.statusCode == 401) {
-      throw ServerException(ServerExceptionMessages.unauthorizedrequest);
-    }
-    if (response.statusCode == 403) {
-      throw ServerException(ServerExceptionMessages.forbiddenRequest);
-    }
-    if (response.statusCode == 404) {
-      throw ServerException(ServerExceptionMessages.userDoesNotExist);
-    }
-    if (response.statusCode == 500) {
-      throw ServerException(ServerExceptionMessages.serverError);
-    }
+    checkErrors(response, ServerExceptionMessages.userDoesNotExist);
   }
 }

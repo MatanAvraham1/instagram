@@ -6,9 +6,19 @@ import 'package:instagram/models/comment_model.dart';
 import 'package:instagram/models/user_model.dart';
 import 'package:instagram/services/ServerIP.dart';
 import 'package:instagram/services/auth_service.dart';
+import 'package:instagram/services/online_db_service.dart';
 
-class CommentsDBService {
-  static Future<Comment> getComment(String commentId) async {
+class CommentsDBService extends OnlineDBService {
+  static final CommentsDBService _commentsDBService =
+      CommentsDBService._internal();
+
+  factory CommentsDBService() {
+    return _commentsDBService;
+  }
+
+  CommentsDBService._internal();
+
+  Future<Comment> getComment(String commentId) async {
     /*
     Returns some comment
 
@@ -19,32 +29,15 @@ class CommentsDBService {
 
     var response = await http
         .get(Uri.parse(SERVER_API_URL + "comments/$commentId"), headers: {
-      "authorization": AuthSerivce.getAuthorizationHeader(),
+      "authorization": AuthService().getAuthorizationHeader(),
     });
 
-    if (response.statusCode == 400) {
-      var errorMessage = jsonDecode(response.body);
-      ;
-
-      throw ServerException(errorMessage);
-    }
-    if (response.statusCode == 401) {
-      throw ServerException(ServerExceptionMessages.unauthorizedrequest);
-    }
-    if (response.statusCode == 403) {
-      throw ServerException(ServerExceptionMessages.forbiddenRequest);
-    }
-    if (response.statusCode == 404) {
-      throw ServerException(ServerExceptionMessages.commentDoesNotExist);
-    }
-    if (response.statusCode == 500) {
-      throw ServerException(ServerExceptionMessages.serverError);
-    }
+    checkErrors(response, ServerExceptionMessages.commentDoesNotExist);
 
     return Comment.fromJson(response.body);
   }
 
-  static Future<List<Map<User, Comment>>> getCommentsByPostId(
+  Future<List<Map<User, Comment>>> getCommentsByPostId(
     String postId,
     int startIndex,
   ) async {
@@ -59,27 +52,10 @@ class CommentsDBService {
         Uri.parse(SERVER_API_URL +
             "comments?startIndex=$startIndex&postId=$postId&includePublisher=true"),
         headers: {
-          "authorization": AuthSerivce.getAuthorizationHeader(),
+          "authorization": AuthService().getAuthorizationHeader(),
         });
 
-    if (response.statusCode == 400) {
-      var errorMessage = jsonDecode(response.body);
-      ;
-
-      throw ServerException(errorMessage);
-    }
-    if (response.statusCode == 401) {
-      throw ServerException(ServerExceptionMessages.unauthorizedrequest);
-    }
-    if (response.statusCode == 403) {
-      throw ServerException(ServerExceptionMessages.forbiddenRequest);
-    }
-    if (response.statusCode == 404) {
-      throw ServerException(ServerExceptionMessages.postDoesNotExist);
-    }
-    if (response.statusCode == 500) {
-      throw ServerException(ServerExceptionMessages.serverError);
-    }
+    checkErrors(response, ServerExceptionMessages.postDoesNotExist);
 
     List<Map<User, Comment>> comments = [];
     for (var commentObject in jsonDecode(response.body)) {
@@ -91,7 +67,7 @@ class CommentsDBService {
     return comments;
   }
 
-  static Future<List<Comment>> getCommentsByPublisherId(
+  Future<List<Comment>> getCommentsByPublisherId(
     String publisherId,
     int startIndex,
   ) async {
@@ -107,27 +83,10 @@ class CommentsDBService {
         Uri.parse(SERVER_API_URL +
             "comments?startIndex=$startIndex&publisherId=$publisherId"),
         headers: {
-          "authorization": AuthSerivce.getAuthorizationHeader(),
+          "authorization": AuthService().getAuthorizationHeader(),
         });
 
-    if (response.statusCode == 400) {
-      var errorMessage = jsonDecode(response.body);
-      ;
-
-      throw ServerException(errorMessage);
-    }
-    if (response.statusCode == 401) {
-      throw ServerException(ServerExceptionMessages.unauthorizedrequest);
-    }
-    if (response.statusCode == 403) {
-      throw ServerException(ServerExceptionMessages.forbiddenRequest);
-    }
-    if (response.statusCode == 404) {
-      throw ServerException(ServerExceptionMessages.userDoesNotExist);
-    }
-    if (response.statusCode == 500) {
-      throw ServerException(ServerExceptionMessages.serverError);
-    }
+    checkErrors(response, ServerExceptionMessages.userDoesNotExist);
 
     List<Comment> comments = [];
     for (var commentObject in jsonDecode(response.body)) {
@@ -137,7 +96,7 @@ class CommentsDBService {
     return comments;
   }
 
-  static Future<List<Comment>> getReplies(
+  Future<List<Comment>> getReplies(
     String commentId,
     int startIndex,
   ) async {
@@ -153,27 +112,10 @@ class CommentsDBService {
         Uri.parse(SERVER_API_URL +
             "comments?startIndex=$startIndex&replyToComment=$commentId"),
         headers: {
-          "authorization": AuthSerivce.getAuthorizationHeader(),
+          "authorization": AuthService().getAuthorizationHeader(),
         });
 
-    if (response.statusCode == 400) {
-      var errorMessage = jsonDecode(response.body);
-      ;
-
-      throw ServerException(errorMessage);
-    }
-    if (response.statusCode == 401) {
-      throw ServerException(ServerExceptionMessages.unauthorizedrequest);
-    }
-    if (response.statusCode == 403) {
-      throw ServerException(ServerExceptionMessages.forbiddenRequest);
-    }
-    if (response.statusCode == 404) {
-      throw ServerException(ServerExceptionMessages.commentDoesNotExist);
-    }
-    if (response.statusCode == 500) {
-      throw ServerException(ServerExceptionMessages.serverError);
-    }
+    checkErrors(response, ServerExceptionMessages.commentDoesNotExist);
 
     List<Comment> comments = [];
     for (var commentObject in jsonDecode(response.body)) {
@@ -183,8 +125,7 @@ class CommentsDBService {
     return comments;
   }
 
-  static Future uploadComment(
-      String userId, String postId, Comment comment) async {
+  Future uploadComment(String userId, String postId, Comment comment) async {
     /*
     Uploads new post
 
@@ -197,33 +138,17 @@ class CommentsDBService {
       Uri.parse(SERVER_API_URL + "comments/"),
       headers: {
         'Content-type': 'application/json',
-        "authorization": AuthSerivce.getAuthorizationHeader(),
+        "authorization": AuthService().getAuthorizationHeader(),
       },
       body: jsonEncode({
         'comment': comment.comment,
       }),
     );
 
-    if (response.statusCode == 400) {
-      var errorMessage = jsonDecode(response.body);
-
-      throw ServerException(errorMessage);
-    }
-    if (response.statusCode == 401) {
-      throw ServerException(ServerExceptionMessages.unauthorizedrequest);
-    }
-    if (response.statusCode == 403) {
-      throw ServerException(ServerExceptionMessages.forbiddenRequest);
-    }
-    if (response.statusCode == 404) {
-      throw ServerException(ServerExceptionMessages.postDoesNotExist);
-    }
-    if (response.statusCode == 500) {
-      throw ServerException(ServerExceptionMessages.serverError);
-    }
+    checkErrors(response, ServerExceptionMessages.postDoesNotExist);
   }
 
-  static Future deleteComment(String commentId) async {
+  Future deleteComment(String commentId) async {
     /*
     Deletes comment
 
@@ -232,30 +157,13 @@ class CommentsDBService {
 
     var response =
         await http.delete(Uri.parse(SERVER_API_URL + "comments/"), headers: {
-      "authorization": AuthSerivce.getAuthorizationHeader(),
+      "authorization": AuthService().getAuthorizationHeader(),
     });
 
-    if (response.statusCode == 400) {
-      var errorMessage = jsonDecode(response.body);
-      ;
-
-      throw ServerException(errorMessage);
-    }
-    if (response.statusCode == 401) {
-      throw ServerException(ServerExceptionMessages.unauthorizedrequest);
-    }
-    if (response.statusCode == 403) {
-      throw ServerException(ServerExceptionMessages.forbiddenRequest);
-    }
-    if (response.statusCode == 404) {
-      throw ServerException(ServerExceptionMessages.commentDoesNotExist);
-    }
-    if (response.statusCode == 500) {
-      throw ServerException(ServerExceptionMessages.serverError);
-    }
+    checkErrors(response, ServerExceptionMessages.commentDoesNotExist);
   }
 
-  static Future likeComment(String commentId) async {
+  Future likeComment(String commentId) async {
     /*
     Likes comment
 
@@ -266,31 +174,14 @@ class CommentsDBService {
       Uri.parse(SERVER_API_URL + "comments/$commentId/like"),
       headers: {
         'Content-type': 'application/json',
-        "authorization": AuthSerivce.getAuthorizationHeader(),
+        "authorization": AuthService().getAuthorizationHeader(),
       },
     );
 
-    if (response.statusCode == 400) {
-      var errorMessage = jsonDecode(response.body);
-      ;
-
-      throw ServerException(errorMessage);
-    }
-    if (response.statusCode == 401) {
-      throw ServerException(ServerExceptionMessages.unauthorizedrequest);
-    }
-    if (response.statusCode == 403) {
-      throw ServerException(ServerExceptionMessages.forbiddenRequest);
-    }
-    if (response.statusCode == 404) {
-      throw ServerException(ServerExceptionMessages.commentDoesNotExist);
-    }
-    if (response.statusCode == 500) {
-      throw ServerException(ServerExceptionMessages.serverError);
-    }
+    checkErrors(response, ServerExceptionMessages.commentDoesNotExist);
   }
 
-  static Future unlikeComment(String commentId) async {
+  Future unlikeComment(String commentId) async {
     /*
     Unlikes comment
 
@@ -301,27 +192,10 @@ class CommentsDBService {
       Uri.parse(SERVER_API_URL + "comments/$commentId/unlike"),
       headers: {
         'Content-type': 'application/json',
-        "authorization": AuthSerivce.getAuthorizationHeader(),
+        "authorization": AuthService().getAuthorizationHeader(),
       },
     );
 
-    if (response.statusCode == 400) {
-      var errorMessage = jsonDecode(response.body);
-      ;
-
-      throw ServerException(errorMessage);
-    }
-    if (response.statusCode == 401) {
-      throw ServerException(ServerExceptionMessages.unauthorizedrequest);
-    }
-    if (response.statusCode == 403) {
-      throw ServerException(ServerExceptionMessages.forbiddenRequest);
-    }
-    if (response.statusCode == 404) {
-      throw ServerException(ServerExceptionMessages.postDoesNotExist);
-    }
-    if (response.statusCode == 500) {
-      throw ServerException(ServerExceptionMessages.serverError);
-    }
+    checkErrors(response, ServerExceptionMessages.commentDoesNotExist);
   }
 }

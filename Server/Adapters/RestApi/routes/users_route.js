@@ -7,14 +7,13 @@ const { getUserById, deleteUserById, updateFields, getUserByUsername, getUserByF
 const { AppError, AppErrorMessages } = require('../../../app_error');
 const { AuthenticationService } = require('../../../CustomHelpers/Authantication');
 const { getLastDayStoriesCount } = require('../../../Use_cases/story');
+const { PROFILE_PHOTOS_FOLDER } = require('../../../Constants');
 const userRouter = express.Router()
-
-const profilePhotosFolderPath = path.join(path.join(path.dirname(path.dirname(path.dirname(__dirname))), 'profilePhotos/'))
 
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, profilePhotosFolderPath);
+        cb(null, PROFILE_PHOTOS_FOLDER);
     },
     filename: function (req, file, cb) {
         cb(null, new Date().toISOString().replace(/:/g, '-') + '.' + mime.getExtension(file.mimetype));
@@ -77,8 +76,8 @@ userRouter.get('/:userToSearch', authenticateToken, async (req, res) => {
 })
 
 // Deletes user
-userRouter.delete('/:userId', authenticateToken, doesOwnUserObject, (req, res) => {
-    const userId = req.params.userId
+userRouter.delete('/', authenticateToken, (req, res) => {
+    const userId = req.userId
 
     deleteUserById({ userId: userId }).then(() => {
         res.sendStatus(200)
@@ -107,17 +106,16 @@ userRouter.patch('/', authenticateToken, upload.single('profilePhoto'), (req, re
     const newFullname = newFields.fullname
     const newBio = newFields.bio
     const newIsPrivate = newFields.isPrivate
-    const newProfilePhoto = req.file.filename
+    const newProfilePhoto = req.file == null ? undefined : req.file.filename
+
+    if (newUsername == undefined && newFullname == undefined && newBio == undefined && newIsPrivate == undefined && newProfilePhoto == undefined) {
+        return res.sendStatus(400)
+    }
 
     updateFields({ newProfilePhoto: newProfilePhoto, userId: userId, newUsername: newUsername, newFullname: newFullname, newBio: newBio, newIsPrivate: newIsPrivate }).then(() => {
         res.sendStatus(200)
     }).catch((error) => {
         if (error instanceof AppError) {
-
-            if (error.message == AppErrorMessages.userDoesNotExist) {
-                return res.sendStatus(404)
-            }
-
             return res.status(400).json(error.message)
         }
 
@@ -130,27 +128,40 @@ userRouter.patch('/', authenticateToken, upload.single('profilePhoto'), (req, re
 // Gets followers of user
 userRouter.get('/:userId/followers', authenticateToken, async (req, res) => {
 
-    const firstUserId = req.userId
-    const secondUserId = req.params.userId
-    const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
-    if (!doesHasPermission) {
-        return res.sendStatus(403)
-    }
-
     const startIndex = parseInt(req.query.startIndex)
 
     if (!Number.isInteger(startIndex)) {
-        return res.status(400).json("Invalid start index.")
+        return res.status(400).json(AppErrorMessages.invalidStartIndex)
     }
 
-    getFollowers({ userId: secondUserId, startIndex: startIndex }).then(async (followers) => {
-
-        const response = [];
-        for (const user of followers) {
-            response.push(await returnUserResponseObject(req.userId, user))
+    const firstUserId = req.userId
+    const secondUserId = req.params.userId
+    AuthenticationService.hasPermission(firstUserId, secondUserId).then((_hasPermission) => {
+        if (!_hasPermission) {
+            return res.sendStatus(403)
         }
 
-        return res.status(200).json(response)
+        getFollowers({ userId: secondUserId, startIndex: startIndex }).then(async (followers) => {
+
+            const response = [];
+            for (const user of followers) {
+                response.push(await returnUserResponseObject(req.userId, user))
+            }
+
+            return res.status(200).json(response)
+        }).catch((error) => {
+            if (error instanceof AppError) {
+
+                if (error.message == AppErrorMessages.userDoesNotExist) {
+                    return res.sendStatus(404)
+                }
+
+                return res.status(400).json(error.message)
+            }
+
+            res.sendStatus(500)
+            console.error(error)
+        })
     }).catch((error) => {
         if (error instanceof AppError) {
 
@@ -169,27 +180,40 @@ userRouter.get('/:userId/followers', authenticateToken, async (req, res) => {
 // Gets followings of user
 userRouter.get('/:userId/followings', authenticateToken, async (req, res) => {
 
-    const firstUserId = req.userId
-    const secondUserId = req.params.userId
-    const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
-    if (!doesHasPermission) {
-        return res.sendStatus(403)
-    }
-
-    const userId = req.params.userId
     const startIndex = parseInt(req.query.startIndex)
 
     if (!Number.isInteger(startIndex)) {
-        return res.status(400).json("Invalid start index.")
+        return res.status(400).json(AppErrorMessages.invalidStartIndex)
     }
 
-    getFollowings({ userId: userId, startIndex: startIndex }).then(async (followings) => {
-        const response = [];
-        for (const user of followings) {
-            response.push(await returnUserResponseObject(req.userId, user))
+    const firstUserId = req.userId
+    const secondUserId = req.params.userId
+    AuthenticationService.hasPermission(firstUserId, secondUserId).then((_hasPermission) => {
+        if (!_hasPermission) {
+            return res.sendStatus(403)
         }
 
-        res.status(200).json(response)
+        getFollowings({ userId: secondUserId, startIndex: startIndex }).then(async (followings) => {
+
+            const response = [];
+            for (const user of followings) {
+                response.push(await returnUserResponseObject(req.userId, user))
+            }
+
+            return res.status(200).json(response)
+        }).catch((error) => {
+            if (error instanceof AppError) {
+
+                if (error.message == AppErrorMessages.userDoesNotExist) {
+                    return res.sendStatus(404)
+                }
+
+                return res.status(400).json(error.message)
+            }
+
+            res.sendStatus(500)
+            console.error(error)
+        })
     }).catch((error) => {
         if (error instanceof AppError) {
 
@@ -227,6 +251,7 @@ async function returnUserResponseObject(requesterUserId, secondUserObject) {
         posts: secondUserObject.posts,
     }
 
+    // We dont check errors because we cant get errors in this case
     const doesHasPermission = await AuthenticationService.hasPermission(requesterUserId, secondUserObject.id)
     if (doesHasPermission) {
         returnedObject.lastDayStories = await getLastDayStoriesCount({ publisherId: secondUserObject.id })
@@ -264,12 +289,12 @@ async function returnUserResponseObject(requesterUserId, secondUserObject) {
     return returnedObject
 }
 
-
+// TODO: delete old profile photo when changed
 // Gets post photo
 userRouter.get('/:userId/:photoName', authenticateToken, (req, res) => {
     const photoName = req.params.photoName
 
-    return res.sendFile(path.join(profilePhotosFolderPath, photoName))
+    return res.sendFile(path.join(PROFILE_PHOTOS_FOLDER, photoName))
 })
 
 

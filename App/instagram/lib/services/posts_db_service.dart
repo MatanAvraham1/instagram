@@ -5,9 +5,18 @@ import 'package:instagram/models/post_model.dart';
 import 'package:instagram/services/ServerIP.dart';
 import 'package:http/http.dart' as http;
 import 'package:instagram/services/auth_service.dart';
+import 'package:instagram/services/online_db_service.dart';
 
-class PostsDBService {
-  static Future<Post> getPost(String postId) async {
+class PostsDBService extends OnlineDBService {
+  static final PostsDBService _postsDBService = PostsDBService._internal();
+
+  factory PostsDBService() {
+    return _postsDBService;
+  }
+
+  PostsDBService._internal();
+
+  Future<Post> getPost(String postId) async {
     /*
     Returns some post
 
@@ -17,33 +26,16 @@ class PostsDBService {
 
     var response =
         await http.get(Uri.parse("${SERVER_API_URL}posts/$postId"), headers: {
-      "authorization": AuthSerivce.getAuthorizationHeader(),
+      "authorization": AuthService().getAuthorizationHeader(),
     });
 
-    if (response.statusCode == 400) {
-      var errorMessage = jsonDecode(response.body);
-      ;
-
-      throw ServerException(errorMessage);
-    }
-    if (response.statusCode == 401) {
-      throw ServerException(ServerExceptionMessages.unauthorizedrequest);
-    }
-    if (response.statusCode == 403) {
-      throw ServerException(ServerExceptionMessages.forbiddenRequest);
-    }
-    if (response.statusCode == 404) {
-      throw ServerException(ServerExceptionMessages.postDoesNotExist);
-    }
-    if (response.statusCode == 500) {
-      throw ServerException(ServerExceptionMessages.serverError);
-    }
+    checkErrors(response, ServerExceptionMessages.postDoesNotExist);
 
     return Post.fromJson(response.body);
   }
 
   // TODO: work on the real add posts
-  static Future uploadPost(Post post) async {
+  Future uploadPost(Post post) async {
     /*
     Uploads new post
 
@@ -58,7 +50,7 @@ class PostsDBService {
     var request =
         http.MultipartRequest("POST", Uri.parse("$SERVER_API_URL/posts/"));
 
-    request.headers["authorization"] = AuthSerivce.getAuthorizationHeader();
+    request.headers["authorization"] = AuthService().getAuthorizationHeader();
 
     request.fields['taggedUsers'] = post.taggedUsers.toString();
     request.fields['publisherComment'] = post.publisherComment;
@@ -69,26 +61,10 @@ class PostsDBService {
 
     var response = await http.Response.fromStream(streamdResponse);
 
-    if (response.statusCode == 400) {
-      var errorMessage = jsonDecode(response.body);
-
-      throw ServerException(errorMessage);
-    }
-    if (response.statusCode == 401) {
-      throw ServerException(ServerExceptionMessages.unauthorizedrequest);
-    }
-    if (response.statusCode == 403) {
-      throw ServerException(ServerExceptionMessages.forbiddenRequest);
-    }
-    if (response.statusCode == 404) {
-      throw ServerException(ServerExceptionMessages.userDoesNotExist);
-    }
-    if (response.statusCode == 500) {
-      throw ServerException(ServerExceptionMessages.serverError);
-    }
+    checkErrors(response, ServerExceptionMessages.userDoesNotExist);
   }
 
-  static Future deletePost(String postId) async {
+  Future deletePost(String postId) async {
     /*
     Deletes post
 
@@ -97,30 +73,13 @@ class PostsDBService {
 
     var response = await http
         .delete(Uri.parse(SERVER_API_URL + "posts/$postId"), headers: {
-      "authorization": AuthSerivce.getAuthorizationHeader(),
+      "authorization": AuthService().getAuthorizationHeader(),
     });
 
-    if (response.statusCode == 400) {
-      var errorMessage = jsonDecode(response.body);
-      ;
-
-      throw ServerException(errorMessage);
-    }
-    if (response.statusCode == 401) {
-      throw ServerException(ServerExceptionMessages.unauthorizedrequest);
-    }
-    if (response.statusCode == 403) {
-      throw ServerException(ServerExceptionMessages.forbiddenRequest);
-    }
-    if (response.statusCode == 404) {
-      throw ServerException(ServerExceptionMessages.postDoesNotExist);
-    }
-    if (response.statusCode == 500) {
-      throw ServerException(ServerExceptionMessages.serverError);
-    }
+    checkErrors(response, ServerExceptionMessages.postDoesNotExist);
   }
 
-  static Future<List<Post>> getPostsByPublisherId(
+  Future<List<Post>> getPostsByPublisherId(
       String publisherId, int startIndex) async {
     /*
     Returns the posts of user
@@ -134,26 +93,10 @@ class PostsDBService {
         Uri.parse(SERVER_API_URL +
             "posts?startIndex=$startIndex&publisherId=$publisherId"),
         headers: {
-          "authorization": AuthSerivce.getAuthorizationHeader(),
+          "authorization": AuthService().getAuthorizationHeader(),
         });
 
-    if (response.statusCode == 400) {
-      var errorMessage = jsonDecode(response.body);
-
-      throw ServerException(errorMessage);
-    }
-    if (response.statusCode == 401) {
-      throw ServerException(ServerExceptionMessages.unauthorizedrequest);
-    }
-    if (response.statusCode == 403) {
-      throw ServerException(ServerExceptionMessages.forbiddenRequest);
-    }
-    if (response.statusCode == 404) {
-      throw ServerException(ServerExceptionMessages.userDoesNotExist);
-    }
-    if (response.statusCode == 500) {
-      throw ServerException(ServerExceptionMessages.serverError);
-    }
+    checkErrors(response, ServerExceptionMessages.userDoesNotExist);
 
     List<Post> posts = [];
     for (var postObject in jsonDecode(response.body)) {
@@ -163,7 +106,7 @@ class PostsDBService {
     return posts;
   }
 
-  static Future likePost(String postId) async {
+  Future likePost(String postId) async {
     /*
     Likes post
 
@@ -174,31 +117,13 @@ class PostsDBService {
       Uri.parse(SERVER_API_URL + "posts/$postId/like"),
       headers: {
         'Content-type': 'application/json',
-        "authorization": AuthSerivce.getAuthorizationHeader(),
+        "authorization": AuthService().getAuthorizationHeader(),
       },
     );
-
-    if (response.statusCode == 400) {
-      var errorMessage = jsonDecode(response.body);
-      ;
-
-      throw ServerException(errorMessage);
-    }
-    if (response.statusCode == 401) {
-      throw ServerException(ServerExceptionMessages.unauthorizedrequest);
-    }
-    if (response.statusCode == 403) {
-      throw ServerException(ServerExceptionMessages.forbiddenRequest);
-    }
-    if (response.statusCode == 404) {
-      throw ServerException(ServerExceptionMessages.postDoesNotExist);
-    }
-    if (response.statusCode == 500) {
-      throw ServerException(ServerExceptionMessages.serverError);
-    }
+    checkErrors(response, ServerExceptionMessages.postDoesNotExist);
   }
 
-  static Future unlikePost(String postId) async {
+  Future unlikePost(String postId) async {
     /*
     Unlikes post
 
@@ -209,27 +134,10 @@ class PostsDBService {
       Uri.parse(SERVER_API_URL + "posts/$postId/unlike"),
       headers: {
         'Content-type': 'application/json',
-        "authorization": AuthSerivce.getAuthorizationHeader(),
+        "authorization": AuthService().getAuthorizationHeader(),
       },
     );
 
-    if (response.statusCode == 400) {
-      var errorMessage = jsonDecode(response.body);
-      ;
-
-      throw ServerException(errorMessage);
-    }
-    if (response.statusCode == 401) {
-      throw ServerException(ServerExceptionMessages.unauthorizedrequest);
-    }
-    if (response.statusCode == 403) {
-      throw ServerException(ServerExceptionMessages.forbiddenRequest);
-    }
-    if (response.statusCode == 404) {
-      throw ServerException(ServerExceptionMessages.postDoesNotExist);
-    }
-    if (response.statusCode == 500) {
-      throw ServerException(ServerExceptionMessages.serverError);
-    }
+    checkErrors(response, ServerExceptionMessages.postDoesNotExist);
   }
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:instagram/exeptions/server_exceptions.dart';
 import 'package:instagram/screens/auth/components/custom_alert_dialog.dart';
-import 'package:instagram/screens/auth/components/custom_button.dart';
+import 'package:instagram/screens/auth/components/online_button.dart';
 import 'package:instagram/screens/auth/components/custom_form_field.dart';
 import 'package:instagram/services/auth_service.dart';
 
@@ -119,11 +119,11 @@ class _RegisterPageState extends State<RegisterPage> {
               });
             }),
         const SizedBox(height: 10),
-        CustomButton(
+        OnlineButton(
             text: "Register",
             onPressed: () async {
               try {
-                await AuthSerivce.register(username, password);
+                await AuthService().register(username, password);
                 Navigator.of(context).pop();
               } on ServerException catch (e) {
                 if (e.cause == ServerExceptionMessages.invalidUsername) {

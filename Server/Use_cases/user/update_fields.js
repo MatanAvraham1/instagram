@@ -32,9 +32,19 @@ function buildUpdateFields({ UsersDB, Id, Username, Fullname, Bio, AppError, App
         }
 
         if (newIsPrivate != undefined) {
-            if (typeof newIsPrivate != "boolean") {
+            if (newIsPrivate == 'true') {
+                newIsPrivate = true
+            }
+            else if (newIsPrivate == 'false') {
+                newIsPrivate = false
+            }
+            else {
                 throw new AppError(AppErrorMessages.invalid_IsPrivate)
             }
+
+            // if (typeof newIsPrivate != "boolean") {
+            //     throw new AppError(AppErrorMessages.invalid_IsPrivate)
+            // }
         }
 
         if (newProfilePhoto != undefined) {

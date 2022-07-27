@@ -11,7 +11,7 @@ const storyModel = mongoose.model("Story", mongoose.Schema({
         required: true,
     },
     structure: {
-        type: Array,
+        type: Object,
         required: true,
     },
 

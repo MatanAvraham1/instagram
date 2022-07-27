@@ -1,12 +1,12 @@
-const { AppError } = require('../../app_error')
+const { AppError, AppErrorMessages } = require('../../app_error')
 const { AuthenticationService } = require('../../CustomHelpers/Authantication')
 const { Id } = require('../../CustomHelpers/Id_helper')
-const { getUserById } = require('../../Use_cases/user')
+const { getUserById, doesUserExist } = require('../../Use_cases/user')
 const { getPostById } = require('../../Use_cases/post')
 const { getStoryById } = require('../../Use_cases/story')
 const { getCommentById } = require('../../Use_cases/comment')
 
-function authenticateToken(req, res, next) {
+async function authenticateToken(req, res, next) {
     const authHeader = req.headers.authorization
 
     if (authHeader != null) {
@@ -15,6 +15,11 @@ function authenticateToken(req, res, next) {
         try {
             const { userId } = AuthenticationService.authenticateToken(token)
             req.userId = userId
+
+            // If the requester user doesn't exist
+            if (!(await doesUserExist({ userId }))) {
+                return res.sendStatus(403)
+            }
 
             return next()
         }
@@ -30,12 +35,7 @@ function authenticateToken(req, res, next) {
 async function doesOwnUserObject(req, res, next) {
 
     try {
-
-        if (!Id.isValid(req.params.userId)) {
-            return res.status(400).json("Can't perfrom request of invalid id.")
-        }
-
-        const user = await getUserById(req.params.userId)
+        const user = await getUserById({ userId: req.params.userId })
 
         if (user.id != req.userId) {
             return res.sendStatus(403)
@@ -45,6 +45,11 @@ async function doesOwnUserObject(req, res, next) {
     }
     catch (err) {
         if (err instanceof AppError) {
+
+            if (err.message == AppErrorMessages.userDoesNotExist) {
+                return res.sendStatus(404)
+            }
+
             return res.status(400).json(err.message)
         }
 
@@ -56,11 +61,6 @@ async function doesOwnUserObject(req, res, next) {
 async function doesOwnStoryObject(req, res, next) {
 
     try {
-
-        if (!Id.isValid(req.params.storyId)) {
-            return res.status(400).json("Can't perfrom request of invalid id.")
-        }
-
         const story = await getStoryById(req.params.storyId)
 
         if (story.publisherId != req.userId) {
@@ -71,6 +71,11 @@ async function doesOwnStoryObject(req, res, next) {
     }
     catch (err) {
         if (err instanceof AppError) {
+
+            if (err.message == AppErrorMessages.storyDoesNotExist) {
+                return res.sendStatus(404)
+            }
+
             return res.status(400).json(err.message)
         }
 
@@ -83,12 +88,7 @@ async function doesOwnStoryObject(req, res, next) {
 async function doesOwnPostObject(req, res, next) {
 
     try {
-
-        if (!Id.isValid(req.params.postId)) {
-            return res.status(400).json("Can't perfrom request of invalid id.")
-        }
-
-        const post = await getPostById(req.params.postId)
+        const post = await getPostById({ postId: req.params.postId })
 
         if (post.publisherId != req.userId) {
             return res.sendStatus(403)
@@ -98,6 +98,11 @@ async function doesOwnPostObject(req, res, next) {
     }
     catch (err) {
         if (err instanceof AppError) {
+
+            if (err.message == AppErrorMessages.postDoesNotExist) {
+                return res.sendStatus(404)
+            }
+
             return res.status(400).json(err.message)
         }
 
@@ -109,11 +114,6 @@ async function doesOwnPostObject(req, res, next) {
 async function doesOwnCommentObject(req, res, next) {
 
     try {
-
-        if (!Id.isValid(req.params.commentId)) {
-            return res.status(400).json("Can't perfrom request of invalid id.")
-        }
-
         const comment = await getCommentById(req.params.commentId)
 
         if (comment.publisherId != req.userId) {
@@ -124,6 +124,11 @@ async function doesOwnCommentObject(req, res, next) {
     }
     catch (err) {
         if (err instanceof AppError) {
+
+            if (err.message == AppErrorMessages.commentDoesNotExist) {
+                return res.sendStatus(404)
+            }
+
             return res.status(400).json(err.message)
         }
 
@@ -131,19 +136,5 @@ async function doesOwnCommentObject(req, res, next) {
         return res.sendStatus(500)
     }
 }
-
-
-// async function doesHasPermission(req, res, next) {
-
-//     const firstUserId = req.userId
-//     const secondUserId = req.params.userId
-
-//     const doesHasPermission = await AuthenticationService.hasPermission(firstUserId, secondUserId)
-//     if (!doesHasPermission) {
-//         return res.sendStatus(401)
-//     }
-
-//     next()
-// }
 
 module.exports = { authenticateToken, doesOwnUserObject, doesOwnStoryObject, doesOwnPostObject, doesOwnCommentObject }
