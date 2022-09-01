@@ -28,7 +28,7 @@ class PostsDB {
             createdAt: post.createdAt
         })
         await postObject.save()
-        await userModel.findByIdAndUpdate(post.publisherId, { $inc: { postsCount: 0 } });
+        await userModel.findByIdAndUpdate(post.publisherId, { $inc: { postsCount: 1 } });
     }
 
     static async findById(postId) {
@@ -91,6 +91,9 @@ class PostsDB {
         await postModel.findByIdAndDelete(postId)
         // Deletes the comments of this post
         await CommentsDB.deleteByPostId(postId)
+
+        await userModel.findByIdAndUpdate(post.publisherId, { $inc: { postsCount: -1 } });
+
     }
 
     static async doesPostExist(postId) {
@@ -166,7 +169,7 @@ class PostsDB {
         param 2: the liker id
         */
 
-        await postModel.findByIdAndUpdate(postId, { $addToSet: { likes: whoLikeId } })
+        await postModel.findByIdAndUpdate(postId, { $addToSet: { likes: whoLikeId, }, $inc: { likesCount: 1 } })
     }
 
     static async unlikePost(postId, whoLikeId) {
@@ -177,7 +180,7 @@ class PostsDB {
         param 2: the liker id
         */
 
-        await postModel.findByIdAndUpdate(postId, { $pull: { likes: whoLikeId } })
+        await postModel.findByIdAndUpdate(postId, { $pull: { likes: whoLikeId }, $inc: { likesCount: -1 } })
     }
 
 }

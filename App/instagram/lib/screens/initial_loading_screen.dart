@@ -10,7 +10,6 @@ import 'package:instagram/screens/no_internet_screen.dart';
 import 'package:instagram/screens/server_down_screen.dart';
 import 'package:instagram/services/auth_service.dart';
 import 'package:instagram/services/online_db_service.dart';
-import 'package:internet_connection_checker/internet_connection_checker.dart';
 
 class InitialLoadingScreen extends StatefulWidget {
   const InitialLoadingScreen({Key? key}) : super(key: key);
@@ -25,7 +24,7 @@ class _InitialLoadingScreenState extends State<InitialLoadingScreen> {
   bool loading = true;
 
   Future _initialLoading() async {
-    if (!(await OnlineDBService().isThereInternetConnection())) {
+    if (!(await OnlineDBService.isThereInternetConnection())) {
       throw NoInternetException();
     }
 
@@ -86,7 +85,7 @@ class _InitialLoadingScreenState extends State<InitialLoadingScreen> {
     if (noInternetConnection) {
       return NoInternetScreen(
         onTap: () async {
-          await Future.delayed(Duration(milliseconds: 250));
+          await Future.delayed(const Duration(milliseconds: 250));
           await callInitialLoading();
         },
       );

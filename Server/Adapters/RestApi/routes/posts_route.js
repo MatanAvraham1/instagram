@@ -32,7 +32,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
     storage: storage,
     limits: {
-        fileSize: 1024 * 1024 * 5
+        fileSize: 1024 * 1024 * 40 // TODO: check that
     },
     fileFilter: fileFilter,
 })
@@ -51,7 +51,22 @@ postsRouter.post('/', authenticateToken, upload.array('photos'), (req, res) => {
         photos.push(file.filename)
     }
 
-    addPost({ publisherId: userId, photos: photos, location: req.body.location, publisherComment: req.body.publisherComment, taggedUsers: req.body.taggedUsers == null ? [] : req.body.taggedUsers })
+    /*
+    Becauase the request sent by MultipartRequest and not by regular one we cant send the array as is 
+    so we have to send him like a string so we convert the array ["id1", "id2"] to "[id1, id2]"
+    */
+
+    let taggedUsers = []
+
+    if (req.body.taggedUsers != null && req.body.taggedUsers != "[]") {
+        let tmp = req.body.taggedUsers
+        tmp = tmp.replace("[", "")
+        tmp = tmp.replace("]", "")
+        tmp = tmp.replace(" ", "")
+        taggedUsers = tmp.split(",")
+    }
+
+    addPost({ publisherId: userId, photos: photos, location: req.body.location, publisherComment: req.body.publisherComment, taggedUsers: taggedUsers })
         .then(async (postId) => {
             res.status(201).json({ postId: postId })
         }).catch((error) => {

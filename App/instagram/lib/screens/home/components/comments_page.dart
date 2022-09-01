@@ -87,44 +87,47 @@ class _CommentsPageState extends State<CommentsPage> {
         appBar: AppBar(
           title: const Text("Comments"),
         ),
-        body: _isLoadingComments
-            ? const Padding(
-                padding: EdgeInsets.only(top: 70),
-                child: LoadingIndicator(
-                  radius: 20,
-                  title: "Loading Comments",
-                  strokeWidth: 2,
-                ),
-              )
-            : ListView.builder(
-                controller: _scrollController,
-                itemCount: comments.length + 2,
-                itemBuilder: (context, index) => index == comments.length + 1
-                    ? _isLoadingMoreComments
-                        ? const LoadingIndicator(
-                            radius: 25,
-                            title: "Loading Comments",
-                            strokeWidth: 2,
-                          )
-                        : Container()
-                    : index == 0
-                        ? CommentTile(
-                            commentPublisher: widget.postPublisher,
-                            comment: Comment(
-                                replies: 0,
-                                publisherId: widget.postPublisher.id,
-                                isLikedByMe: false,
-                                comment: widget.post.publisherComment,
-                                id: widget.post.id,
-                                postId: widget.post.id,
-                                createdAt: widget.post.createdAt,
-                                likes: widget.post.likes),
-                            isOwnerComment: true,
-                          )
-                        : CommentTile(
-                            commentPublisher: comments[index - 1].keys.first,
-                            comment: comments[index - 1].values.first,
-                            isOwnerComment: false,
-                          )));
+        body: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 700),
+          child: _isLoadingComments
+              ? const Padding(
+                  padding: EdgeInsets.only(top: 70),
+                  child: LoadingIndicator(
+                    radius: 20,
+                    title: "Loading Comments",
+                    strokeWidth: 2,
+                  ),
+                )
+              : ListView.builder(
+                  controller: _scrollController,
+                  itemCount: comments.length + 2,
+                  itemBuilder: (context, index) => index == comments.length + 1
+                      ? _isLoadingMoreComments
+                          ? const LoadingIndicator(
+                              radius: 25,
+                              title: "Loading Comments",
+                              strokeWidth: 2,
+                            )
+                          : Container()
+                      : index == 0
+                          ? CommentTile(
+                              commentPublisher: widget.postPublisher,
+                              comment: Comment(
+                                  replies: 0,
+                                  publisherId: widget.postPublisher.id,
+                                  isLikedByMe: false,
+                                  comment: widget.post.publisherComment,
+                                  id: widget.post.id,
+                                  postId: widget.post.id,
+                                  createdAt: widget.post.createdAt,
+                                  likes: widget.post.likes),
+                              isOwnerComment: true,
+                            )
+                          : CommentTile(
+                              commentPublisher: comments[index - 1].keys.first,
+                              comment: comments[index - 1].values.first,
+                              isOwnerComment: false,
+                            )),
+        ));
   }
 }

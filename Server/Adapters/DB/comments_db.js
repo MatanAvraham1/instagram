@@ -1,6 +1,7 @@
 const { default: mongoose } = require("mongoose")
 const { AppError, AppErrorMessages } = require("../../app_error")
 const { commentModel } = require("./schemes/comment_scheme")
+const { postModel } = require("./schemes/post_scheme")
 
 
 class CommentsDB {
@@ -28,18 +29,17 @@ class CommentsDB {
         if (comment.replyToComment != null) {
             await commentModel.findByIdAndUpdate(comment.replyToComment, { $inc: { repliesCount: 1 } })
         }
+
+        await postModel.findByIdAndUpdate(comment.postId, { $inc: { commentsCount: 1 } })
     }
 
     static async deleteById(commentId) {
         // Deletes comment by id
 
-
-        const replyToCommentId = (await commentModel.findById(commentId, { replyToComment: 1 })).replyToComment
-        if (replyToCommentId != null) {
-            await commentModel.findByIdAndUpdate(replyToCommentId, { $inc: { repliesCount: -1 } })
+        const comment = commentObjectFromDbObject(await commentModel.findByIdAndDelete(commentId, { projection: { likes: 0 } }))
+        if (comment.replyToComment != null) {
+            await commentModel.findByIdAndUpdate(comment.replyToComment, { $inc: { repliesCount: -1 } })
         }
-
-        await commentModel.findByIdAndDelete(commentId)
     }
 
     static async findById(commentId) {
@@ -94,7 +94,7 @@ class CommentsDB {
 
                 for (let index = 0; index < count; index++) {
                     let comment = await commentModel.findOneAndDelete({})
-                    await CommentsDB.deleteReplies(comment._id.toString())
+                    await CommentsDB._deleteReplies(comment._id.toString())
                 }
 
                 res()
@@ -102,7 +102,7 @@ class CommentsDB {
         }))
     }
 
-    static async deleteReplies(commentId) {
+    static async _deleteReplies(commentId) {
         /*
         Deletes all the replies comments to the comment[commentId]
 
@@ -159,7 +159,7 @@ class CommentsDB {
         param 2: the liker id
         */
 
-        await commentModel.findByIdAndUpdate(commentId, { $addToSet: { likes: whoLikeId } })
+        await commentModel.findByIdAndUpdate(commentId, { $addToSet: { likes: whoLikeId }, $inc: { likesCount: 1 } })
     }
 
     static async unlikeComment(commentId, whoLikeId) {
@@ -170,7 +170,7 @@ class CommentsDB {
         param 2: the liker id
         */
 
-        await commentModel.findByIdAndUpdate(commentId, { $pull: { likes: whoLikeId } })
+        await commentModel.findByIdAndUpdate(commentId, { $pull: { likes: whoLikeId }, $inc: { likesCount: -1 } })
     }
 
 }

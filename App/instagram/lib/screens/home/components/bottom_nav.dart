@@ -118,6 +118,16 @@ class _BottomNavItemState extends State<BottomNavItem> {
     return Flexible(
       flex: 1,
       child: InkWell(
+          onTap: widget.onTap,
+          onHover: (value) {
+            setState(() {
+              isHover = value;
+            });
+          },
+          highlightColor: Colors.transparent,
+          focusColor: Colors.transparent,
+          hoverColor: Colors.transparent,
+          splashColor: Colors.transparent,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             color: widget.isSelected
@@ -141,17 +151,7 @@ class _BottomNavItemState extends State<BottomNavItem> {
                           .unselectedIconTheme!
                           .color),
             ),
-          ),
-          onTap: widget.onTap,
-          onHover: (value) {
-            setState(() {
-              isHover = value;
-            });
-          },
-          highlightColor: Colors.transparent,
-          focusColor: Colors.transparent,
-          hoverColor: Colors.transparent,
-          splashColor: Colors.transparent),
+          )),
     );
     // return InkWell(
     //   child: Padding(

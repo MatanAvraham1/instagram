@@ -110,7 +110,7 @@ class StoriesDB {
         param 2: the liker id
         */
 
-        await storyModel.findByIdAndUpdate(storyId, { $addToSet: { likes: whoLikeId } })
+        await storyModel.findByIdAndUpdate(storyId, { $addToSet: { likes: whoLikeId }, $inc: { likesCount: 1 } })
     }
 
     static async unlikeStory(storyId, whoLikeId) {
@@ -121,7 +121,7 @@ class StoriesDB {
         param 2: the liker id
         */
 
-        await storyModel.findByIdAndUpdate(storyId, { $pull: { likes: whoLikeId } })
+        await storyModel.findByIdAndUpdate(storyId, { $pull: { likes: whoLikeId }, $inc: { likesCount: -1 } })
     }
 
     static async isLiked(storyId, whoLikeId) {
@@ -145,7 +145,7 @@ class StoriesDB {
         param 2: the viewer id
         */
 
-        await storyModel.findByIdAndUpdate(storyId, { $addToSet: { viewers: viewerId } })
+        await storyModel.findByIdAndUpdate(storyId, { $addToSet: { viewers: viewerId }, $inc: { viewersCount: 1 } })
     }
 
     static async unviewStory(storyId, viewerId) {
@@ -156,7 +156,7 @@ class StoriesDB {
         param 2: the viewer id
         */
 
-        await storyModel.findByIdAndUpdate(storyId, { $pull: { viewers: viewerId } })
+        await storyModel.findByIdAndUpdate(storyId, { $pull: { viewers: viewerId }, $inc: { viewersCount: -1 } })
     }
 
 

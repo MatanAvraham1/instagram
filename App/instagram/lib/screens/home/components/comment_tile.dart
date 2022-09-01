@@ -45,8 +45,8 @@ class CommentTile extends StatelessWidget {
                         ));
                       },
                     text: '${commentPublisher.username} ',
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                TextSpan(text: comment.comment),
+                    style:  TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).iconTheme.color)),
+                TextSpan(text: comment.comment, style: TextStyle(color: Theme.of(context).iconTheme.color)),
               ],
             ),
           ),

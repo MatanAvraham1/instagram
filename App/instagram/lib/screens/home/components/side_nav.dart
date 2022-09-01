@@ -85,6 +85,16 @@ class _SideNavItemState extends State<SideNavItem> {
   @override
   Widget build(BuildContext context) {
     return InkWell(
+      onTap: widget.onTap,
+      onHover: (value) {
+        setState(() {
+          isHover = value;
+        });
+      },
+      highlightColor: Colors.transparent,
+      focusColor: Colors.transparent,
+      hoverColor: Colors.transparent,
+      splashColor: Colors.transparent,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 5),
         child: AnimatedContainer(
@@ -129,16 +139,6 @@ class _SideNavItemState extends State<SideNavItem> {
           ),
         ),
       ),
-      onTap: widget.onTap,
-      onHover: (value) {
-        setState(() {
-          isHover = value;
-        });
-      },
-      highlightColor: Colors.transparent,
-      focusColor: Colors.transparent,
-      hoverColor: Colors.transparent,
-      splashColor: Colors.transparent,
     );
   }
 }

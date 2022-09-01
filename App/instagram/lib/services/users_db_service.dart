@@ -27,7 +27,7 @@ class UsersDBService extends OnlineDBService {
 
     try {
       return await getUserById(AuthService().getUserId());
-    } on ServerException catch (e) {
+    } on ServerException {
       await AuthService().signOut();
       throw ServerException(ServerExceptionMessages.userNotConnected);
     }
@@ -114,7 +114,7 @@ class UsersDBService extends OnlineDBService {
 
     var response = await http.get(
         Uri.parse(
-            SERVER_API_URL + "users/$userId/followers?startIndex=$startIndex"),
+            "${SERVER_API_URL}users/$userId/followers?startIndex=$startIndex"),
         headers: {
           "authorization": AuthService().getAuthorizationHeader(),
         });
@@ -138,7 +138,7 @@ class UsersDBService extends OnlineDBService {
 
     var response = await http.get(
         Uri.parse(
-            SERVER_API_URL + "users/$userId/followings?startIndex=$startIndex"),
+            "${SERVER_API_URL}users/$userId/followings?startIndex=$startIndex"),
         headers: {
           "authorization": AuthService().getAuthorizationHeader(),
         });

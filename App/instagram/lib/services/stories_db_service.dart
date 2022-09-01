@@ -25,7 +25,7 @@ class StoriesDBService extends OnlineDBService {
     */
 
     var response = await http.post(
-      Uri.parse(SERVER_API_URL + "stories"),
+      Uri.parse("${SERVER_API_URL}stories"),
       headers: {
         'Content-type': 'application/json',
         "authorization": AuthService().getAuthorizationHeader(),
@@ -46,7 +46,7 @@ class StoriesDBService extends OnlineDBService {
     */
 
     var response = await http
-        .get(Uri.parse(SERVER_API_URL + "stories/$storyId"), headers: {
+        .get(Uri.parse("${SERVER_API_URL}stories/$storyId"), headers: {
       "authorization": AuthService().getAuthorizationHeader(),
     });
 
@@ -64,7 +64,7 @@ class StoriesDBService extends OnlineDBService {
     */
 
     var response = await http
-        .delete(Uri.parse(SERVER_API_URL + "stories/$storyId"), headers: {
+        .delete(Uri.parse("${SERVER_API_URL}stories/$storyId"), headers: {
       "authorization": AuthService().getAuthorizationHeader(),
     });
 
@@ -81,8 +81,7 @@ class StoriesDBService extends OnlineDBService {
     */
 
     var response = await http.get(
-        Uri.parse(SERVER_API_URL +
-            "stories?startIndex=$startIndex&publisherId=$publisherId"),
+        Uri.parse("${SERVER_API_URL}stories?startIndex=$startIndex&publisherId=$publisherId"),
         headers: {
           "authorization": AuthService().getAuthorizationHeader(),
         });
@@ -103,7 +102,7 @@ class StoriesDBService extends OnlineDBService {
     */
 
     var response = await http.get(
-        Uri.parse(SERVER_API_URL + "stories/archive?startIndex=$startIndex"),
+        Uri.parse("${SERVER_API_URL}stories/archive?startIndex=$startIndex"),
         headers: {
           "authorization": AuthService().getAuthorizationHeader(),
         });
@@ -126,7 +125,7 @@ class StoriesDBService extends OnlineDBService {
     */
 
     var response = await http.post(
-      Uri.parse(SERVER_API_URL + "stories/$storyId/like"),
+      Uri.parse("${SERVER_API_URL}stories/$storyId/like"),
       headers: {
         'Content-type': 'application/json',
         "authorization": AuthService().getAuthorizationHeader(),
@@ -144,7 +143,7 @@ class StoriesDBService extends OnlineDBService {
     */
 
     var response = await http.post(
-      Uri.parse(SERVER_API_URL + "stories/$storyId/unlike"),
+      Uri.parse("${SERVER_API_URL}stories/$storyId/unlike"),
       headers: {
         'Content-type': 'application/json',
         "authorization": AuthService().getAuthorizationHeader(),

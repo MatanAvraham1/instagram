@@ -76,7 +76,7 @@ class Post {
     List<String> photosUrls = [];
     var photosNames = List<String>.from(map['photos']);
     for (var photoName in photosNames) {
-      photosUrls.add(SERVER_API_URL + "posts/${map['id']}/$photoName");
+      photosUrls.add("${SERVER_API_URL}posts/${map['id']}/$photoName");
     }
 
     return Post(

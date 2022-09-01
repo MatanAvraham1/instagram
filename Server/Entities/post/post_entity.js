@@ -54,7 +54,7 @@ function buildMakePost({ Id, Location, PhotosChecker, TextChecker, AppError, App
             // TODO: replace with PostsDB.deletePhotos()
             try {
                 await Promise.all(
-                    fileNames.map(
+                    photos.map(
                         file =>
                             new Promise(async (res, rej) => {
                                 const filePath = path.join(POSTS_PHOTOS_FOLDER, file)
@@ -67,11 +67,11 @@ function buildMakePost({ Id, Location, PhotosChecker, TextChecker, AppError, App
                                     }
                                 });
 
-                                // Will avoid errors when in example the first photo has been deleted
-                                // but the second photo throw error, so on the on the next func call it will try to delete the first 
-                                // photo but it will throw an error because the first photo has been already deleted and it will create a loop 
-                                await postModel.findByIdAndUpdate(postId, { $pull: { photos: file } })
-                            })
+                                // // Will avoid errors when in example the first photo has been deleted
+                                // // but the second photo throw error, so on the on the next func call it will try to delete the first 
+                                // // photo but it will throw an error because the first photo has been already deleted and it will create a loop 
+                                // await postModel.findByIdAndUpdate(postId, { $pull: { photos: file } })
+                            }) // TODO: check that
                     )
                 )
 
@@ -80,7 +80,7 @@ function buildMakePost({ Id, Location, PhotosChecker, TextChecker, AppError, App
                 console.error(error) // when file can't be deleted
             }
 
-            throw err
+            throw error
         }
 
 

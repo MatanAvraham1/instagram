@@ -12,7 +12,7 @@ class ExplorePage extends StatefulWidget {
   const ExplorePage({Key? key}) : super(key: key);
 
   @override
-  _ExplorePageState createState() => _ExplorePageState();
+  State<ExplorePage> createState() => _ExplorePageState();
 }
 
 class _ExplorePageState extends State<ExplorePage>

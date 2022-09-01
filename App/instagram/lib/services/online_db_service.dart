@@ -4,18 +4,10 @@ import 'package:http/http.dart';
 import 'package:instagram/exeptions/server_exceptions.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 
-class OnlineDBService {
-  static final OnlineDBService _onlineDBService = OnlineDBService._internal();
-
-  factory OnlineDBService() {
-    return _onlineDBService;
-  }
-
-  OnlineDBService._internal();
-
+abstract class OnlineDBService {
   Duration timeout = const Duration(seconds: 5);
 
-  Future isThereInternetConnection() async {
+  static Future isThereInternetConnection() async {
     return await InternetConnectionChecker().hasConnection;
   }
 

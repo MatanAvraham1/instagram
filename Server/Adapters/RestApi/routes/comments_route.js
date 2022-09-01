@@ -32,8 +32,13 @@ commentsRouter.post('/', authenticateToken, (req, res) => {
 
 
 // Gets comment
-commentsRouter.get('/:commentId', authenticateToken, (req, res) => {
-    const commentId = req.params.commentId
+commentsRouter.get('/byId/', authenticateToken, (req, res) => {
+    const commentId = req.query.commentId
+
+    if (commentId == null) {
+        return res.sendStatus(400)
+    }
+
 
     getCommentById({ commentId }).then(async (comment) => {
 
@@ -96,7 +101,7 @@ commentsRouter.delete('/:commentId', authenticateToken, doesOwnCommentObject, (r
 
 
 // Gets comments by publisher
-commentsRouter.get('/', authenticateToken, (req, res) => {
+commentsRouter.get('/byPublisher/', authenticateToken, (req, res) => {
     const publisherId = req.query.publisherId
     const startIndex = parseInt(req.query.startIndex)
 
@@ -159,7 +164,7 @@ commentsRouter.get('/', authenticateToken, (req, res) => {
 })
 
 // Gets replies
-commentsRouter.get('/', authenticateToken, (req, res) => {
+commentsRouter.get('/byComment/', authenticateToken, (req, res) => {
     const replyToComment = req.query.replyToComment
     const startIndex = parseInt(req.query.startIndex)
 
@@ -225,7 +230,7 @@ commentsRouter.get('/', authenticateToken, (req, res) => {
 
 
 // Gets comments by post id
-commentsRouter.get('/', authenticateToken, async (req, res) => {
+commentsRouter.get('/byPost/', authenticateToken, async (req, res) => {
     const postId = req.query.postId
     const startIndex = parseInt(req.query.startIndex)
     const includePublisher = req.query.includePublisher == 'true'

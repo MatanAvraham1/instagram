@@ -4,6 +4,7 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:instagram/presentation/my_flutter_app_icons.dart';
+import 'package:instagram/screens/home/profile/add_post_screen.dart';
 import 'package:instagram/services/friendships_service.dart';
 import 'package:instagram/services/posts_db_service.dart';
 import 'package:instagram/services/users_db_service.dart';
@@ -31,7 +32,7 @@ class ProfilePage extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _ProfilePageState createState() => _ProfilePageState();
+  State<ProfilePage> createState() => _ProfilePageState();
 }
 
 class _ProfilePageState extends State<ProfilePage>
@@ -328,10 +329,17 @@ class _ProfilePageState extends State<ProfilePage>
         child: ListView(
           children: [
             ListTile(
-              leading: Icon(Icons.logout),
-              title: Text("Log Out"),
+              leading: const Icon(Icons.logout),
+              title: const Text("Log Out"),
               onTap: () async {
                 await AuthService().signOut();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.nightlight_outlined),
+              title: const Text("Toogle Theme Mode"),
+              onTap: () {
+                AdaptiveTheme.of(context).toggleThemeMode();
               },
             )
           ],
@@ -370,11 +378,18 @@ class _ProfilePageState extends State<ProfilePage>
                         ? Row(
                             children: [
                               CircularButton(
-                                  onPressed: () {},
+                                  onPressed: () {
+                                    Navigator.of(context)
+                                        .push(MaterialPageRoute(
+                                      builder: (context) =>
+                                          const AddPostScreen(),
+                                    ));
+                                  },
                                   icon: const Icon(
-                                    MyFlutterApp.add_outlined,
+                                    // MyFlutterApp.add_outlined,
+                                    Icons.add,
                                     color: Colors.white,
-                                    size: 9,
+                                    // size: 9,
                                   )),
                               Builder(builder: (context) {
                                 return CircularButton(
@@ -591,14 +606,6 @@ class _ProfilePageState extends State<ProfilePage>
                   (index) => Padding(
                         padding: const EdgeInsets.only(right: 25.0),
                         child: Container(
-                          child: index > 0
-                              ? null
-                              : const Center(
-                                  child: Icon(
-                                    Icons.add,
-                                    size: 30,
-                                  ),
-                                ),
                           height: 60,
                           width: 60,
                           decoration: BoxDecoration(
@@ -614,6 +621,14 @@ class _ProfilePageState extends State<ProfilePage>
                                     width: 1.2,
                                     color: Theme.of(context).iconTheme.color!),
                           ),
+                          child: index > 0
+                              ? null
+                              : const Center(
+                                  child: Icon(
+                                    Icons.add,
+                                    size: 30,
+                                  ),
+                                ),
                         ),
                       )),
             ),

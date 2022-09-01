@@ -10,6 +10,8 @@ import 'package:instagram/services/online_db_service.dart';
 import 'package:instagram/services/users_db_service.dart';
 
 class AuthService extends OnlineDBService {
+  
+  
   static final AuthService _authSerivce = AuthService._internal();
 
   factory AuthService() {
@@ -17,12 +19,13 @@ class AuthService extends OnlineDBService {
   }
 
   AuthService._internal() {
+    
     _androidOptions = const AndroidOptions(
       encryptedSharedPreferences: true,
     );
     _safeStorage = FlutterSecureStorage(aOptions: _androidOptions);
     _streamController = StreamController<User?>();
-  }
+  } 
 
   late final AndroidOptions _androidOptions;
   late final FlutterSecureStorage _safeStorage;
@@ -129,7 +132,7 @@ class AuthService extends OnlineDBService {
     */
     var response = await http
         .post(
-          Uri.parse(SERVER_API_URL + "register"),
+          Uri.parse("${SERVER_API_URL}register"),
           headers: {
             'Content-type': 'application/json',
           },
@@ -169,7 +172,7 @@ class AuthService extends OnlineDBService {
     */
     var response = await http
         .post(
-          Uri.parse(SERVER_API_URL + "login"),
+          Uri.parse("${SERVER_API_URL}login"),
           headers: {
             'Content-type': 'application/json',
           },

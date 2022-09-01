@@ -13,7 +13,7 @@ class CustomAlertDialog extends StatefulWidget {
   final String? continueButton, okButton;
 
   @override
-  _CustomAlertDialogState createState() => _CustomAlertDialogState();
+  State<CustomAlertDialog> createState() => _CustomAlertDialogState();
 }
 
 class _CustomAlertDialogState extends State<CustomAlertDialog> {

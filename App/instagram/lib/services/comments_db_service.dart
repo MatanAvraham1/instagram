@@ -28,7 +28,7 @@ class CommentsDBService extends OnlineDBService {
     */
 
     var response = await http
-        .get(Uri.parse(SERVER_API_URL + "comments/$commentId"), headers: {
+        .get(Uri.parse("${SERVER_API_URL}comments/$commentId"), headers: {
       "authorization": AuthService().getAuthorizationHeader(),
     });
 
@@ -49,8 +49,7 @@ class CommentsDBService extends OnlineDBService {
     */
 
     var response = await http.get(
-        Uri.parse(SERVER_API_URL +
-            "comments?startIndex=$startIndex&postId=$postId&includePublisher=true"),
+        Uri.parse("${SERVER_API_URL}comments/byPost/?startIndex=$startIndex&postId=$postId&includePublisher=true"),
         headers: {
           "authorization": AuthService().getAuthorizationHeader(),
         });
@@ -80,8 +79,7 @@ class CommentsDBService extends OnlineDBService {
     */
 
     var response = await http.get(
-        Uri.parse(SERVER_API_URL +
-            "comments?startIndex=$startIndex&publisherId=$publisherId"),
+        Uri.parse("${SERVER_API_URL}comments/byPublisher/?startIndex=$startIndex&publisherId=$publisherId"),
         headers: {
           "authorization": AuthService().getAuthorizationHeader(),
         });
@@ -109,8 +107,7 @@ class CommentsDBService extends OnlineDBService {
     */
 
     var response = await http.get(
-        Uri.parse(SERVER_API_URL +
-            "comments?startIndex=$startIndex&replyToComment=$commentId"),
+        Uri.parse("${SERVER_API_URL}comments/byComment/?startIndex=$startIndex&replyToComment=$commentId"),
         headers: {
           "authorization": AuthService().getAuthorizationHeader(),
         });
@@ -135,7 +132,7 @@ class CommentsDBService extends OnlineDBService {
     */
 
     var response = await http.post(
-      Uri.parse(SERVER_API_URL + "comments/"),
+      Uri.parse("${SERVER_API_URL}comments/"),
       headers: {
         'Content-type': 'application/json',
         "authorization": AuthService().getAuthorizationHeader(),
@@ -156,7 +153,7 @@ class CommentsDBService extends OnlineDBService {
     */
 
     var response =
-        await http.delete(Uri.parse(SERVER_API_URL + "comments/"), headers: {
+        await http.delete(Uri.parse("${SERVER_API_URL}comments/"), headers: {
       "authorization": AuthService().getAuthorizationHeader(),
     });
 
@@ -171,7 +168,7 @@ class CommentsDBService extends OnlineDBService {
     */
 
     var response = await http.post(
-      Uri.parse(SERVER_API_URL + "comments/$commentId/like"),
+      Uri.parse("${SERVER_API_URL}comments/$commentId/like"),
       headers: {
         'Content-type': 'application/json',
         "authorization": AuthService().getAuthorizationHeader(),
@@ -189,7 +186,7 @@ class CommentsDBService extends OnlineDBService {
     */
 
     var response = await http.post(
-      Uri.parse(SERVER_API_URL + "comments/$commentId/unlike"),
+      Uri.parse("${SERVER_API_URL}comments/$commentId/unlike"),
       headers: {
         'Content-type': 'application/json',
         "authorization": AuthService().getAuthorizationHeader(),

@@ -8,7 +8,7 @@ class ShopPage extends StatefulWidget {
   const ShopPage({Key? key}) : super(key: key);
 
   @override
-  _ShopPageState createState() => _ShopPageState();
+  State<ShopPage> createState() => _ShopPageState();
 }
 
 class _ShopPageState extends State<ShopPage>

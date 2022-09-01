@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:instagram/exeptions/server_exceptions.dart';
@@ -15,7 +13,7 @@ class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
 
   @override
-  _LoginPageState createState() => _LoginPageState();
+  State<LoginPage> createState() => _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage> {
@@ -130,7 +128,7 @@ class _LoginPageState extends State<LoginPage> {
           text: "Log In",
           onPressed: () async {
             try {
-              if (!(await OnlineDBService().isThereInternetConnection())) {
+              if (!(await OnlineDBService.isThereInternetConnection())) {
                 showDialog(
                   context: context,
                   builder: (context) => const CustomAlertDialog(

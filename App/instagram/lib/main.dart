@@ -1,7 +1,6 @@
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:instagram/classes/navigator_keys.dart';
 import 'package:instagram/screens/initial_loading_screen.dart';
 import 'package:provider/provider.dart';

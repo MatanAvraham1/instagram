@@ -6,6 +6,8 @@ import 'package:instagram/services/ServerIP.dart';
 import 'package:http/http.dart' as http;
 import 'package:instagram/services/auth_service.dart';
 import 'package:instagram/services/online_db_service.dart';
+import 'package:mime/mime.dart';
+import 'package:http_parser/src/media_type.dart';
 
 class PostsDBService extends OnlineDBService {
   static final PostsDBService _postsDBService = PostsDBService._internal();
@@ -35,7 +37,11 @@ class PostsDBService extends OnlineDBService {
   }
 
   // TODO: work on the real add posts
-  Future uploadPost(Post post) async {
+  Future uploadPost(
+      {required String publisherComment,
+      required String location,
+      required List<String> photos,
+      required List<String> taggedUsers}) async {
     /*
     Uploads new post
 
@@ -43,18 +49,20 @@ class PostsDBService extends OnlineDBService {
     */
 
     List<http.MultipartFile> files = [];
-    for (var photo in post.photos) {
-      files.add(await http.MultipartFile.fromPath('photos', photo));
+    for (var photo in photos) {
+      final mimeTypeData = lookupMimeType(photo)!.split('/');
+      files.add(await http.MultipartFile.fromPath('photos', photo,
+          contentType: MediaType(mimeTypeData[0], mimeTypeData[1])));
     }
 
     var request =
-        http.MultipartRequest("POST", Uri.parse("$SERVER_API_URL/posts/"));
+        http.MultipartRequest("POST", Uri.parse("${SERVER_API_URL}posts/"));
 
     request.headers["authorization"] = AuthService().getAuthorizationHeader();
 
-    request.fields['taggedUsers'] = post.taggedUsers.toString();
-    request.fields['publisherComment'] = post.publisherComment;
-    request.fields['location'] = post.location;
+    request.fields['taggedUsers'] = taggedUsers.toString();
+    request.fields['publisherComment'] = publisherComment;
+    request.fields['location'] = location;
     request.files.addAll(files);
 
     final streamdResponse = await request.send();
@@ -72,7 +80,7 @@ class PostsDBService extends OnlineDBService {
     */
 
     var response = await http
-        .delete(Uri.parse(SERVER_API_URL + "posts/$postId"), headers: {
+        .delete(Uri.parse("${SERVER_API_URL}posts/$postId"), headers: {
       "authorization": AuthService().getAuthorizationHeader(),
     });
 
@@ -90,8 +98,8 @@ class PostsDBService extends OnlineDBService {
     */
 
     var response = await http.get(
-        Uri.parse(SERVER_API_URL +
-            "posts?startIndex=$startIndex&publisherId=$publisherId"),
+        Uri.parse(
+            "${SERVER_API_URL}posts?startIndex=$startIndex&publisherId=$publisherId"),
         headers: {
           "authorization": AuthService().getAuthorizationHeader(),
         });
@@ -114,7 +122,7 @@ class PostsDBService extends OnlineDBService {
     */
 
     var response = await http.post(
-      Uri.parse(SERVER_API_URL + "posts/$postId/like"),
+      Uri.parse("${SERVER_API_URL}posts/$postId/like"),
       headers: {
         'Content-type': 'application/json',
         "authorization": AuthService().getAuthorizationHeader(),
@@ -131,7 +139,7 @@ class PostsDBService extends OnlineDBService {
     */
 
     var response = await http.post(
-      Uri.parse(SERVER_API_URL + "posts/$postId/unlike"),
+      Uri.parse("${SERVER_API_URL}posts/$postId/unlike"),
       headers: {
         'Content-type': 'application/json',
         "authorization": AuthService().getAuthorizationHeader(),

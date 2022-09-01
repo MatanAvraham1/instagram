@@ -22,7 +22,7 @@ class FriendshipsService extends OnlineDBService {
     */
 
     var response = await http.post(
-      Uri.parse(SERVER_API_URL + "friendships/follow?userToFollow=$userId"),
+      Uri.parse("${SERVER_API_URL}friendships/follow?userToFollow=$userId"),
       headers: {
         "authorization": AuthService().getAuthorizationHeader(),
       },
@@ -39,7 +39,7 @@ class FriendshipsService extends OnlineDBService {
     */
 
     var response = await http.post(
-      Uri.parse(SERVER_API_URL + "friendships/unfollow?userToUnfollow=$userId"),
+      Uri.parse("${SERVER_API_URL}friendships/unfollow?userToUnfollow=$userId"),
       headers: {
         "authorization": AuthService().getAuthorizationHeader(),
       },
@@ -56,8 +56,7 @@ class FriendshipsService extends OnlineDBService {
     */
 
     var response = await http.post(
-      Uri.parse(SERVER_API_URL +
-          "friendships/acceptRequest?userToAccept=$userToAccept"),
+      Uri.parse("${SERVER_API_URL}friendships/acceptRequest?userToAccept=$userToAccept"),
       headers: {
         "authorization": AuthService().getAuthorizationHeader(),
       },
@@ -74,8 +73,7 @@ class FriendshipsService extends OnlineDBService {
     */
 
     var response = await http.post(
-      Uri.parse(SERVER_API_URL +
-          "friendships/declineRequest?userToDecline=$userToDecline"),
+      Uri.parse("${SERVER_API_URL}friendships/declineRequest?userToDecline=$userToDecline"),
       headers: {
         "authorization": AuthService().getAuthorizationHeader(),
       },
@@ -92,8 +90,7 @@ class FriendshipsService extends OnlineDBService {
     */
 
     var response = await http.delete(
-      Uri.parse(SERVER_API_URL +
-          "friendships/deleteRequest?userToDelete=$requestToDelete"),
+      Uri.parse("${SERVER_API_URL}friendships/deleteRequest?userToDelete=$requestToDelete"),
       headers: {
         "authorization": AuthService().getAuthorizationHeader(),
       },
@@ -110,8 +107,7 @@ class FriendshipsService extends OnlineDBService {
     */
 
     var response = await http.delete(
-      Uri.parse(SERVER_API_URL +
-          "friendships/removeFollower?userToRemove=$userToRemove"),
+      Uri.parse("${SERVER_API_URL}friendships/removeFollower?userToRemove=$userToRemove"),
       headers: {
         "authorization": AuthService().getAuthorizationHeader(),
       },

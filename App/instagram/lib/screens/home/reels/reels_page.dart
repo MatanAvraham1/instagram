@@ -6,7 +6,7 @@ class ReelsPage extends StatefulWidget {
   const ReelsPage({Key? key}) : super(key: key);
 
   @override
-  _ReelsPageState createState() => _ReelsPageState();
+  State<ReelsPage> createState() => _ReelsPageState();
 }
 
 class _ReelsPageState extends State<ReelsPage>

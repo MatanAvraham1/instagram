@@ -10,7 +10,7 @@ class DirectPage extends StatefulWidget {
   const DirectPage({Key? key}) : super(key: key);
 
   @override
-  _DirectPageState createState() => _DirectPageState();
+  State<DirectPage> createState() => _DirectPageState();
 }
 
 class _DirectPageState extends State<DirectPage>
@@ -67,13 +67,13 @@ class _DirectPageState extends State<DirectPage>
         ],
         leadingActions: [
           FloatingSearchBarAction(
+            showIfClosed: true,
             child: CircularButton(
               icon: const Icon(Icons.search),
               onPressed: () {
                 floatingSearchBarController.open();
               },
             ),
-            showIfClosed: true,
           ),
           FloatingSearchBarAction.back(
             showIfClosed: false,

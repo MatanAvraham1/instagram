@@ -21,7 +21,7 @@ class StoryPage extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _StoryPageState createState() => _StoryPageState();
+  State<StoryPage> createState() => _StoryPageState();
 }
 
 class _StoryPageState extends State<StoryPage> {
@@ -35,7 +35,7 @@ class _StoryPageState extends State<StoryPage> {
   @override
   Widget build(BuildContext context) {
     return DismissiblePage(
-      onDismiss: () => Navigator.of(context).pop(),
+      onDismissed: () => Navigator.of(context).pop(),
       child: StoryPageView(
         initialPage: widget.usersToPlay.indexOf(widget.initialUser),
         pageLength: widget.usersToPlay.length,
