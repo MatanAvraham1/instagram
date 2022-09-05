@@ -7,6 +7,7 @@ const { AuthenticationService } = require('../../../CustomHelpers/Authantication
 const { getPostById, addPost, deletePostById, getPostsByPublisherId, isPostLiked, likePost, unlikePost } = require('../../../Use_cases/post')
 const { authenticateToken, doesOwnPostObject } = require('../middleware');
 const { POSTS_PHOTOS_FOLDER } = require('../../../Constants');
+const { PostsDB } = require('../../DB/posts_db');
 
 const postsRouter = express.Router()
 
@@ -69,7 +70,15 @@ postsRouter.post('/', authenticateToken, upload.array('photos'), (req, res) => {
     addPost({ publisherId: userId, photos: photos, location: req.body.location, publisherComment: req.body.publisherComment, taggedUsers: taggedUsers })
         .then(async (postId) => {
             res.status(201).json({ postId: postId })
-        }).catch((error) => {
+        }).catch(async (error) => {
+
+            const photos = []
+            for (const file of req.files) {
+                photos.push(file.filename)
+            }
+            await PostsDB._deletePhotos(photos, (fileName) => { })
+
+
             if (error instanceof AppError) {
                 return res.status(400).json(error.message)
             }

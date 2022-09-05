@@ -17,6 +17,10 @@ function buildUnlikeStory({ UsersDB, StoriesDB, Id, AppError, AppErrorMessages }
             throw new AppError(AppErrorMessages.storyDoesNotExist)
         }
 
+        if (!(await StoriesDB.isLiked(storyId, likerId))) {
+            throw new AppError(AppErrorMessages.alreadyUnliked)
+        }
+
         return await StoriesDB.unlikeStory(storyId, likerId)
     }
 }

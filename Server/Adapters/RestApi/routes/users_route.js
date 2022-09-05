@@ -8,6 +8,7 @@ const { AppError, AppErrorMessages } = require('../../../app_error');
 const { AuthenticationService } = require('../../../CustomHelpers/Authantication');
 const { getLastDayStoriesCount } = require('../../../Use_cases/story');
 const { PROFILE_PHOTOS_FOLDER } = require('../../../Constants');
+const { UsersDB } = require('../../DB/users_db');
 const userRouter = express.Router()
 
 
@@ -114,7 +115,10 @@ userRouter.patch('/', authenticateToken, upload.single('profilePhoto'), (req, re
 
     updateFields({ newProfilePhoto: newProfilePhoto, userId: userId, newUsername: newUsername, newFullname: newFullname, newBio: newBio, newIsPrivate: newIsPrivate }).then(() => {
         res.sendStatus(200)
-    }).catch((error) => {
+    }).catch(async (error) => {
+
+        await UsersDB._deleteProfilePhoto(req.file.filename)
+
         if (error instanceof AppError) {
             return res.status(400).json(error.message)
         }

@@ -17,6 +17,10 @@ function buildUnlikePost({ UsersDB, PostsDB, Id, AppError, AppErrorMessages }) {
             throw new AppError(AppErrorMessages.postDoesNotExist)
         }
 
+        if (!(await PostsDB.isLiked(postId, likerId))) {
+            throw new AppError(AppErrorMessages.alreadyUnliked)
+        }
+
         return await PostsDB.unlikePost(postId, likerId)
     }
 }

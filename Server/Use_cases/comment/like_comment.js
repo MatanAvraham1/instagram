@@ -17,6 +17,10 @@ function buildLikeCommentById({ UsersDB, CommentsDB, Id, AppError, AppErrorMessa
             throw new AppError(AppErrorMessages.commentDoesNotExist)
         }
 
+        if (await CommentsDB.isLiked(commentId, likerId)) {
+            throw new AppError(AppErrorMessages.alreadyLiked)
+        }
+
         return await CommentsDB.likeComment(commentId, likerId)
     }
 }

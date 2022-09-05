@@ -17,6 +17,10 @@ function buildLikePost({ UsersDB, PostsDB, Id, AppError, AppErrorMessages }) {
             throw new AppError(AppErrorMessages.postDoesNotExist)
         }
 
+        if (await PostsDB.isLiked(postId, likerId)) {
+            throw new AppError(AppErrorMessages.alreadyLiked)
+        }
+
         return await PostsDB.likePost(postId, likerId)
     }
 }

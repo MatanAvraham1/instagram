@@ -287,16 +287,7 @@ class UsersDB {
             changes.profilePhoto = newProfilePhoto
 
             if (user.profilePhoto != null) {
-                try {
-                    await this._deleteProfilePhoto(user.profilePhoto)
-                }
-                catch (error) {
-                    // Becuase this function has been failed the new profilePhoto value has not been updated in the
-                    // db, but the new profile photo file has been saved to the profilePhotosFolder becuase the multer package
-                    // do that automatically. so we have to delete the new profilePhoto file because it just takes place in disk memory
-                    await this._deleteProfilePhoto(newProfilePhoto)
-                    throw error
-                }
+                await this._deleteProfilePhoto(user.profilePhoto)
             }
         }
 

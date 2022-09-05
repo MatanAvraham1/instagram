@@ -5,8 +5,7 @@ const { PhotosChecker } = require("../../CustomHelpers/Photos_checker")
 const { TextChecker } = require("../../CustomHelpers/Text_checker")
 const { AppError, AppErrorMessages } = require("../../app_error")
 const { UsersDB } = require("../../Adapters/DB/users_db")
-const { PostsDB } = require("../../Adapters/DB/posts_db")
 
-const makePost = buildMakePost({ Id, Location, PhotosChecker, TextChecker, AppError, AppErrorMessages, UsersDB, PostsDB })
+const makePost = buildMakePost({ Id, Location, PhotosChecker, TextChecker, AppError, AppErrorMessages, UsersDB })
 
 module.exports = { makePost }

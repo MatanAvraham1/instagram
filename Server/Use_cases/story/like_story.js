@@ -17,6 +17,10 @@ function buildLikeStory({ UsersDB, StoriesDB, Id, AppError, AppErrorMessages }) 
             throw new AppError(AppErrorMessages.storyDoesNotExist)
         }
 
+        if (await StoriesDB.isLiked(storyId, likerId)) {
+            throw new AppError(AppErrorMessages.alreadyLiked)
+        }
+
         return await StoriesDB.likeStory(storyId, likerId)
     }
 }

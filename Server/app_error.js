@@ -27,6 +27,8 @@ class AppErrorMessages {
     static invalidProfilePhoto = "Invalid profile photo."
 
     // post
+    static alreadyLiked = "Already liked!"
+    static alreadyUnliked = "Already unliked!"
     static invalidLocation = 'Invalid location.'
     static invalidTaggedUser = 'Invalid tagged user.'
     static unexistTaggedUser = 'Tagged user does not exist.'

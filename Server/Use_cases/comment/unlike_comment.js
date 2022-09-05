@@ -17,6 +17,10 @@ function buildUnlikeCommentById({ UsersDB, CommentsDB, Id, AppError, AppErrorMes
             throw new AppError(AppErrorMessages.commentDoesNotExist)
         }
 
+        if (!(await CommentsDB.isLiked(commentId, likerId))) {
+            throw new AppError(AppErrorMessages.alreadyUnliked)
+        }
+
         return await CommentsDB.unlikeComment(commentId, likerId)
     }
 }
